@@ -1,0 +1,9 @@
+*.[a|o]
+*~
+\#*\#
+*.bak
+/*.json
+**/bin/*
+**/build/*
+**/.idea/*
+cmake-build-debug/
