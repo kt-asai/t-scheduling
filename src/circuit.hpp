@@ -11,7 +11,7 @@ public:
 
     int n()
     {
-        reutnr n_;
+        return n_;
     }
 };
 
