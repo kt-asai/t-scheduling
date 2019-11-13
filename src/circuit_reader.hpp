@@ -10,7 +10,6 @@ class CircuitReader
 {
 private:
     std::string path_;
-    std::vector<int> qubit_names_;
 
     inline std::string getExtension_(const std::string& path)
     {
