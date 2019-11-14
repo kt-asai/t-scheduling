@@ -6,38 +6,53 @@
 
 void CircuitReader::readQC_(Circuit& qc)
 {
-    std::cout << "start qc reader" << std::endl;
-
     std::ifstream ifs(path_);
     std::string str;
 
     if (ifs.fail())
     {
         std::cerr << "failed to open " << path_ << std::endl;
-
         exit(1);
     }
 
     while (getline(ifs, str))
     {
-        // remove space
-        str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+        // skip empty line
+        if (str.empty()) continue;
+
+        // preparation
+        std::vector<std::string> buf = splitString_(str, ' ');
+        std::string id = buf.front();
+        buf.erase(buf.begin());
 
         // read parameters
-        if (str.find(".v") != std::string::npos)
+        if (id == ".v")
         {
-            std::cout << ".v line parse" << std::endl;
-            std::cout << str << std::endl;
+            for (std::string s : buf)
+            {
+                qc.addQubit(s);
+            }
         }
-        else if (str.find(".i") != std::string::npos)
+        else if (id == ".i")
         {
-            std::cout << ".i line parse" << std::endl;
-            std::cout << str << std::endl;
+            continue;
         }
         else
         {
-            std::cout << "gate parse" << std::endl;
-            std::cout << str << std::endl;
+            if (id == "H" || id == "X")
+            {
+                qc.addGate(id, buf.front());
+            }
+            if (id == "Z")
+            {
+                std::string target = buf.back();
+                buf.pop_back();
+                qc.addGate("czz", buf, target);
+            }
+            if (id == "tof")
+            {
+                qc.addGate("cnot", buf.front(), buf.back());
+            }
         }
     }
 }
@@ -45,9 +60,7 @@ void CircuitReader::readQC_(Circuit& qc)
 Circuit CircuitReader::read()
 {
     Circuit qc = Circuit();
-
     std::string extension = getExtension_(path_);
-    std::cout << "extension is " << extension << std::endl;
 
     if (extension == "qc")
     {
@@ -56,7 +69,6 @@ Circuit CircuitReader::read()
     else
     {
         std::cerr << "invalid format" << std::endl;
-
         exit(1);
     }
 
