@@ -24,7 +24,7 @@ public:
      * return number of qubit in circuit
      * @return number of qubit
      */
-    int qubitNum()
+    int qubit_num() const
     {
         return static_cast<int>(qubit_names_.size());
     }
@@ -33,16 +33,34 @@ public:
      * return number of gate in circuit
      * @return number of gate
      */
-    int gateNum()
+    int gate_num() const
     {
         return static_cast<int>(gate_list_.size());
+    }
+
+    /**
+     * return qubit names in the circuit
+     * @return array of qubit name
+     */
+    const std::vector<std::string> qubit_names() const
+    {
+        return qubit_names_;
+    }
+
+    /**
+     * return gate list in the circuit
+     * @return array of gate
+     */
+    const std::vector<Gate> gate_list() const
+    {
+        return gate_list_;
     }
 
     /**
      * add qubit to the circuit
      * @param qubit qubit name
      */
-    void addQubit(const std::string& qubit)
+    void add_qubit(const std::string& qubit)
     {
         qubit_names_.push_back(qubit);
     }
@@ -53,7 +71,7 @@ public:
      * @param control_list control qubit names
      * @param target_list target qubit names
      */
-    void addGate(const std::string& type,
+    void add_qate(const std::string& type,
                  const std::vector<std::string>& control_list,
                  const std::vector<std::string>& target_list)
     {
@@ -67,7 +85,7 @@ public:
      * @param control_list control qubit names
      * @param target target qubit name
      */
-    void addGate(const std::string& type,
+    void add_gate(const std::string& type,
                  const std::vector<std::string>& control_list,
                  const std::string& target)
     {
@@ -81,7 +99,7 @@ public:
      * @param control control qubit name
      * @param target_list target qubit names
      */
-    void addGate(const std::string& type,
+    void add_gate(const std::string& type,
                  const std::string& control,
                  const std::vector<std::string>& target_list)
     {
@@ -95,7 +113,7 @@ public:
      * @param control control qubit name
      * @param target target qubit name
      */
-    void addGate(const std::string& type,
+    void add_gate(const std::string& type,
                  const std::string& control,
                  const std::string& target)
     {
@@ -108,7 +126,7 @@ public:
      * @param type gate name
      * @param target target qubit name
      */
-    void addGate(const std::string& type,
+    void add_gate(const std::string& type,
                  const std::string& target)
     {
         Gate gate(type, target);
@@ -118,12 +136,12 @@ public:
     /**
      * decompose a czz gate to {CNOT, T} gates
      */
-    void decomposeCZZ();
+    void DecomposeCZZ();
 
     /**
      * print circuit status
      */
-    void printStatus()
+    void print()
     {
         // counter
         int h_num = std::count_if(gate_list_.begin(), gate_list_.end(),
@@ -137,8 +155,8 @@ public:
         int cnot_num = std::count_if(gate_list_.begin(), gate_list_.end(),
                 [](Gate& gate) { return gate.type() == "cnot"; });
 
-        std::cout << "qubits: " << qubitNum() << std::endl;
-        std::cout << "gates: " << gateNum() << std::endl;
+        std::cout << "qubits: " << qubit_num() << std::endl;
+        std::cout << "gates: " << gate_num() << std::endl;
         std::cout << "T: " << t_num << std::endl;
         std::cout << "H: " << h_num << std::endl;
         std::cout << "X: " << x_num << std::endl;
@@ -149,7 +167,7 @@ public:
     /**
      * print gate list in the circuit
      */
-    void printGateList()
+    void print_gate_list()
     {
         for (Gate& gate : gate_list_)
         {

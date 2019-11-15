@@ -1,14 +1,14 @@
 #include "circuit.hpp"
 
-void Circuit::decomposeCZZ()
+void Circuit::DecomposeCZZ()
 {
     for (auto it = gate_list_.begin(); it != gate_list_.end(); it++)
     {
         if (it->type() == "czz")
         {
-            std::string control_a = it->control_list().front();
-            std::string control_b = it->control_list().back();
-            std::string target = it->target_list().front();
+            const std::string control_a = it->control_list().front();
+            const std::string control_b = it->control_list().back();
+            const std::string target = it->target_list().front();
 
             // remove czz
             gate_list_.erase(it);
@@ -22,21 +22,21 @@ void Circuit::decomposeCZZ()
              *   --+------------+---------T--X--T*--X--
              *   --X--T*--X--T--X--T*--X--T------------
              */
-            std::vector<Gate> czz = {Gate("cnot", control_b, target),
-                                     Gate("T*", target),
-                                     Gate("cnot", control_a, target),
-                                     Gate("T", target),
-                                     Gate("cnot", control_b, target),
-                                     Gate("T*", target),
-                                     Gate("cnot", control_a, target),
-                                     Gate("T", control_b),
-                                     Gate("T", target),
-                                     Gate("cnot", control_a, control_b),
-                                     Gate("T", control_a),
-                                     Gate("T*", control_b),
-                                     Gate("cnot", control_a, control_b)};
+            const std::vector<Gate> czz = {Gate("cnot", control_b, target),
+                                           Gate("T*", target),
+                                           Gate("cnot", control_a, target),
+                                           Gate("T", target),
+                                           Gate("cnot", control_b, target),
+                                           Gate("T*", target),
+                                           Gate("cnot", control_a, target),
+                                           Gate("T", control_b),
+                                           Gate("T", target),
+                                           Gate("cnot", control_a, control_b),
+                                           Gate("T", control_a),
+                                           Gate("T*", control_b),
+                                           Gate("cnot", control_a, control_b)};
 
-            for (Gate& gate : czz)
+            for (const Gate& gate : czz)
             {
                 it = gate_list_.insert(it, gate);
                 it++;

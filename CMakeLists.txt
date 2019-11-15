@@ -4,7 +4,7 @@ project(t-scheduling CXX)
 
 set(TARGETS t-scheduling)
 
-add_executable(${TARGETS} src/main.cpp src/circuit_reader.cpp src/gate.h src/circuit.cpp)
+add_executable(${TARGETS} src/main.cpp src/circuit_reader.cpp src/circuit.cpp src/character.cpp)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_FLAGS "")

@@ -2,26 +2,23 @@
 
 #include "circuit_reader.hpp"
 #include "circuit.hpp"
+#include "character.hpp"
 
 int main()
 {
     std::cout << "T-scheduling" << std::endl;
 
-    std::string path("../benchmarks/tof_3.qc");
+    std::string path("../benchmarks/tof_1.qc");
 
     CircuitReader reader(path);
     Circuit qc =  reader.read();
 
     std::cout << "-----------------------------" << std::endl;
     std::cout << "Original circuit" << std::endl;
-    qc.printStatus();
-//    qc.printGateList();
+    qc.print();
 
-    std::cout << "-----------------------------" << std::endl;
-    std::cout << "Decomposed circuit" << std::endl;
-    qc.decomposeCZZ();
-    qc.printStatus();
-//    qc.printGateList();
+    Character character(qc);
+    character.Parse();
 
     return 0;
 }

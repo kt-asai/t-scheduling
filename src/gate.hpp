@@ -91,7 +91,7 @@ public:
      * retunr gate name
      * @return gate name
      */
-    std::string type()
+    const std::string type() const
     {
         return type_;
     }
@@ -100,7 +100,7 @@ public:
      * return control qubit list
      * @return control list
      */
-    std::vector<std::string> control_list()
+    const std::vector<std::string> control_list() const
     {
         return control_list_;
     }
@@ -109,7 +109,7 @@ public:
      * return target qubit list
      * @return target list
      */
-    std::vector<std::string> target_list()
+    const std::vector<std::string> target_list() const
     {
         return target_list_;
     }
@@ -117,7 +117,7 @@ public:
     /**
      * print gate status
      */
-    void print()
+    void print() const
     {
         std::cout << type_ << " ";
         for (auto& e : control_list_)

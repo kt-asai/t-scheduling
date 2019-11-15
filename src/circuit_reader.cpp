@@ -4,7 +4,7 @@
 
 #include "circuit_reader.hpp"
 
-void CircuitReader::readQC_(Circuit& qc)
+void CircuitReader::ReadQC_(Circuit& qc)
 {
     std::ifstream ifs(path_);
     std::string str;
@@ -21,7 +21,7 @@ void CircuitReader::readQC_(Circuit& qc)
         if (str.empty()) continue;
 
         // preparation
-        std::vector<std::string> buf = splitString_(str, ' ');
+        std::vector<std::string> buf = split_(str, ' ');
         std::string id = buf.front();
         buf.erase(buf.begin());
 
@@ -30,7 +30,7 @@ void CircuitReader::readQC_(Circuit& qc)
         {
             for (std::string s : buf)
             {
-                qc.addQubit(s);
+                qc.add_qubit(s);
             }
         }
         else if (id == ".i")
@@ -41,17 +41,17 @@ void CircuitReader::readQC_(Circuit& qc)
         {
             if (id == "H" || id == "X")
             {
-                qc.addGate(id, buf.front());
+                qc.add_gate(id, buf.front());
             }
             if (id == "Z")
             {
                 std::string target = buf.back();
                 buf.pop_back();
-                qc.addGate("czz", buf, target);
+                qc.add_gate("czz", buf, target);
             }
             if (id == "tof")
             {
-                qc.addGate("cnot", buf.front(), buf.back());
+                qc.add_gate("cnot", buf.front(), buf.back());
             }
         }
     }
@@ -60,11 +60,12 @@ void CircuitReader::readQC_(Circuit& qc)
 Circuit CircuitReader::read()
 {
     Circuit qc = Circuit();
-    std::string extension = getExtension_(path_);
+    const std::string extension = extension_(path_);
 
     if (extension == "qc")
     {
-        readQC_(qc);
+        ReadQC_(qc);
+        qc.DecomposeCZZ();
     }
     else
     {
