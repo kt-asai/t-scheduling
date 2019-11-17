@@ -1,5 +1,7 @@
 #include "circuit.hpp"
 
+namespace tskd {
+
 void Circuit::DecomposeCZZ()
 {
     for (auto it = gate_list_.begin(); it != gate_list_.end(); it++)
@@ -12,6 +14,7 @@ void Circuit::DecomposeCZZ()
 
             // remove czz
             gate_list_.erase(it);
+            num_gate_--;
 
             /*
              *   {CNOT + T} tempalte of CZZ
@@ -40,7 +43,10 @@ void Circuit::DecomposeCZZ()
             {
                 it = gate_list_.insert(it, gate);
                 it++;
+                num_gate_++;
             }
         }
     }
+}
+
 }

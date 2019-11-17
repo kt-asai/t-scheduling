@@ -6,6 +6,7 @@
 
 #include "circuit.hpp"
 
+namespace tskd {
 
 class CircuitReader
 {
@@ -17,33 +18,15 @@ private:
      * @param path file path
      * @return extension
      */
-    inline std::string extension_(const std::string& path)
+    static inline std::string extension_(const std::string& path)
     {
-        std::string ext;
-        size_t pos1 = path.rfind('.');
-        if (pos1 != std::string::npos)
+        std::string extension;
+        std::string::size_type pos = path.find_last_of('.');
+        if (pos != std::string::npos)
         {
-            ext = path.substr(pos1+1, path.size()-pos1);
-            std::string::iterator itr = ext.begin();
-            while (itr != ext.end())
-            {
-                *itr = tolower(*itr);
-                itr++;
-            }
-            itr = ext.end()-1;
-            while (itr != ext.begin())
-            {
-                if (*itr == 0 || *itr == 32)
-                {
-                    ext.erase(itr--);
-                }
-                else
-                {
-                    itr--;
-                }
-            }
+            extension = path.substr(pos + 1, path.size());
         }
-        return ext;
+        return extension;
     }
 
     /**
@@ -52,8 +35,8 @@ private:
      * @param delimiter a delimiter as like space and ',' etc...
      * @return some splitted strings
      */
-    inline std::vector<std::string> split_(const std::string& input,
-                                           char delimiter)
+    static inline std::vector<std::string> split_(const std::string& input,
+                                                  char delimiter)
     {
         std::istringstream stream(input);
         std::string field;
@@ -69,7 +52,7 @@ private:
      * read qc format
      * @param qc empty Circuit class
      */
-    void ReadQC_(Circuit& qc);
+    void ReadQC_(Circuit& circuit);
 
 public:
     /**
@@ -81,9 +64,11 @@ public:
      * constructor
      * @param path file path
      */
-    CircuitReader(const std::string path) : path_(path) { }
+    CircuitReader(const std::string& path) : path_(path) { }
 
     Circuit read();
 };
+
+}
 
 #endif //T_SCHEDULING_CIRCUIT_READER_HPP

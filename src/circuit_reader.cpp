@@ -4,7 +4,9 @@
 
 #include "circuit_reader.hpp"
 
-void CircuitReader::ReadQC_(Circuit& qc)
+namespace tskd {
+
+void CircuitReader::ReadQC_(Circuit& circuit)
 {
     std::ifstream ifs(path_);
     std::string str;
@@ -12,6 +14,7 @@ void CircuitReader::ReadQC_(Circuit& qc)
     if (ifs.fail())
     {
         std::cerr << "failed to open " << path_ << std::endl;
+
         exit(1);
     }
 
@@ -28,30 +31,34 @@ void CircuitReader::ReadQC_(Circuit& qc)
         // read parameters
         if (id == ".v")
         {
-            for (std::string s : buf)
+            for (const std::string& s : buf)
             {
-                qc.add_qubit(s);
+                circuit.add_qubit(s);
+                circuit.set_ancilla(s);
             }
         }
         else if (id == ".i")
         {
-            continue;
+            for (const std::string& s : buf)
+            {
+                circuit.set_ancilla(s, false);
+            }
         }
         else
         {
             if (id == "H" || id == "X")
             {
-                qc.add_gate(id, buf.front());
+                circuit.add_gate(id, buf.front());
             }
             if (id == "Z")
             {
                 std::string target = buf.back();
                 buf.pop_back();
-                qc.add_gate("czz", buf, target);
+                circuit.add_gate("czz", buf, target);
             }
             if (id == "tof")
             {
-                qc.add_gate("cnot", buf.front(), buf.back());
+                circuit.add_gate("cnot", buf.front(), buf.back());
             }
         }
     }
@@ -59,19 +66,22 @@ void CircuitReader::ReadQC_(Circuit& qc)
 
 Circuit CircuitReader::read()
 {
-    Circuit qc = Circuit();
+    Circuit circuit = Circuit();
     const std::string extension = extension_(path_);
 
     if (extension == "qc")
     {
-        ReadQC_(qc);
-        qc.DecomposeCZZ();
+        ReadQC_(circuit);
+        circuit.DecomposeCZZ();
     }
     else
     {
         std::cerr << "invalid format" << std::endl;
+
         exit(1);
     }
 
-    return qc;
+    return circuit;
+}
+
 }

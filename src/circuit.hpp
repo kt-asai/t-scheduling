@@ -4,15 +4,23 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include <algorithm>
 
 #include "gate.hpp"
 
+namespace tskd {
+
 class Circuit
 {
 private:
+    int num_qubit_;
+    int num_ancilla_qubit_;
+    int num_gate_;
+
     std::vector<std::string> qubit_names_;
     std::vector<Gate> gate_list_;
+    std::unordered_map<std::string, bool> is_ancilla_map_;
 
 public:
     /**
@@ -26,7 +34,12 @@ public:
      */
     int qubit_num() const
     {
-        return static_cast<int>(qubit_names_.size());
+        return num_qubit_;
+    }
+
+    int ancilla_qubit_num() const
+    {
+        return num_ancilla_qubit_;
     }
 
     /**
@@ -35,25 +48,72 @@ public:
      */
     int gate_num() const
     {
-        return static_cast<int>(gate_list_.size());
+        return num_gate_;
+    }
+
+    /**
+     * count specified gates
+     * @param type gate name
+     * @return number of specified gate
+     */
+    int count_gate(const std::string& type) const
+    {
+        const int gate_count = std::count_if(gate_list_.begin(), gate_list_.end(),
+                                             [type](const Gate& gate)
+                                             {
+                                                 return type == gate.type();
+                                             });
+        return gate_count;
     }
 
     /**
      * return qubit names in the circuit
      * @return array of qubit name
      */
-    const std::vector<std::string> qubit_names() const
+    std::vector<std::string> qubit_names() const
     {
         return qubit_names_;
     }
+
+
+    /**
+     * return info of whether each qubit is ancilla
+     * @return ancilla map
+     */
+    std::unordered_map<std::string, bool> is_ancilla_map() const
+    {
+        return is_ancilla_map_;
+    }
+
 
     /**
      * return gate list in the circuit
      * @return array of gate
      */
-    const std::vector<Gate> gate_list() const
+    std::vector<Gate> gate_list() const
     {
         return gate_list_;
+    }
+
+    /**
+     * set whether ancilla qubit
+     * @param qubit qubit name
+     * @param is_ancilla whether qubit is ancilla qubit
+     */
+    void set_ancilla(const std::string& qubit,
+                     const bool is_ancilla = true)
+    {
+        const size_t exist = is_ancilla_map_.count(qubit);
+        if (exist)
+        {
+            num_ancilla_qubit_ += static_cast<int>(is_ancilla) - static_cast<int>(is_ancilla_map_[qubit]);
+            is_ancilla_map_[qubit] = is_ancilla;
+        }
+        else
+        {
+            is_ancilla_map_.emplace(qubit, is_ancilla);
+            num_ancilla_qubit_ += static_cast<int>(is_ancilla);
+        }
     }
 
     /**
@@ -63,6 +123,7 @@ public:
     void add_qubit(const std::string& qubit)
     {
         qubit_names_.push_back(qubit);
+        num_qubit_++;
     }
 
     /**
@@ -72,11 +133,12 @@ public:
      * @param target_list target qubit names
      */
     void add_qate(const std::string& type,
-                 const std::vector<std::string>& control_list,
-                 const std::vector<std::string>& target_list)
+                  const std::vector<std::string>& control_list,
+                  const std::vector<std::string>& target_list)
     {
         Gate gate(type, control_list, target_list);
         gate_list_.push_back(gate);
+        num_gate_++;
     }
 
     /**
@@ -86,11 +148,12 @@ public:
      * @param target target qubit name
      */
     void add_gate(const std::string& type,
-                 const std::vector<std::string>& control_list,
-                 const std::string& target)
+                  const std::vector<std::string>& control_list,
+                  const std::string& target)
     {
         Gate gate(type, control_list, target);
         gate_list_.push_back(gate);
+        num_gate_++;
     }
 
     /**
@@ -100,11 +163,12 @@ public:
      * @param target_list target qubit names
      */
     void add_gate(const std::string& type,
-                 const std::string& control,
-                 const std::vector<std::string>& target_list)
+                  const std::string& control,
+                  const std::vector<std::string>& target_list)
     {
         Gate gate(type, control, target_list);
         gate_list_.push_back(gate);
+        num_gate_++;
     }
 
     /**
@@ -114,11 +178,12 @@ public:
      * @param target target qubit name
      */
     void add_gate(const std::string& type,
-                 const std::string& control,
-                 const std::string& target)
+                  const std::string& control,
+                  const std::string& target)
     {
         Gate gate(type, control, target);
         gate_list_.push_back(gate);
+        num_gate_++;
     }
 
     /**
@@ -127,10 +192,11 @@ public:
      * @param target target qubit name
      */
     void add_gate(const std::string& type,
-                 const std::string& target)
+                  const std::string& target)
     {
         Gate gate(type, target);
         gate_list_.push_back(gate);
+        num_gate_++;
     }
 
     /**
@@ -144,24 +210,20 @@ public:
     void print()
     {
         // counter
-        int h_num = std::count_if(gate_list_.begin(), gate_list_.end(),
-                [](Gate& gate) { return gate.type() == "H"; });
-        int t_num = std::count_if(gate_list_.begin(), gate_list_.end(),
-                [](Gate& gate) { return gate.type() == "T" || gate.type() == "T*"; });
-        int x_num = std::count_if(gate_list_.begin(), gate_list_.end(),
-                [](Gate& gate) { return gate.type() == "X"; });
-        int toffoli_num = std::count_if(gate_list_.begin(), gate_list_.end(),
-                [](Gate& gate) { return gate.type() == "toffoli"; });
-        int cnot_num = std::count_if(gate_list_.begin(), gate_list_.end(),
-                [](Gate& gate) { return gate.type() == "cnot"; });
+        int num_h = count_gate("H");
+        int num_x = count_gate("X");
+        int num_t = count_gate("T") + count_gate("T*");
+        int num_toffoli = count_gate("toffoli");
+        int num_cnot = count_gate("cnot");
 
-        std::cout << "qubits: " << qubit_num() << std::endl;
-        std::cout << "gates: " << gate_num() << std::endl;
-        std::cout << "T: " << t_num << std::endl;
-        std::cout << "H: " << h_num << std::endl;
-        std::cout << "X: " << x_num << std::endl;
-        std::cout << "CNOT: " << cnot_num << std::endl;
-        std::cout << "Toffoli: " << toffoli_num << std::endl;
+        std::cout << "# qubits: " << num_qubit_ << std::endl;
+        std::cout << "# ancilla: " << num_ancilla_qubit_ << std::endl;
+        std::cout << "# gates: " << num_gate_ << std::endl;
+        std::cout << "# T: " << num_t << std::endl;
+        std::cout << "# H: " << num_h << std::endl;
+        std::cout << "# X: " << num_x << std::endl;
+        std::cout << "# CNOT: " << num_cnot << std::endl;
+        std::cout << "# Toffoli: " << num_toffoli << std::endl;
     }
 
     /**
@@ -175,5 +237,7 @@ public:
         }
     }
 };
+
+}
 
 #endif //T_SCHEDULING_CIRCUIT_HPP

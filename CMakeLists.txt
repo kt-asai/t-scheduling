@@ -4,7 +4,16 @@ project(t-scheduling CXX)
 
 set(TARGETS t-scheduling)
 
-add_executable(${TARGETS} src/main.cpp src/circuit_reader.cpp src/circuit.cpp src/character.cpp)
+find_package(Boost)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
+add_executable(${TARGETS} src/main.cpp
+                          src/circuit_reader.cpp
+                          src/circuit.cpp
+                          src/character.cpp
+                          src/util.cpp)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_FLAGS "")

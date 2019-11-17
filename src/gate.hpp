@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace tskd {
+
 class Gate
 {
 private:
@@ -26,9 +28,9 @@ public:
     Gate(const std::string& type,
          const std::vector<std::string>& control_list,
          const std::vector<std::string>& target_list)
-    : type_(type),
-      control_list_(control_list),
-      target_list_(target_list) { }
+            : type_(type),
+              control_list_(control_list),
+              target_list_(target_list) { }
 
     /**
      * constructor of a multi-control gate (e.g.toffoli)
@@ -39,8 +41,8 @@ public:
     Gate(const std::string& type,
          const std::vector<std::string>& control_list,
          const std::string& target)
-    : type_(type),
-      control_list_(control_list)
+            : type_(type),
+              control_list_(control_list)
     {
         target_list_.push_back(target);
     }
@@ -54,8 +56,8 @@ public:
     Gate(const std::string& type,
          const std::string& control,
          const std::vector<std::string>& target_list)
-    : type_(type),
-      target_list_(target_list)
+            : type_(type),
+              target_list_(target_list)
     {
         control_list_.push_back(control);
     }
@@ -69,7 +71,7 @@ public:
     Gate(const std::string& type,
          const std::string& control,
          const std::string& target)
-    : type_(type)
+            : type_(type)
     {
         control_list_.push_back(control);
         target_list_.push_back(target);
@@ -82,7 +84,7 @@ public:
      */
     Gate(const std::string& type,
          const std::string& target)
-    : type_(type)
+            : type_(type)
     {
         target_list_.push_back(target);
     }
@@ -91,7 +93,7 @@ public:
      * retunr gate name
      * @return gate name
      */
-    const std::string type() const
+    std::string type() const
     {
         return type_;
     }
@@ -100,7 +102,7 @@ public:
      * return control qubit list
      * @return control list
      */
-    const std::vector<std::string> control_list() const
+    std::vector<std::string> control_list() const
     {
         return control_list_;
     }
@@ -109,7 +111,7 @@ public:
      * return target qubit list
      * @return target list
      */
-    const std::vector<std::string> target_list() const
+    std::vector<std::string> target_list() const
     {
         return target_list_;
     }
@@ -131,5 +133,7 @@ public:
         std::cout << std::endl;
     }
 };
+
+}
 
 #endif //T_SCHEDULING_GATE_H

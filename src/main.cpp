@@ -8,16 +8,16 @@ int main()
 {
     std::cout << "T-scheduling" << std::endl;
 
-    std::string path("../benchmarks/tof_1.qc");
+    std::string path("../benchmarks/tof_3.qc");
 
-    CircuitReader reader(path);
-    Circuit qc =  reader.read();
+    tskd::CircuitReader reader(path);
+    tskd::Circuit qc = reader.read();
 
-    std::cout << "-----------------------------" << std::endl;
-    std::cout << "Original circuit" << std::endl;
+    std::cout << "# ----------------" << std::endl;
+    std::cout << "# Original circuit" << std::endl;
     qc.print();
 
-    Character character(qc);
+    tskd::Character character(qc);
     character.Parse();
 
     return 0;
