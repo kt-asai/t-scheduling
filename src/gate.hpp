@@ -30,7 +30,11 @@ public:
          const std::vector<std::string>& target_list)
             : type_(type),
               control_list_(control_list),
-              target_list_(target_list) { }
+              target_list_(target_list)
+    {
+        std::sort(control_list_.begin(), control_list_.end());
+        std::sort(target_list_.begin(), target_list_.end());
+    }
 
     /**
      * constructor of a multi-control gate (e.g.toffoli)
@@ -45,6 +49,7 @@ public:
               control_list_(control_list)
     {
         target_list_.push_back(target);
+        std::sort(control_list_.begin(), control_list_.end());
     }
 
     /**
@@ -60,6 +65,7 @@ public:
               target_list_(target_list)
     {
         control_list_.push_back(control);
+        std::sort(target_list_.begin(), target_list_.end());
     }
 
     /**

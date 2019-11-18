@@ -81,6 +81,8 @@ Circuit CircuitReader::read()
         exit(1);
     }
 
+    circuit.RemoveIdentities();
+
     return circuit;
 }
 

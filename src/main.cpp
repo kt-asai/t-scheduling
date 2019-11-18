@@ -8,7 +8,7 @@ int main()
 {
     std::cout << "T-scheduling" << std::endl;
 
-    std::string path("../benchmarks/tof_3.qc");
+    std::string path("../benchmarks/sample.qc");
 
     tskd::CircuitReader reader(path);
     tskd::Circuit qc = reader.read();

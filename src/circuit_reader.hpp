@@ -64,7 +64,8 @@ public:
      * constructor
      * @param path file path
      */
-    CircuitReader(const std::string& path) : path_(path) { }
+    CircuitReader(const std::string& path)
+        : path_(path) { }
 
     Circuit read();
 };

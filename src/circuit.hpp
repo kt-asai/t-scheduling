@@ -22,11 +22,17 @@ private:
     std::vector<Gate> gate_list_;
     std::unordered_map<std::string, bool> is_ancilla_map_;
 
+    bool EqualBits_(const Gate& gate_a,
+                    const Gate& gate_b);
+
 public:
     /**
      * constructor
      */
-    Circuit() = default;
+    Circuit()
+        : num_qubit_(0),
+          num_ancilla_qubit_(0),
+          num_gate_(0) { }
 
     /**
      * return number of qubit in circuit
@@ -157,7 +163,7 @@ public:
     }
 
     /**
-     * add muti-target gate (e.g.multi-target cnot) to the circuit
+     * add multi-target gate (e.g.multi-target cnot) to the circuit
      * @param type gate name
      * @param control control qubit name
      * @param target_list target qubit names
@@ -198,6 +204,11 @@ public:
         gate_list_.push_back(gate);
         num_gate_++;
     }
+
+    /**
+     * remove identity gates
+     */
+    void RemoveIdentities();
 
     /**
      * decompose a czz gate to {CNOT, T} gates
