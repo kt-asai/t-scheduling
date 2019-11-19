@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <set>
 
 #include "circuit.hpp"
 #include "gate.hpp"
@@ -61,8 +62,8 @@ public:
               num_ancilla_(circuit_.ancilla_qubit_num()),
               num_hadamard_(circuit_.count_gate("H"))
     {
-        qubit_names_.reserve(num_qubit_ + num_hadamard_);
-        ancilla_list_.reserve(num_qubit_);
+        qubit_names_.resize(num_qubit_ + num_hadamard_);
+        ancilla_list_.resize(num_qubit_);
     }
 
     /**

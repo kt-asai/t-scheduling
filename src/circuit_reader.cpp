@@ -72,6 +72,7 @@ Circuit CircuitReader::read()
     if (extension == "qc")
     {
         ReadQC_(circuit);
+        circuit.RemoveIdentities();
         circuit.DecomposeCZZ();
     }
     else

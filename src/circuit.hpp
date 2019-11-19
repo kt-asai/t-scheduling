@@ -22,7 +22,7 @@ private:
     std::vector<Gate> gate_list_;
     std::unordered_map<std::string, bool> is_ancilla_map_;
 
-    bool EqualBits_(const Gate& gate_a,
+    bool EqualGate_(const Gate& gate_a,
                     const Gate& gate_b);
 
 public:

@@ -4,15 +4,42 @@
 
 namespace tskd {
 
-bool Circuit::EqualBits_(const Gate& gate_a,
+bool Circuit::EqualGate_(const Gate& gate_a,
                          const Gate& gate_b)
 {
-    return true;
+    if (gate_a.type() != gate_b.type())
+    {
+        return false;
+    }
+
+    bool equal_bits = true;
+    const int num_control_bit = static_cast<int>(gate_a.control_list().size());
+    const int num_target_bit = static_cast<int>(gate_a.target_list().size());
+
+    for (int i = 0; i < num_control_bit; ++i)
+    {
+        if (gate_a.control_list()[i] != gate_b.control_list()[i])
+        {
+            equal_bits = false;
+        }
+    }
+
+    for (int i = 0; i < num_target_bit; ++i)
+    {
+        if (gate_a.target_list()[i] != gate_b.target_list()[i])
+        {
+            equal_bits = false;
+        }
+    }
+
+    return equal_bits;
 }
 
 void Circuit::RemoveIdentities()
 {
     std::unordered_map<std::string, std::string> identity_map{
+            {"ccz", "ccz"},
+            {"toffoli", "toffoli"},
             {"cnot", "cnot"},
             {"Z", "Z"},
             {"X", "X"},
@@ -25,7 +52,10 @@ void Circuit::RemoveIdentities()
     };
 
     bool update = true;
-    bool equal_bits = false;
+    std::size_t is_identity = 0;
+    std::size_t same_bit_counter = 0;
+    std::unordered_map<std::string, std::vector<Gate>::iterator> gate_map;
+    std::string compared_bit;
 
     /*
      * search the identity matrix until the gate is no longer removed
@@ -33,24 +63,49 @@ void Circuit::RemoveIdentities()
     while (update)
     {
         update = false;
-        for (auto it_a = gate_list_.begin(); it_a != gate_list_.end(); it_a++)
+        for (auto it = gate_list_.begin(); it != gate_list_.end(); ++it)
         {
-            auto it_b = it_a + 1;
-            for (; it_b != gate_list_.end(); it_b++)
+            // check the same gate as the gate in the gate map
+            for (const std::string& bit : it->control_list())
             {
+                same_bit_counter = gate_map.count(bit);
+                if (same_bit_counter)
+                {
+                    is_identity += same_bit_counter;
+                    compared_bit = bit;
+                }
+            }
+            for (const std::string& bit : it->target_list())
+            {
+                same_bit_counter = gate_map.count(bit);
+                if (same_bit_counter)
+                {
+                    is_identity += same_bit_counter;
+                    compared_bit = bit;
+                }
+            }
 
-                equal_bits = EqualBits_(*it_a, *it_b);
-                if (equal_bits && identity_map[it_a->type()] == it_b->type())
-                {
-                    gate_list_.erase(it_a);
-                    gate_list_.erase(it_b);
-                    update = true;
-                    break;
-                }
-                if (equal_bits && identity_map[it_a->type()] != it_b->type())
-                {
-                    break;
-                }
+            // remove identity gate
+            if (is_identity > 0 && EqualGate_(*it, *gate_map[compared_bit]))
+            {
+                gate_list_.erase(it);
+                gate_list_.erase(gate_map.at(compared_bit));
+                num_gate_ -= 2;
+
+                gate_map.clear();
+                is_identity = 0;
+                update = true;
+                break;
+            }
+
+            // register the gate to the gate_map
+            for (const std::string& bit : it->control_list())
+            {
+                gate_map[bit] = it;
+            }
+            for (const std::string& bit : it->target_list())
+            {
+                gate_map[bit] = it;
             }
         }
     }
@@ -60,6 +115,7 @@ void Circuit::DecomposeCZZ()
 {
     for (auto it = gate_list_.begin(); it != gate_list_.end(); it++)
     {
+        it->print();
         if (it->type() == "czz")
         {
             const std::string control_a = it->control_list().front();
@@ -99,6 +155,7 @@ void Circuit::DecomposeCZZ()
                 it++;
                 num_gate_++;
             }
+            it--;
         }
     }
 }

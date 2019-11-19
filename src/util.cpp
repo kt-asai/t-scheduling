@@ -54,7 +54,7 @@ bool IsIndependentDestructive(int num_qubit,
                               xor_func& parity)
 {
     std::map<int, int> pivots;
-    for (int row = 0, col = 0; row < num_qubit && col < bits.size();)
+    for (int row = 0, col = 0; row < num_qubit && col < static_cast<int>(bits.size());)
     {
         if (bits[col].test(row))
         {
