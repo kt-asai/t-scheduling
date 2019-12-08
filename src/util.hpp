@@ -9,45 +9,97 @@ namespace util {
 using xor_func = boost::dynamic_bitset<>;
 using phase_exponent = std::pair<int, xor_func>;
 
+class IndependentOracle
+{
+private:
+    int num_;
+    int dim_;
+    int length_;
+
+public:
+    /**
+     * constructor
+     */
+    IndependentOracle()
+        : num_(0),
+          dim_(0),
+          length_ (0) { }
+
+    /**
+     * contructor
+     * @param numin
+     * @param dimin
+     * @param lengthin
+     */
+    IndependentOracle(int numin, int dimin, int lengthin)
+        : num_(numin),
+          dim_(dimin),
+          length_ (lengthin) { }
+
+    /**
+     * matroid oracle
+     * @param expnts
+     * @param lst
+     * @return
+     */
+    bool operator()(const std::vector<phase_exponent>& expnts,
+                    const std::set<int>& lst) const;
+
+    /**
+     * set new dimension
+     * @param newdim new dimension
+     */
+    void set_dim(int newdim) { dim_ = newdim; }
+
+    /**
+     * Shortcut to find a linearly dependent element faster
+     * @param expnts
+     * @param lst
+     * @return
+     */
+    int retrieve_lin_dep(const std::vector<phase_exponent>& expnts,
+                         const std::set<int>& lst) const;
+};
+
 /**
-* make triangular to determine the rank (destructive)
-* @param num_qubit number of qubit in the circuit
-* @param num_qubit_and_hadamard number of qubit and hadamard in the circuit
-* @param bits parity matrix
-* @return rank of matrix
+ * make triangular to determine the rank (destructive)
+ * @param num_qubit number of qubit in the circuit
+ * @param num_qubit_and_hadamard number of qubit and hadamard in the circuit
+ * @param bits parity matrix
+ * @return rank of matrix
 */
 int ComputeRankDestructive(int num_qubit,
                            int num_qubit_and_hadamard,
                            std::vector<xor_func>& bits);
 
 /**
-* make triangular to determine the rank
-* @param num_qubit number of qubit in the circuit
-* @param num_qubit_and_hadamard number of qubit and hadamard in the circuit
-* @param bits parity matrix
-* @return rank of matrix
+ * make triangular to determine the rank
+ * @param num_qubit number of qubit in the circuit
+ * @param num_qubit_and_hadamard number of qubit and hadamard in the circuit
+ * @param bits parity matrix
+ * @return rank of matrix
 */
 int ComputeRank(int num_qubit,
                 int num_qubit_and_hadamard,
                 std::vector<xor_func>& bits);
 
 /**
-* check linear independence of one vector wrt a matrix (destructive)
-* @param num_qubit number of qubit in the circuit
-* @param bits  parity matrix
-* @param parity parity to check
-* @return whether parity is linearly independent of bits
+ * check linear independence of one vector wrt a matrix (destructive)
+ * @param num_qubit number of qubit in the circuit
+ * @param bits  parity matrix
+ * @param parity parity to check
+ * @return whether parity is linearly independent of bits
 */
 bool IsIndependentDestructive(int num_qubit,
                               const std::vector<xor_func>& bits,
                               xor_func& parity);
 
 /**
-* check linear independence of one vector wrt a matrix
-* @param num_qubit number of qubit in the circuit
-* @param bits  parity matrix
-* @param parity parity to check
-* @return whether parity is linearly independent of bits
+ * check linear independence of one vector wrt a matrix
+ * @param num_qubit number of qubit in the circuit
+ * @param bits  parity matrix
+ * @param parity parity to check
+ * @return whether parity is linearly independent of bits
 */
 bool IsIndependent(int num_qubit,
                    const std::vector<xor_func>& bits,

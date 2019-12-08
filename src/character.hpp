@@ -15,7 +15,7 @@ namespace tskd {
 
 class Character
 {
-private:
+public:
     struct Hadamard
     {
         int target_;
@@ -31,11 +31,13 @@ private:
                   input_wires_parity_(input_wires_parity) { }
     };
 
+private:
     Circuit circuit_;
 
     int num_qubit_;
     int num_ancilla_;
     int num_hadamard_;
+
     std::vector<std::string> qubit_names_;
     std::vector<bool> ancilla_list_;
     std::map<int, int> value_map_;
@@ -64,6 +66,70 @@ public:
     {
         qubit_names_.resize(num_qubit_ + num_hadamard_);
         ancilla_list_.resize(num_qubit_);
+    }
+
+
+    /**
+     * return number of qubit in circuit
+     * @return number of qubit
+     */
+    int num_qubit() const
+    {
+        return num_qubit_;
+    }
+
+    /**
+     * return number of qubit in circuit
+     * @return number of ancilla qubit
+     */
+    int num_ancilla_qubit() const
+    {
+        return num_ancilla_;
+    }
+
+    /**
+     * return number of hadamard gate
+     * @return number of hadamard gate
+     */
+    int num_hadamard() const
+    {
+        return num_hadamard_;
+    }
+
+    /**
+     * return qubit names in the circuit
+     * @return array of qubit name
+     */
+    std::vector<std::string> qubit_names() const
+    {
+        return qubit_names_;
+    }
+
+    /**
+     * return ancilla list
+     * @return ancilla list
+     */
+    std::vector<bool> ancilla_list() const
+    {
+        return ancilla_list_;
+    }
+
+    /**
+     * return phase exponents
+     * @return phase exponents
+     */
+    std::vector<util::phase_exponent> phase_exponents() const
+    {
+        return phase_exponents_;
+    }
+
+    /**
+     * return hadamard gate list
+     * @return hadmard gates
+     */
+    std::vector<Hadamard> hadamards() const
+    {
+        return hadamards_;
     }
 
     /**

@@ -81,7 +81,6 @@ public:
         return qubit_names_;
     }
 
-
     /**
      * return info of whether each qubit is ancilla
      * @return ancilla map
@@ -90,7 +89,6 @@ public:
     {
         return is_ancilla_map_;
     }
-
 
     /**
      * return gate list in the circuit
@@ -193,7 +191,7 @@ public:
     }
 
     /**
-     * add single qubit gate (e.g.T, P) to the circuit
+     * add single qubit gate (e.g.H, Z, T) to the circuit
      * @param type gate name
      * @param target target qubit name
      */
