@@ -3,6 +3,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include "gate.hpp"
+
 namespace tskd {
 namespace util {
 
@@ -21,9 +23,9 @@ public:
      * constructor
      */
     IndependentOracle()
-        : num_(0),
-          dim_(0),
-          length_ (0) { }
+            : num_(0),
+              dim_(0),
+              length_(0) { }
 
     /**
      * contructor
@@ -32,9 +34,9 @@ public:
      * @param lengthin
      */
     IndependentOracle(int numin, int dimin, int lengthin)
-        : num_(numin),
-          dim_(dimin),
-          length_ (lengthin) { }
+            : num_(numin),
+              dim_(dimin),
+              length_(lengthin) { }
 
     /**
      * matroid oracle
@@ -104,6 +106,23 @@ bool IsIndependentDestructive(int num_qubit,
 bool IsIndependent(int num_qubit,
                    const std::vector<xor_func>& bits,
                    const xor_func& parity);
+
+std::list<Gate> ToUpperEchelon(int m,
+                               int n,
+                               std::vector<xor_func>& bits,
+                               std::vector<xor_func> *mat,
+                               const std::vector<std::string>& qubit_names);
+
+std::list<Gate> ComposeX(int target,
+                         const std::vector<std::string>& qubit_names);
+
+std::list<Gate> ComposeSwap(int a,
+                            int b,
+                            const std::vector<std::string>& qubit_names);
+
+std::list<Gate> ComposeCNOT(int target,
+                            int control,
+                            const std::vector<std::string>& qubit_names);
 
 }
 }

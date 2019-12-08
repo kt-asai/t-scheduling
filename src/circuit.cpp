@@ -54,7 +54,7 @@ void Circuit::RemoveIdentities()
     bool update = true;
     std::size_t is_identity = 0;
     std::size_t same_bit_counter = 0;
-    std::unordered_map<std::string, std::vector<Gate>::iterator> gate_map;
+    std::unordered_map<std::string, std::list<Gate>::iterator> gate_map;
     std::string compared_bit;
 
     /*
@@ -115,15 +115,14 @@ void Circuit::DecomposeCZZ()
 {
     for (auto it = gate_list_.begin(); it != gate_list_.end(); it++)
     {
-        it->print();
-        if (it->type() == "czz")
+        if (it->type() == "ccz")
         {
             const std::string control_a = it->control_list().front();
             const std::string control_b = it->control_list().back();
             const std::string target = it->target_list().front();
 
             // remove czz
-            gate_list_.erase(it);
+            it = gate_list_.erase(it);
             num_gate_--;
 
             /*
@@ -135,27 +134,22 @@ void Circuit::DecomposeCZZ()
              *   --+------------+---------T--X--T*--X--
              *   --X--T*--X--T--X--T*--X--T------------
              */
-            const std::vector<Gate> czz = {Gate("cnot", control_b, target),
-                                           Gate("T*", target),
-                                           Gate("cnot", control_a, target),
-                                           Gate("T", target),
-                                           Gate("cnot", control_b, target),
-                                           Gate("T*", target),
-                                           Gate("cnot", control_a, target),
-                                           Gate("T", control_b),
-                                           Gate("T", target),
-                                           Gate("cnot", control_a, control_b),
-                                           Gate("T", control_a),
-                                           Gate("T*", control_b),
-                                           Gate("cnot", control_a, control_b)};
+            std::list<Gate> czz = {Gate("cnot", control_b, target),
+                                   Gate("T*", target),
+                                   Gate("cnot", control_a, target),
+                                   Gate("T", target),
+                                   Gate("cnot", control_b, target),
+                                   Gate("T*", target),
+                                   Gate("cnot", control_a, target),
+                                   Gate("T", control_b),
+                                   Gate("T", target),
+                                   Gate("cnot", control_a, control_b),
+                                   Gate("T", control_a),
+                                   Gate("T*", control_b),
+                                   Gate("cnot", control_a, control_b)};
 
-            for (const Gate& gate : czz)
-            {
-                it = gate_list_.insert(it, gate);
-                it++;
-                num_gate_++;
-            }
-            it--;
+            num_gate_ += static_cast<int>(czz.size());
+            gate_list_.splice(it, czz);
         }
     }
 }

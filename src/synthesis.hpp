@@ -2,38 +2,36 @@
 #define T_SCHEDULING_SYNTHESIS_HPP
 
 #include "character.hpp"
+#include "util.hpp"
+
+#include "tpar/partition.hpp"
 
 namespace tskd {
 
 class Synthesis
 {
 private:
-    Character character_;
+    Character chr_;
 
-    int num_qubit_;
-    int num_ancilla_;
-    int num_hadamard_;
-    int dimension_;
+    Circuit circuit_;
 
-    std::vector<std::string> qubit_names_;
-    std::vector<bool> ancilla_list_;
-    std::vector<util::phase_exponent> phase_exponents_;
-    std::vector<Character::Hadamard> hadamards_;
+    int global_phase_;
+
+    std::vector<tpar::partitioning> floats_;
+    std::vector<tpar::partitioning> frozen_;
+
+    util::xor_func mask_;
+
+    std::vector<util::xor_func> wires_;
+    std::vector<std::list<int>> remaining_;
 
 public:
-    Synthesis(Character character)
-        : character_(character)
+    Synthesis(const Character& chr) : chr_(chr)
     {
-        num_qubit_ = character.num_qubit();
-        num_ancilla_ = character.num_ancilla_qubit();
-        num_hadamard_ = character.num_hadamard();
-        dimension_= character.num_qubit() - character.num_ancilla_qubit();
-
-        qubit_names_ = character.qubit_names();
-        ancilla_list_ = character.ancilla_list();
-        phase_exponents_ = character.phase_exponents();
-        hadamards_ = character.hadamards();
+        init(chr);
     }
+
+    void init(const Character& chr);
 
     Circuit Execute();
 };

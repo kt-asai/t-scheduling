@@ -2,43 +2,43 @@
 
 namespace tskd {
 
-Circuit CircuitBuilder::build()
+std::vector<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
+                                        std::vector<util::xor_func>& in,
+                                        const std::vector<util::xor_func>& out)
 {
-    Circuit circuit;
+    std::vector<Gate> circuit;
 
 //    gatelist ret, tmp, rev;
-//    auto bits = vector<xor_func>(num);
-//    auto pre = vector<xor_func>(num);
-//    auto post = vector<xor_func>(num);
-//    set<int>::iterator ti;
-//    int i;
-//    bool flg = true;
-//
-//    for (int i = 0; i < num; i++)
-//    {
-//        flg &= (in[i] == out[i]);
-//    }
-//    for (int i = 0; i < num; i++)
-//    {
-//        flg &= (in[i] == out[i]);
-//        pre[i] = xor_func(num + 1, 0);
-//        post[i] = xor_func(num + 1, 0);
-//        pre[i].set(i);
-//        post[i].set(i);
-//    }
-//    if (flg && (part.size() == 0))
-//    {
-//        return ret;
-//    }
-//
-//    /*
-//     * Reduce in to echelon form to decide on a basis
-//     */
-//    to_upper_echelon(num, dim, in, &pre, vector<string>());
-//
-//    /*
-//     * For each partition... Compute *it, apply T gates, uncompute
-//     */
+    auto bits = std::vector<util::xor_func>(qubit_num_);
+    auto pre = std::vector<util::xor_func>(qubit_num_);
+    auto post = std::vector<util::xor_func>(qubit_num_);
+    bool flg = true;
+
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        flg &= (in[i] == out[i]);
+    }
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        flg &= (in[i] == out[i]);
+        pre[i] = util::xor_func(qubit_num_ + 1, 0);
+        post[i] = util::xor_func(qubit_num_ + 1, 0);
+        pre[i].set(i);
+        post[i].set(i);
+    }
+    if (flg && (partition.empty()))
+    {
+        return circuit;
+    }
+
+    /*
+     * Reduce in to echelon form to decide on a basis
+     */
+    util::ToUpperEchelon(qubit_num_, dimension_, in, &pre, std::vector<std::string>());
+
+    /*
+     * For each partition... Compute *it, apply T gates, uncompute
+     */
 //    for (partitioning::const_iterator it = part.begin(); it != part.end(); it++)
 //    {
 //        for (ti = it->begin(), i = 0; i < num; i++)

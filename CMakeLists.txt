@@ -12,7 +12,7 @@ endif()
 #add_subdirectory(src/tpar)
 
 add_executable(${TARGETS} src/main.cpp
-                          src/circuit_reader.cpp
+                          src/io/circuit_reader.cpp
                           src/circuit.cpp
                           src/character.cpp
                           src/util.cpp

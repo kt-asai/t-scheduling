@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <list>
 #include <string>
 #include <unordered_map>
 #include <algorithm>
@@ -19,7 +20,7 @@ private:
     int num_gate_;
 
     std::vector<std::string> qubit_names_;
-    std::vector<Gate> gate_list_;
+    std::list<Gate> gate_list_;
     std::unordered_map<std::string, bool> is_ancilla_map_;
 
     bool EqualGate_(const Gate& gate_a,
@@ -94,7 +95,7 @@ public:
      * return gate list in the circuit
      * @return array of gate
      */
-    std::vector<Gate> gate_list() const
+    std::list<Gate> gate_list() const
     {
         return gate_list_;
     }
@@ -222,7 +223,7 @@ public:
         int num_h = count_gate("H");
         int num_x = count_gate("X");
         int num_t = count_gate("T") + count_gate("T*");
-        int num_toffoli = count_gate("toffoli");
+        int num_toffoli = count_gate("ccz");
         int num_cnot = count_gate("cnot");
 
         std::cout << "# qubits: " << num_qubit_ << std::endl;
@@ -240,7 +241,7 @@ public:
      */
     void print_gate_list()
     {
-        for (Gate& gate : gate_list_)
+        for (auto&& gate : gate_list_)
         {
             gate.print();
         }

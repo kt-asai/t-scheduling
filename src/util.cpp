@@ -1,5 +1,6 @@
 #include <map>
 
+#include "gate.hpp"
 #include "util.hpp"
 
 namespace tskd {
@@ -191,6 +192,112 @@ bool IsIndependent(int num_qubit,
     xor_func temp_parity = parity;
 
     return IsIndependentDestructive(num_qubit, bits, temp_parity);
+}
+
+std::list<Gate> ToUpperEchelon(int m,
+                               int n,
+                               std::vector<xor_func>& bits,
+                               std::vector<xor_func> *mat,
+                               const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> acc;
+    int rank = 0;
+    for (int j = 0; j < m; j++)
+    {
+        if (bits[j].test(n))
+        {
+            bits[j].reset(n);
+            if (mat == NULL)
+            {
+                acc.splice(acc.end(), ComposeX(j, qubit_names));
+            }
+            else
+            {
+                (*mat)[j].set(m);
+            }
+        }
+    }
+
+    /*
+     * Make triangular
+     */
+    for (int i = 0; i < n; i++)
+    {
+        bool flg = false;
+        for (int j = rank; j < m; j++)
+        {
+            if (bits[j].test(i))
+            {
+                // If we haven't yet seen a vector with bit i set...
+                if (!flg)
+                {
+                    // If it wasn't the first vector we tried, swap to the front
+                    if (j != rank)
+                    {
+                        swap(bits[rank], bits[j]);
+                        if (mat == nullptr)
+                        {
+                            acc.splice(acc.end(), ComposeSwap(rank, j, qubit_names));
+                        }
+                        else
+                        {
+                            swap((*mat)[rank], (*mat)[j]);
+                        }
+                    }
+                    flg = true;
+                }
+                else
+                {
+                    bits[j] ^= bits[rank];
+                    if (mat == nullptr)
+                    {
+                        acc.splice(acc.end(), ComposeCNOT(rank, j, qubit_names));
+                    }
+                    else
+                    {
+                        (*mat)[j] ^= (*mat)[rank];
+                    }
+                }
+            }
+        }
+        if (flg) rank++;
+    }
+
+    return acc;
+}
+
+std::list<Gate> ComposeX(int target,
+                         const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> ret;
+
+    ret.emplace_back("tof", qubit_names[target]);
+
+    return ret;
+}
+
+std::list<Gate> ComposeSwap(int a,
+                            int b,
+                            const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> ret;
+
+    ret.emplace_back("tof", qubit_names[a], qubit_names[b]);
+    ret.emplace_back("tof", qubit_names[b], qubit_names[a]);
+    ret.emplace_back("tof", qubit_names[a], qubit_names[b]);
+
+    return ret;
+}
+
+std::list<Gate> ComposeCNOT(int target,
+                            int control,
+                            const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> ret;
+
+    ret.emplace_back("tof", qubit_names[target], qubit_names[control]);
+
+    return ret;
 }
 
 }

@@ -79,6 +79,15 @@ public:
     }
 
     /**
+     * return number of data qubit in circuit
+     * @return number of data qubit
+     */
+    int num_data_qubit() const
+    {
+        return num_qubit_ - num_ancilla_;
+    }
+
+    /**
      * return number of qubit in circuit
      * @return number of ancilla qubit
      */

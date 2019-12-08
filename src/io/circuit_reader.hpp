@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 
-#include "circuit.hpp"
+#include "../circuit.hpp"
 
 namespace tskd {
 

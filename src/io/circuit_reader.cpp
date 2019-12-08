@@ -54,7 +54,7 @@ void CircuitReader::ReadQC_(Circuit& circuit)
             {
                 std::string target = buf.back();
                 buf.pop_back();
-                circuit.add_gate("czz", buf, target);
+                circuit.add_gate("ccz", buf, target);
             }
             if (id == "tof")
             {

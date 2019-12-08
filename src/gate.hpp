@@ -1,6 +1,7 @@
 #ifndef T_SCHEDULING_GATE_H
 #define T_SCHEDULING_GATE_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 

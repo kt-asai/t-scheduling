@@ -2,39 +2,31 @@
 #include "tpar/matroid.hpp"
 #include "synthesis.hpp"
 #include "character.hpp"
+#include "circuit_builder.hpp"
 
 namespace tskd {
 
-Circuit Synthesis::Execute()
+void Synthesis::init(const Character& chr)
 {
-    std::cout << "running..." << std::endl;
-
-    Circuit circuit;
-    util::IndependentOracle oracle(num_qubit_, dimension_, (num_qubit_ - num_ancilla_) + num_hadamard_);
-
-    auto floats = std::vector<tpar::partitioning>(2);
-    auto frozen = std::vector<tpar::partitioning>(2);
-
-    util::xor_func mask((num_qubit_ - num_ancilla_) + num_hadamard_ + 1, 0);
-    std::vector<util::xor_func> wires;
-    std::vector<std::list<int>> remaining(2);
-    int tmp, h_count = 1, applied = 0, j;
-    std::list<std::pair<std::string, std::list<std::string> > > circ;
-    int global_phase = 0;
+    floats_.resize(2);
+    frozen_.resize(2);
+    remaining_.resize(2);
 
     /*
      * initialize some stuff
      */
-    mask.set((num_qubit_ - num_ancilla_) + num_hadamard_);
-    for (int i = 0, j = 0; i < num_qubit_; i++)
+    global_phase_ = 0;
+    mask_ = util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
+    mask_.set(chr.num_data_qubit() + chr.num_hadamard());
+    for (int i = 0, j = 0; i < chr.num_qubit(); i++)
     {
-        circuit.add_qubit(qubit_names_[i]);
-        circuit.set_ancilla(qubit_names_[i], ancilla_list_[i]);
-        wires.emplace_back((num_qubit_ - num_ancilla_) + num_hadamard_ + 1, 0);
-        if (!ancilla_list_[i])
+        circuit_.add_qubit(chr.qubit_names()[i]);
+        circuit_.set_ancilla(chr.qubit_names()[i], chr.ancilla_list()[i]);
+        wires_.emplace_back(chr.num_data_qubit() + chr.num_hadamard()+ 1, 0);
+        if (!chr.ancilla_list()[i])
         {
-            wires[i].set(j);
-            mask.set(j);
+            wires_[i].set(j);
+            mask_.set(j);
             j++;
         }
     }
@@ -42,54 +34,64 @@ Circuit Synthesis::Execute()
     /*
      * initialize the remaining list
      */
-    for (int i = 0; i < phase_exponents_.size(); i++)
+    for (int i = 0; i < chr.phase_exponents().size(); i++)
     {
-        if (phase_exponents_[i].second == util::xor_func((num_qubit_ - num_ancilla_) + num_hadamard_ + 1, 0))
+        if (chr.phase_exponents()[i].second == util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0))
         {
-            global_phase = phase_exponents_[i].first;
+            global_phase_ = chr.phase_exponents()[i].first;
         }
-        else if (phase_exponents_[i].first % 2 == 1)
+        else if (chr.phase_exponents()[i].first % 2 == 1)
         {
-            remaining[0].push_back(i);
+            remaining_[0].push_back(i);
         }
-        else if (phase_exponents_[i].first != 0)
+        else if (chr.phase_exponents()[i].first != 0)
         {
-            remaining[1].push_back(i);
+            remaining_[1].push_back(i);
         }
     }
+}
+
+Circuit Synthesis::Execute()
+{
+    std::cout << "running..." << std::endl;
+
+    int dimension = chr_.num_data_qubit();
+    int applied = 0;
+    util::IndependentOracle oracle(chr_.num_qubit(), dimension, chr_.num_data_qubit() + chr_.num_hadamard());
+    CircuitBuilder builder(chr_.num_qubit(), dimension, chr_.qubit_names(), chr_.phase_exponents());
 
     /*
     std::cout << "- wires" << std::endl;
-    for (auto&& w : wires)
+    for (auto&& w : wires_)
     {
         std::cout << w << std::endl;
     }
     std::cout << "- mask" << std::endl;
-    std::cout << mask << std::endl;
+    std::cout << mask_ << std::endl;
     std::cout << "- remaining[0]" << std::endl;
-    for (auto&& r : remaining[0])
+    for (auto&& r : remaining_[0])
     {
-        std::cout << r << ":" << phase_exponents_[r].second << std::endl;
+        std::cout << r << ":" << chr_.phase_exponents()[r].second << std::endl;
     }
     std::cout << "- remaining[1]" << std::endl;
-    for (auto&& r : remaining[1])
+    for (auto&& r : remaining_[1])
     {
-        std::cout << r << ":" << phase_exponents_[r].second << std::endl;
+        std::cout << r << ":" << chr_.phase_exponents()[r].second << std::endl;
     }
-     */
+    */
 
     /*
      * create an initial partition
      */
-    for (j = 0; j < 2; j++)
+    for (int j = 0; j < 2; j++)
     {
-        for (auto it = remaining[j].begin(); it != remaining[j].end();)
+        for (auto it = remaining_[j].begin(); it != remaining_[j].end();)
         {
-            util::xor_func tmp = (~mask) & (phase_exponents_[*it].second);
+            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
             if (tmp.none())
             {
-                tpar::add_to_partition(floats[j], *it, phase_exponents_, oracle);
-                it = remaining[j].erase(it);
+                tpar::add_to_partition(floats_[j], *it, chr_.phase_exponents(), oracle);
+                it = remaining_[j].erase(it);
             }
             else
             {
@@ -123,37 +125,37 @@ Circuit Synthesis::Execute()
    */
 
     /**
+     * Synthesize the circuit by applying H-gate to greed
      * 1. freeze partitions that are not disjoint from the hadamard input
      * 2. construct CNOT+T circuit
      * 3. apply the hadamard gate
      * 4. add new functions to the partition
      */
-    for (auto it = hadamards_.begin(); it != hadamards_.end(); it++, h_count++)
+    for (auto&& hadamard : chr_.hadamards())
     {
         /*
         std::cout << h_count << ".番目--" << std::endl;
-        std::cout << it->target_ << std::endl;
-        std::cout << it->previous_qubit_index_ << std::endl;
+        std::cout << hadamard.target_ << std::endl;
+        std::cout << hadamard.previous_qubit_index_ << std::endl;
         std::cout << "- input parity" << std::endl;
-        for (auto&& e : it->input_wires_parity_)
+        for (auto&& e : hadamard.input_wires_parity_)
         {
             std::cout << e << std::endl;
         }
         std::cout << "- in" << std::endl;
-        for (auto&& e : it->in_)
+        for (auto&& e : hadamard.in_)
         {
             std::cout << e << std::endl;
         }
-        if (disp_log) cerr << "  Hadamard " << h_count << "/" << hadamards.size() << "\n" << flush;
-         */
+        */
 
         /*
          * determine frozen partitions
          */
-        for (j = 0; j < 2; j++)
+        for (int i = 0; i < 2; i++)
         {
-            frozen[j] = tpar::freeze_partitions(floats[j], it->in_);
-            applied += tpar::num_elts(frozen[j]);
+            frozen_[i] = tpar::freeze_partitions(floats_[i], hadamard.in_);
+            applied += tpar::num_elts(frozen_[i]);
         }
 
         /*
@@ -163,43 +165,43 @@ Circuit Synthesis::Execute()
 //                        construct_circuit(phase_expts, frozen[0], wires, wires, n + m, n + h, names));
 //        ret.circ.splice(ret.circ.end(),
 //                        construct_circuit(phase_expts, frozen[1], wires, it->wires, n + m, n + h, names));
-        for (int i = 0; i < num_qubit_; i++)
+        for (int i = 0; i < chr_.num_qubit(); i++)
         {
-            wires[i] = it->input_wires_parity_[i];
+            wires_[i] = hadamard.input_wires_parity_[i];
         }
 
         /*
          * Apply Hadamard gate
          */
-        circuit.add_gate("H", qubit_names_[it->target_]);
-        wires[it->target_].reset();
-        wires[it->target_].set(it->previous_qubit_index_);
-        mask.set(it->previous_qubit_index_);
+        circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
+        wires_[hadamard.target_].reset();
+        wires_[hadamard.target_].set(hadamard.previous_qubit_index_);
+        mask_.set(hadamard.previous_qubit_index_);
 
         /*
          * Check for increases in dimension
          */
-        tmp = util::ComputeRank(num_qubit_, (num_qubit_ - num_ancilla_) + num_hadamard_, wires);
-        if (tmp > dimension_)
+        const int updated_dimension = util::ComputeRank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
+        if (updated_dimension > dimension)
         {
-            dimension_ = tmp;
-            oracle.set_dim(dimension_);
-            tpar::repartition(floats[0], phase_exponents_, oracle);
-            tpar::repartition(floats[1], phase_exponents_, oracle);
+            dimension = updated_dimension;
+            oracle.set_dim(dimension);
+            tpar::repartition(floats_[0], chr_.phase_exponents(), oracle);
+            tpar::repartition(floats_[1], chr_.phase_exponents(), oracle);
         }
 
         /*
          * Add new functions to the partition
          */
-        for (j = 0; j < 2; j++)
+        for (int i = 0; i < 2; i++)
         {
-            for (auto it = remaining[j].begin(); it != remaining[j].end();)
+            for (auto it = remaining_[i].begin(); it != remaining_[i].end();)
             {
-                util::xor_func tmp = (~mask) & (phase_exponents_[*it].second);
+                util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
                 if (tmp.none())
                 {
-                    tpar::add_to_partition(floats[j], *it, phase_exponents_, oracle);
-                    it = remaining[j].erase(it);
+                    tpar::add_to_partition(floats_[i], *it, chr_.phase_exponents(), oracle);
+                    it = remaining_[i].erase(it);
                 }
                 else
                 {
@@ -220,9 +222,9 @@ Circuit Synthesis::Execute()
 //    if (disp_log) cerr << "  " << applied << "/" << phase_expts.size() << " phase rotations applied\n" << flush;
 
 //    // Add the global phase
-//    ret.circ.splice(ret.circ.end(), global_phase_synth(n + m, global_phase, names));
+//    ret.circ.splice(ret.circ.end(), global_phase_synth(n + m, global_phase_, names));
 
-    return circuit;
+    return circuit_;
 }
 
 }
