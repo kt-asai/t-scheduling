@@ -7,6 +7,27 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
                                       std::vector<util::xor_func>& in,
                                       const std::vector<util::xor_func>& out)
 {
+    std::cout << "-->> build circuit" << std::endl;
+    std::cout << "# partition size: " << static_cast<int>(partition.size()) << std::endl;
+    for (auto&& e : partition)
+    {
+        std::cout << "# --" << std::endl;
+        for (auto&& ee : e)
+        {
+            std::cout << "# " << phase_exponent_[ee].second << std::endl;
+        }
+    }
+    std::cout << "# input " << std::endl;
+    for (auto&& e : in)
+    {
+        std::cout << "# " << e << std::endl;
+    }
+    std::cout << "# output " << std::endl;
+    for (auto&& e : out)
+    {
+        std::cout << "# " << e << std::endl;
+    }
+
     std::list<Gate> ret;
 
     auto bits = std::vector<util::xor_func>(qubit_num_);
@@ -38,6 +59,7 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
      */
     for (tpar::partitioning::const_iterator it = partition.begin(); it != partition.end(); it++)
     {
+        std::cout << "-->> cnot synthesis" << std::endl;
         std::set<int>::iterator ti;
         int counter = 0;
         for (ti = it->begin(), counter = 0; counter < qubit_num_; counter++)
@@ -60,16 +82,16 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
         util::FixBasis(qubit_num_, dimension_, it->size(), in, bits, &post, std::vector<std::string>());
         util::Compose(qubit_num_, pre, post);
 
-        std::cout << "---- pre" << std::endl;
-        for (auto&& e : pre)
-        {
-            std::cout << e << std::endl;
-        }
-        std::cout << "---- post" << std::endl;
-        for (auto&& e : post)
-        {
-            std::cout << e << std::endl;
-        }
+//        std::cout << "---- pre" << std::endl;
+//        for (auto&& e : pre)
+//        {
+//            std::cout << e << std::endl;
+//        }
+//        std::cout << "---- post" << std::endl;
+//        for (auto&& e : post)
+//        {
+//            std::cout << e << std::endl;
+//        }
 
 //        ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
 
