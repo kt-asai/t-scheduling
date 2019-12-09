@@ -87,7 +87,7 @@ Circuit Synthesis::Execute()
     int dimension = chr_.num_data_qubit();
     int applied = 0;
     util::IndependentOracle oracle(chr_.num_qubit(), dimension, chr_.num_data_qubit() + chr_.num_hadamard());
-    CircuitBuilder builder(chr_.num_qubit(), dimension, chr_.qubit_names(), chr_.phase_exponents());
+    CircuitBuilder builder(chr_.num_qubit(), dimension + chr_.num_hadamard(), chr_.qubit_names(), chr_.phase_exponents());
 
     /*
     std::cout << "- wires" << std::endl;
@@ -170,17 +170,24 @@ Circuit Synthesis::Execute()
             applied += tpar::num_elts(frozen_[i]);
         }
 
-        /*
-        std::cout << "---- frozen[0]" << std::endl;
-        for (auto&& e : frozen_[0])
-        {
-            std::cout << "--" << std::endl;
-            for (auto&& ee : e)
-            {
-                std::cout << ee << ":" << chr_.phase_exponents()[ee].second << std::endl;
-            }
-        }
-        */
+//        std::cout << "---- frozen[0]" << std::endl;
+//        for (auto&& e : frozen_[0])
+//        {
+//            std::cout << "--" << std::endl;
+//            for (auto&& ee : e)
+//            {
+//                std::cout << ee << ":" << chr_.phase_exponents()[ee].second << std::endl;
+//            }
+//        }
+//        std::cout << "---- frozen[1]" << std::endl;
+//        for (auto&& e : frozen_[1])
+//        {
+//            std::cout << "--" << std::endl;
+//            for (auto&& ee : e)
+//            {
+//                std::cout << ee << ":" << chr_.phase_exponents()[ee].second << std::endl;
+//            }
+//        }
 
 //        std::cout << "-- wire 1" << std::endl;
 //        for (auto&& w : wires_)
@@ -191,8 +198,10 @@ Circuit Synthesis::Execute()
         /*
          * Construct {CNOT, T} subcircuit for the frozen partitions
          */
+//        std::cout << "-->> frozen[0] build start" << std::endl;
         std::list<Gate> syn1 = builder.build(frozen_[0], wires_, wires_);
-//        std::list<Gate> syn2 = builder.build(frozen_[1], wires_, hadamard.input_wires_parity_);
+//        std::cout << "-->> frozen[1] build start" << std::endl;
+        std::list<Gate> syn2 = builder.build(frozen_[1], wires_, hadamard.input_wires_parity_);
 //        for (auto&& gate : syn1)
 //        {
 //            circuit_.add_gate(gate);
@@ -261,6 +270,11 @@ Circuit Synthesis::Execute()
 
 //    applied += num_elts(floats[0]) + num_elts(floats[1]);
 //    // Construct the final {CNOT, T} subcircuit
+//    std::cout << "->>> last synthesis to output" << std::endl;
+//    std::cout << "-->> frozen[0] build start" << std::endl;
+    std::list<Gate> syn1 = builder.build(floats_[0], wires_, wires_);
+//    std::cout << "-->> frozen[1] build start" << std::endl;
+    std::list<Gate> syn2 = builder.build(floats_[1], wires_, chr_.outputs());
 //    ret.circ.splice(ret.circ.end(),
 //                    construct_circuit(phase_expts, floats[0], wires, wires, n + m, n + h, names));
 //    ret.circ.splice(ret.circ.end(),

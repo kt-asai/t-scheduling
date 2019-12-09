@@ -142,6 +142,15 @@ public:
     }
 
     /**
+     * return output parities of circuit
+     * @return output parities of circuit
+     */
+    std::vector<util::xor_func> outputs() const
+    {
+        return outputs_;
+    }
+
+    /**
      * parse circuit info and calculate parity
      */
     void Parse();

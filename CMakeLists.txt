@@ -13,13 +13,14 @@ endif()
 
 add_executable(${TARGETS} src/main.cpp
                           src/io/circuit_reader.cpp
+                          src/tpar/partition.cpp
+                          src/tpar/matroid.hpp
                           src/circuit.cpp
                           src/character.cpp
                           src/util.cpp
                           src/synthesis.cpp
                           src/circuit_builder.cpp
-                          src/tpar/partition.cpp
-                          src/tpar/matroid.hpp)
+                          src/gaussian_decomposer.cpp)
 
 #target_link_libraries(${TARGET} t-par)
 
