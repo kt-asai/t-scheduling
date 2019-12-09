@@ -1,5 +1,6 @@
 #include "circuit_builder.hpp"
 #include "gate.hpp"
+#include "gaussian_decomposer.hpp"
 
 namespace tskd {
 
@@ -93,6 +94,7 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
 //            std::cout << e << std::endl;
 //        }
 
+        ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, pre, qubit_names_));
 //        ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
 
 //        if (synth_method == GAUSS)
@@ -156,6 +158,7 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
     util::ToUpperEchelon(qubit_num_, dimension_, bits, &post, std::vector<std::string>());
     util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits, &post, std::vector<std::string>());
     util::Compose(qubit_num_, pre, post);
+    ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, pre, qubit_names_));
 //    ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
 ;
     return ret;

@@ -5,7 +5,8 @@
 
 namespace tskd {
 
-class GaussianDecomposer : public MatrixDecomposer {
+class GaussianDecomposer : public MatrixDecomposer
+{
 private:
 
 public:

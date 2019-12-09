@@ -200,16 +200,16 @@ Circuit Synthesis::Execute()
          */
 //        std::cout << "-->> frozen[0] build start" << std::endl;
         std::list<Gate> syn1 = builder.build(frozen_[0], wires_, wires_);
+        for (auto&& gate : syn1)
+        {
+            circuit_.add_gate(gate);
+        }
 //        std::cout << "-->> frozen[1] build start" << std::endl;
         std::list<Gate> syn2 = builder.build(frozen_[1], wires_, hadamard.input_wires_parity_);
-//        for (auto&& gate : syn1)
-//        {
-//            circuit_.add_gate(gate);
-//        }
-//        for (auto&& gate : syn2)
-//        {
-//            circuit_.add_gate(gate);
-//        }
+        for (auto&& gate : syn2)
+        {
+            circuit_.add_gate(gate);
+        }
 //        ret.circ.splice(ret.circ.end(),
 //                        construct_circuit(phase_expts, frozen[0], wires, wires, n + m, n + h, names));
 //        ret.circ.splice(ret.circ.end(),
@@ -273,8 +273,16 @@ Circuit Synthesis::Execute()
 //    std::cout << "->>> last synthesis to output" << std::endl;
 //    std::cout << "-->> frozen[0] build start" << std::endl;
     std::list<Gate> syn1 = builder.build(floats_[0], wires_, wires_);
+    for (auto&& gate : syn1)
+    {
+        circuit_.add_gate(gate);
+    }
 //    std::cout << "-->> frozen[1] build start" << std::endl;
     std::list<Gate> syn2 = builder.build(floats_[1], wires_, chr_.outputs());
+    for (auto&& gate : syn2)
+    {
+        circuit_.add_gate(gate);
+    }
 //    ret.circ.splice(ret.circ.end(),
 //                    construct_circuit(phase_expts, floats[0], wires, wires, n + m, n + h, names));
 //    ret.circ.splice(ret.circ.end(),

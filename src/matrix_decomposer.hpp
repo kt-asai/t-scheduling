@@ -10,18 +10,19 @@
 
 namespace tskd {
 
-class MatrixDecomposer {
+class MatrixDecomposer
+{
 private:
 
 public:
     MatrixDecomposer() = default;
 
-    virtual ~MatrixDecomposer();
+    virtual ~MatrixDecomposer() = default;
 
     virtual std::list<Gate> operator()(const int n,
                                        const int m,
-                                       std::vector<util::xor_func> &matrix,
-                                       const std::vector<std::string> &qubit_names);
+                                       std::vector<util::xor_func>& matrix,
+                                       const std::vector<std::string>& qubit_names) = 0;
 };
 
 }
