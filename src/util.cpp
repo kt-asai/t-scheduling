@@ -144,7 +144,7 @@ int ComputeRank(int num_qubit,
 {
     std::vector<xor_func> parity_matrix = bits;
 
-    return ComputeRankDestructive(num_qubit, num_qubit_and_hadamard, bits);;
+    return ComputeRankDestructive(num_qubit, num_qubit_and_hadamard, parity_matrix);;
 }
 
 bool IsIndependentDestructive(int num_qubit,
@@ -264,6 +264,155 @@ std::list<Gate> ToUpperEchelon(int m,
     }
 
     return acc;
+}
+
+std::list<Gate> ToLowerEchelon(int m,
+                               int n,
+                               std::vector<xor_func>& bits,
+                               std::vector<xor_func>* mat,
+                               const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> acc;
+    int i, j;
+
+    for (i = n - 1; i > 0; i--)
+    {
+        for (j = i - 1; j >= 0; j--)
+        {
+            if (bits[j].test(i))
+            {
+                bits[j] ^= bits[i];
+                if (mat == NULL)
+                {
+                    acc.splice(acc.end(), ComposeCNOT(i, j, qubit_names));
+                }
+                else
+                {
+                    (*mat)[j] ^= (*mat)[i];
+                }
+            }
+        }
+    }
+
+    return acc;
+}
+
+std::list<Gate> FixBasis(int m,
+                         int n,
+                         int k,
+                         const std::vector<xor_func>& fst,
+                         std::vector<xor_func>& snd,
+                         std::vector<xor_func>* mat,
+                         const std::vector<std::string>& qubit_names) {
+    std::list<Gate> acc;
+    int j = 0;
+    bool flg = false;
+    std::map<int, int> pivots;  // mapping from columns to rows that have that column as pivot
+    for (int i = 0; i < n; i++)
+    {
+        pivots[i] = -1;
+    }
+
+    // First pass makes sure tmp has the same pivots as fst
+    for (int i = 0; i < m; i++)
+    {
+        // Find the next pivot
+        while (j < n && !fst[i].test(j)) j++;
+        if (j < n)
+        {
+            pivots[j] = i;
+            flg = false;
+            for (int h = i; !flg && h < k; h++)
+            {
+                // We found a vector with the same pivot
+                if (snd[h].test(j))
+                {
+                    flg = true;
+                    if (h != i)
+                    {
+                        swap(snd[h], snd[i]);
+                        if (mat == NULL)
+                        {
+                            acc.splice(acc.end(), ComposeSwap(h, i, qubit_names));
+                        }
+                        else
+                        {
+                            swap((*mat)[h], (*mat)[i]);
+                        }
+                    }
+                }
+            }
+            // There was no vector with the same pivot
+            if (!flg)
+            {
+                if (k >= m)
+                {
+                    std::cerr << "FATAL ERROR: second space not a subspace\n" << std::endl;
+                    exit(1);
+                }
+                snd[k] = fst[i];
+                if (k != i)
+                {
+                    swap(snd[k], snd[i]);
+                    if (mat == NULL)
+                    {
+                        acc.splice(acc.end(), ComposeSwap(k, i, qubit_names));
+                    }
+                    else
+                    {
+                        swap((*mat)[k], (*mat)[i]);
+                    }
+                }
+                k++;
+            }
+        }
+    }
+
+    // Second pass makes each row of tmp equal to that row of fst
+    for (int i = 0; i < m; i++) {
+        for (int j = i + 1; j < n; j++)
+        {
+            if (fst[i][j] != snd[i][j])
+            {
+                if (pivots[j] == -1)
+                {
+                    std::cerr << "FATAL ERROR: cannot fix basis\n" << std::endl;
+                    exit(1);
+                }
+                else
+                {
+                    snd[i] ^= snd[pivots[j]];
+                    if (mat == NULL)
+                    {
+                        acc.splice(acc.end(), ComposeCNOT(pivots[j], i, qubit_names));
+                    }
+                    else
+                    {
+                        (*mat)[i] ^= (*mat)[pivots[j]];
+                    }
+                }
+            }
+        }
+        if (!(snd[i] == fst[i]))
+        {
+            std::cerr << "FATAL ERROR: basis differs\n" << std::endl;
+            exit(1);
+        }
+    }
+
+    return acc;
+}
+
+void Compose(int num,
+             std::vector<xor_func>& A,
+             const std::vector<xor_func>& B)
+{
+    auto tmp = std::vector<xor_func>(num);
+    for (int i = 0; i < num; i++) {
+        tmp[i] = B[i];
+    }
+    ToUpperEchelon(num, num, tmp, &A, std::vector<std::string>());
+    ToLowerEchelon(num, num, tmp, &A, std::vector<std::string>());
 }
 
 std::list<Gate> ComposeX(int target,

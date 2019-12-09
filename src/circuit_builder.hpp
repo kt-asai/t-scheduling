@@ -2,6 +2,7 @@
 #define T_SCHEDULING_CIRCUIT_BUILDER_HPP
 
 #include <vector>
+#include <list>
 #include <string>
 
 #include "gate.hpp"
@@ -34,9 +35,9 @@ public:
           qubit_names_(qubit_names),
           phase_exponent_(phase_exponent) { }
 
-    std::vector<Gate> build(const tpar::partitioning& partition,
-                            std::vector<util::xor_func>& in,
-                            const std::vector<util::xor_func>& out);
+    std::list<Gate> build(const tpar::partitioning& partition,
+                          std::vector<util::xor_func>& in,
+                          const std::vector<util::xor_func>& out);
 };
 
 }

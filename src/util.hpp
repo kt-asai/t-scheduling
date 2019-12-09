@@ -1,6 +1,8 @@
 #ifndef T_SCHEDULING_UTIL_HPP
 #define T_SCHEDULING_UTIL_HPP
 
+#include <set>
+#include <list>
 #include <boost/dynamic_bitset.hpp>
 
 #include "gate.hpp"
@@ -112,6 +114,27 @@ std::list<Gate> ToUpperEchelon(int m,
                                std::vector<xor_func>& bits,
                                std::vector<xor_func> *mat,
                                const std::vector<std::string>& qubit_names);
+
+std::list<Gate> ToLowerEchelon(int m,
+                               int n,
+                               std::vector<xor_func>& bits,
+                               std::vector<xor_func>* mat,
+                               const std::vector<std::string>& qubit_names);
+
+std::list<Gate> FixBasis(int m,
+                         int n,
+                         int k,
+                         const std::vector<xor_func>& fst,
+                         std::vector<xor_func>& snd,
+                         std::vector<xor_func>* mat,
+                         const std::vector<std::string>& qubit_names);
+
+/*
+ * A := B^{-1} A
+ */
+void Compose(int num,
+             std::vector<xor_func>& A,
+             const std::vector<xor_func>& B);
 
 std::list<Gate> ComposeX(int target,
                          const std::vector<std::string>& qubit_names);

@@ -132,6 +132,16 @@ public:
     }
 
     /**
+     * add Gate object to the circuit list
+     * @param gate gate object
+     */
+    void add_gate(const Gate& gate)
+    {
+        gate_list_.push_back(gate);
+        num_gate_++;
+    }
+
+    /**
      * add multi-control and multi-target gate to the circuit
      * @param type gate name
      * @param control_list control qubit names

@@ -25,6 +25,13 @@ private:
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
 
+    template<typename oracle_type>
+    void CreatePartition(const oracle_type& oracle);
+
+    void ConstructCircuit();
+
+    void ApplyHadamard(const Character::Hadamard& hadamard);
+
 public:
     Synthesis(const Character& chr) : chr_(chr)
     {
