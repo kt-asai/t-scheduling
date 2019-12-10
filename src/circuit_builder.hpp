@@ -23,6 +23,16 @@ private:
     std::vector<std::string> qubit_names_;
     std::vector<util::phase_exponent> phase_exponent_;
 
+    std::vector<util::xor_func> bits_;
+    std::vector<util::xor_func> preparation_;
+    std::vector<util::xor_func> restoration_;
+
+    bool Init(const std::vector<util::xor_func>& in,
+              const std::vector<util::xor_func>& out);
+
+    void ApplyPhaseGates(std::list<Gate>& gate_list,
+                         const std::set<int>& phase_exponent_index_set);
+
 public:
     CircuitBuilder() = default;
 
@@ -35,9 +45,13 @@ public:
           qubit_names_(qubit_names),
           phase_exponent_(phase_exponent) { }
 
-    std::list<Gate> build(const tpar::partitioning& partition,
+    std::list<Gate> Build(const tpar::partitioning& partition,
                           std::vector<util::xor_func>& in,
                           const std::vector<util::xor_func>& out);
+
+    static std::list<Gate> BuildGlobalPhase(int qubit_num,
+                                            int phase,
+                                            const std::vector<std::string>& qubit_names);
 };
 
 }

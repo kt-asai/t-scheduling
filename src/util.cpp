@@ -449,5 +449,32 @@ std::list<Gate> ComposeCNOT(int target,
     return ret;
 }
 
+std::list<Gate> ComposeOM(int target,
+                          const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> ret;
+
+    ret.emplace_back("H", qubit_names[target]);
+    ret.emplace_back("P", qubit_names[target]);
+    ret.emplace_back("H", qubit_names[target]);
+    ret.emplace_back("P", qubit_names[target]);
+    ret.emplace_back("H", qubit_names[target]);
+    ret.emplace_back("P", qubit_names[target]);
+
+    return ret;
+}
+
+std::list<Gate> ComposeImaginaryUnit(int target,
+                                     const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> ret;
+
+    ret.emplace_back("tof", qubit_names[target]);
+    ret.emplace_back("Z", qubit_names[target]);
+    ret.emplace_back("Y", qubit_names[target]);
+
+    return ret;
+}
+
 }
 }

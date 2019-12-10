@@ -4,57 +4,101 @@
 
 namespace tskd {
 
-std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
+bool CircuitBuilder::Init(const std::vector<util::xor_func>& in,
+                          const std::vector<util::xor_func>& out)
+{
+    bool is_io_different = true;
+
+    bits_ = std::vector<util::xor_func>(qubit_num_);
+    preparation_ = std::vector<util::xor_func>(qubit_num_);
+    restoration_ = std::vector<util::xor_func>(qubit_num_);
+
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        is_io_different &= (in[i] == out[i]);
+        preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
+        restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+        preparation_[i].set(i);
+        restoration_[i].set(i);
+    }
+
+    return is_io_different;
+}
+
+void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
+                                     const std::set<int>& phase_exponent_index_set)
+{
+    int index = 0;
+    for (auto&& phase_exponent_index : phase_exponent_index_set)
+    {
+        if (phase_exponent_[phase_exponent_index].first <= 4)
+        {
+            if (phase_exponent_[phase_exponent_index].first / 4 == 1)
+            {
+                gate_list.emplace_back("Z", qubit_names_[index]);
+            }
+            if (phase_exponent_[phase_exponent_index].first / 2 == 1)
+            {
+                gate_list.emplace_back("P", qubit_names_[index]);
+            }
+            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
+            {
+                gate_list.emplace_back("T", qubit_names_[index]);
+            }
+        }
+        else
+        {
+            if (phase_exponent_[phase_exponent_index].first == 5 || phase_exponent_[phase_exponent_index].first == 6)
+            {
+                gate_list.emplace_back("P*", qubit_names_[index]);
+            }
+            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
+            {
+                gate_list.emplace_back("T*", qubit_names_[index]);
+            }
+        }
+        index++;
+    }
+}
+
+std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
                                       std::vector<util::xor_func>& in,
                                       const std::vector<util::xor_func>& out)
 {
     std::list<Gate> ret;
 
-    auto bits = std::vector<util::xor_func>(qubit_num_);
-    auto pre = std::vector<util::xor_func>(qubit_num_);
-    auto post = std::vector<util::xor_func>(qubit_num_);
-    bool is_io_different = true;
-    int i = 0;
-
-    for (int i = 0; i < qubit_num_; i++)
-    {
-        is_io_different &= (in[i] == out[i]);
-        pre[i] = util::xor_func(qubit_num_ + 1, 0);
-        post[i] = util::xor_func(qubit_num_ + 1, 0);
-        pre[i].set(i);
-        post[i].set(i);
-    }
-//    std::cout << "is_io_different:" << is_io_different << std::endl;
-    if (is_io_different && partition.empty())
+    if (Init(in, out) && partition.empty())
     {
         return ret;
     }
 
-//    std::cout << "-->> build circuit" << std::endl;
-//    std::cout << "# partition size: " << static_cast<int>(partition.size()) << std::endl;
-//    for (auto&& e : partition)
-//    {
-//        std::cout << "# --" << std::endl;
-//        for (auto&& ee : e)
-//        {
-//            std::cout << "# " << phase_exponent_[ee].second << std::endl;
-//        }
-//    }
-//    std::cout << "# input " << std::endl;
-//    for (auto&& e : in)
-//    {
-//        std::cout << "# " << e << std::endl;
-//    }
-//    std::cout << "# output " << std::endl;
-//    for (auto&& e : out)
-//    {
-//        std::cout << "# " << e << std::endl;
-//    }
+    /*
+    std::cout << "-->> build circuit" << std::endl;
+    std::cout << "# partition size: " << static_cast<int>(partition.size()) << std::endl;
+    for (auto&& e : partition)
+    {
+        std::cout << "# --" << std::endl;
+        for (auto&& ee : e)
+        {
+            std::cout << "# " << phase_exponent_[ee].second << std::endl;
+        }
+    }
+    std::cout << "# input " << std::endl;
+    for (auto&& e : in)
+    {
+        std::cout << "# " << e << std::endl;
+    }
+    std::cout << "# output " << std::endl;
+    for (auto&& e : out)
+    {
+        std::cout << "# " << e << std::endl;
+    }
+     */
 
     /*
      * Reduce in to echelon form to decide on a basis
      */
-    util::ToUpperEchelon(qubit_num_, dimension_, in, &pre, std::vector<std::string>());
+    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
 
     /*
      * For each partition... Compute *it, apply T gates, uncompute
@@ -65,103 +109,87 @@ std::list<Gate> CircuitBuilder::build(const tpar::partitioning& partition,
         int counter = 0;
         for (ti = it->begin(), counter = 0; counter < qubit_num_; counter++)
         {
-            if (counter < it->size())
+            if (counter < static_cast<int>(it->size()))
             {
-                bits[counter] = phase_exponent_[*ti].second;
+                bits_[counter] = phase_exponent_[*ti].second;
                 ti++;
             }
             else
             {
-                bits[counter] = util::xor_func(dimension_ + 1, 0);
+                bits_[counter] = util::xor_func(dimension_ + 1, 0);
             }
         }
 
         /*
-         * Prepare the bits
+         * prepapare the bits
          */
-        util::ToUpperEchelon(it->size(), dimension_, bits, &post, std::vector<std::string>());
-        util::FixBasis(qubit_num_, dimension_, it->size(), in, bits, &post, std::vector<std::string>());
-        util::Compose(qubit_num_, pre, post);
+        util::ToUpperEchelon(it->size(), dimension_, bits_, &restoration_, std::vector<std::string>());
+        util::FixBasis(qubit_num_, dimension_, it->size(), in, bits_, &restoration_, std::vector<std::string>());
+        util::Compose(qubit_num_, preparation_, restoration_);
 
-//        std::cout << "---- pre" << std::endl;
-//        for (auto&& e : pre)
-//        {
-//            std::cout << e << std::endl;
-//        }
-//        std::cout << "---- post" << std::endl;
-//        for (auto&& e : post)
-//        {
-//            std::cout << e << std::endl;
-//        }
+        /*
+        std::cout << "---- preparation_" << std::endl;
+        for (auto&& e : preparation_)
+        {
+            std::cout << e << std::endl;
+        }
+        std::cout << "---- restoration_" << std::endl;
+        for (auto&& e : restoration_)
+        {
+            std::cout << e << std::endl;
+        }
+         */
 
-        ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, pre, qubit_names_));
-//        ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
-
-//        if (synth_method == GAUSS)
-//        {
-//            ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
-//        }
-//        else if (synth_method == PMH)
-//        {
-//            ret.splice(ret.end(), CNOT_synth(num, pre, names));
-//        }
+        ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
 
         /*
          * Apply the T gates
          */
-        for (ti = it->begin(), i = 0; ti != it->end(); ti++, i++)
-        {
-            if (phase_exponent_[*ti].first <= 4)
-            {
-                if (phase_exponent_[*ti].first / 4 == 1)
-                {
-                    ret.emplace_back("Z", qubit_names_[i]);
-                }
-                if (phase_exponent_[*ti].first / 2 == 1)
-                {
-                    ret.emplace_back("P", qubit_names_[i]);
-                }
-                if (phase_exponent_[*ti].first % 2 == 1)
-                {
-                    ret.emplace_back("T", qubit_names_[i]);
-                }
-            }
-            else
-            {
-                if (phase_exponent_[*ti].first == 5 || phase_exponent_[*ti].first == 6)
-                {
-                    ret.emplace_back("P*", qubit_names_[i]);
-                }
-                if (phase_exponent_[*ti].first % 2 == 1)
-                {
-                    ret.emplace_back("T*", qubit_names_[i]);
-                }
-            }
-        }
+        ApplyPhaseGates(ret, *it);
 
-        // unprepare the bits
-        pre = std::move(post);
-        post = std::vector<util::xor_func>(qubit_num_);
+        // unpreparation_pare the bits
+        preparation_ = std::move(restoration_);
+        restoration_ = std::vector<util::xor_func>(qubit_num_);
         // re-initialize
-        for (i = 0; i < qubit_num_; i++)
+        for (int i = 0; i < qubit_num_; i++)
         {
-            post[i] = util::xor_func(qubit_num_ + 1, 0);
-            post[i].set(i);
+            restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+            restoration_[i].set(i);
         }
     }
 
     // Reduce out to the basis of in
-    for (i = 0; i < qubit_num_; i++)
+    for (int i = 0; i < qubit_num_; i++)
     {
-        bits[i] = out[i];
+        bits_[i] = out[i];
     }
-    util::ToUpperEchelon(qubit_num_, dimension_, bits, &post, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits, &post, std::vector<std::string>());
-    util::Compose(qubit_num_, pre, post);
-    ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, pre, qubit_names_));
-//    ret.splice(ret.end(), gauss_CNOT_synth(num, 0, pre, names));
-;
+    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+    util::Compose(qubit_num_, preparation_, restoration_);
+    ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+
     return ret;
+}
+
+std::list<Gate> CircuitBuilder::BuildGlobalPhase(int qubit_num,
+                                                 int phase,
+                                                 const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> acc;
+    int qubit = 0;
+
+    if (phase % 2 == 1)
+    {
+        acc.splice(acc.end(), util::ComposeOM(qubit, qubit_names));
+        qubit = (qubit + 1) % qubit_num;
+    }
+    for (int i = phase / 2; i > 0; i--)
+    {
+        acc.splice(acc.end(), util::ComposeImaginaryUnit(qubit, qubit_names));
+        qubit = (qubit + 1) % qubit_num;
+    }
+
+    return acc;
 }
 
 }

@@ -132,6 +132,16 @@ public:
     }
 
     /**
+     * add gate list
+     * @param gate_list gate list
+     */
+    void add_gate_list(std::list<Gate>&& gate_list)
+    {
+        num_gate_ += static_cast<int>(gate_list.size());
+        gate_list_.splice(gate_list_.end(), gate_list);
+    }
+
+    /**
      * add Gate object to the circuit list
      * @param gate gate object
      */
@@ -233,16 +243,20 @@ public:
         int num_h = count_gate("H");
         int num_x = count_gate("X");
         int num_t = count_gate("T") + count_gate("T*");
+        int num_p = count_gate("P") + count_gate("P*");
+        int num_z = count_gate("Z");
         int num_toffoli = count_gate("ccz");
-        int num_cnot = count_gate("cnot");
+        int num_cnot = count_gate("tof");
 
         std::cout << "# qubits: " << num_qubit_ << std::endl;
         std::cout << "# ancilla: " << num_ancilla_qubit_ << std::endl;
         std::cout << "# gates: " << num_gate_ << std::endl;
-        std::cout << "# T: " << num_t << std::endl;
         std::cout << "# H: " << num_h << std::endl;
-        std::cout << "# X: " << num_x << std::endl;
         std::cout << "# CNOT: " << num_cnot << std::endl;
+        std::cout << "# X: " << num_x << std::endl;
+        std::cout << "# T: " << num_t << std::endl;
+        std::cout << "# P: " << num_p << std::endl;
+        std::cout << "# Z: " << num_z << std::endl;
         std::cout << "# Toffoli: " << num_toffoli << std::endl;
     }
 

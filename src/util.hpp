@@ -147,6 +147,13 @@ std::list<Gate> ComposeCNOT(int target,
                             int control,
                             const std::vector<std::string>& qubit_names);
 
+std::list<Gate> ComposeOM(int target,
+                          const std::vector<std::string>& qubit_names);
+
+std::list<Gate> ComposeImaginaryUnit(int target,
+                                     const std::vector<std::string>& qubit_names);
+
+
 }
 }
 
