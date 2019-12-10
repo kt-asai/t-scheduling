@@ -30,6 +30,10 @@ private:
     bool Init(const std::vector<util::xor_func>& in,
               const std::vector<util::xor_func>& out);
 
+    void Prepare(std::list<Gate>& gate_list,
+                 const std::vector<util::xor_func>& in,
+                 const int num_partition);
+
     void ApplyPhaseGates(std::list<Gate>& gate_list,
                          const std::set<int>& phase_exponent_index_set);
 

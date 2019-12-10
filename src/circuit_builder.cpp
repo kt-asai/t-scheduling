@@ -25,6 +25,30 @@ bool CircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
+void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
+                             const std::vector<util::xor_func>& in,
+                             const int num_partition)
+{
+    util::ToUpperEchelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::FixBasis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
+    util::Compose(qubit_num_, preparation_, restoration_);
+
+    /*
+    std::cout << "---- preparation_" << std::endl;
+    for (auto&& e : preparation_)
+    {
+        std::cout << e << std::endl;
+    }
+    std::cout << "---- restoration_" << std::endl;
+    for (auto&& e : restoration_)
+    {
+        std::cout << e << std::endl;
+    }
+     */
+
+    gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+}
+
 void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
                                      const std::set<int>& phase_exponent_index_set)
 {
@@ -103,13 +127,13 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
     /*
      * For each partition... Compute *it, apply T gates, uncompute
      */
-    for (tpar::partitioning::const_iterator it = partition.begin(); it != partition.end(); it++)
+    for (auto&& it : partition)
     {
         std::set<int>::iterator ti;
         int counter = 0;
-        for (ti = it->begin(), counter = 0; counter < qubit_num_; counter++)
+        for (ti = it.begin(), counter = 0; counter < qubit_num_; counter++)
         {
-            if (counter < static_cast<int>(it->size()))
+            if (counter < static_cast<int>(it.size()))
             {
                 bits_[counter] = phase_exponent_[*ti].second;
                 ti++;
@@ -121,33 +145,16 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
         }
 
         /*
-         * prepapare the bits
+         * Prepare the bits
          */
-        util::ToUpperEchelon(it->size(), dimension_, bits_, &restoration_, std::vector<std::string>());
-        util::FixBasis(qubit_num_, dimension_, it->size(), in, bits_, &restoration_, std::vector<std::string>());
-        util::Compose(qubit_num_, preparation_, restoration_);
-
-        /*
-        std::cout << "---- preparation_" << std::endl;
-        for (auto&& e : preparation_)
-        {
-            std::cout << e << std::endl;
-        }
-        std::cout << "---- restoration_" << std::endl;
-        for (auto&& e : restoration_)
-        {
-            std::cout << e << std::endl;
-        }
-         */
-
-        ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+        Prepare(ret, in, static_cast<int>(it.size()));
 
         /*
          * Apply the T gates
          */
-        ApplyPhaseGates(ret, *it);
+        ApplyPhaseGates(ret, it);
 
-        // unpreparation_pare the bits
+        // unprepare the bits
         preparation_ = std::move(restoration_);
         restoration_ = std::vector<util::xor_func>(qubit_num_);
         // re-initialize
