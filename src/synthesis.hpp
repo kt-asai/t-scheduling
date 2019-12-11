@@ -2,7 +2,8 @@
 #define T_SCHEDULING_SYNTHESIS_HPP
 
 #include "character.hpp"
-#include "util.hpp"
+#include "util/util.hpp"
+#include "util/option.hpp"
 
 #include "tpar/partition.hpp"
 
@@ -12,6 +13,8 @@ class Synthesis
 {
 private:
     Character chr_;
+
+    util::Option option_;
 
     Circuit circuit_;
 
@@ -33,7 +36,10 @@ private:
     void ApplyHadamard(const Character::Hadamard& hadamard);
 
 public:
-    Synthesis(const Character& chr) : chr_(chr)
+    Synthesis(const Character& chr,
+              const util::Option& option)
+        : chr_(chr),
+          option_(option)
     {
         init(chr);
     }

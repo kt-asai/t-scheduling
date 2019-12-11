@@ -9,7 +9,7 @@
 
 #include "circuit.hpp"
 #include "gate.hpp"
-#include "util.hpp"
+#include "util/util.hpp"
 
 namespace tskd {
 

@@ -25,6 +25,24 @@ bool CircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
+void CircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_set)
+{
+    std::set<int>::iterator ti;
+    int counter = 0;
+    for (ti = phase_exponent_index_set.begin(), counter = 0; counter < qubit_num_; counter++)
+    {
+        if (counter < static_cast<int>(phase_exponent_index_set.size()))
+        {
+            bits_[counter] = phase_exponent_[*ti].second;
+            ti++;
+        }
+        else
+        {
+            bits_[counter] = util::xor_func(dimension_ + 1, 0);
+        }
+    }
+}
+
 void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
                              const std::vector<util::xor_func>& in,
                              const int num_partition)
@@ -46,7 +64,10 @@ void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
     }
      */
 
-    gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+    if (option_.dec_type() == DecompositionType::kgauss)
+    {
+        gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+    }
 }
 
 void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
@@ -82,6 +103,36 @@ void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
             }
         }
         index++;
+    }
+}
+
+void CircuitBuilder::UnPrepare()
+{
+    preparation_ = std::move(restoration_);
+    restoration_ = std::vector<util::xor_func>(qubit_num_);
+    // re-initialize
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+        restoration_[i].set(i);
+    }
+}
+
+void CircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
+                                     const std::vector<util::xor_func>& in,
+                                     const std::vector<util::xor_func>& out)
+{
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        bits_[i] = out[i];
+    }
+    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+    util::Compose(qubit_num_, preparation_, restoration_);
+
+    if (option_.dec_type() == DecompositionType::kgauss)
+    {
+        gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
     }
 }
 
@@ -129,21 +180,21 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
      */
     for (auto&& it : partition)
     {
-        std::set<int>::iterator ti;
-        int counter = 0;
-        for (ti = it.begin(), counter = 0; counter < qubit_num_; counter++)
-        {
-            if (counter < static_cast<int>(it.size()))
-            {
-                bits_[counter] = phase_exponent_[*ti].second;
-                ti++;
-            }
-            else
-            {
-                bits_[counter] = util::xor_func(dimension_ + 1, 0);
-            }
-        }
-
+        InitBits(it);
+//        std::set<int>::iterator ti;
+//        int counter = 0;
+//        for (ti = it.begin(), counter = 0; counter < qubit_num_; counter++)
+//        {
+//            if (counter < static_cast<int>(it.size()))
+//            {
+//                bits_[counter] = phase_exponent_[*ti].second;
+//                ti++;
+//            }
+//            else
+//            {
+//                bits_[counter] = util::xor_func(dimension_ + 1, 0);
+//            }
+//        }
         /*
          * Prepare the bits
          */
@@ -154,26 +205,16 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
          */
         ApplyPhaseGates(ret, it);
 
-        // unprepare the bits
-        preparation_ = std::move(restoration_);
-        restoration_ = std::vector<util::xor_func>(qubit_num_);
-        // re-initialize
-        for (int i = 0; i < qubit_num_; i++)
-        {
-            restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
-            restoration_[i].set(i);
-        }
+        /*
+         * Unprepare the bits
+         */
+        UnPrepare();
     }
 
-    // Reduce out to the basis of in
-    for (int i = 0; i < qubit_num_; i++)
-    {
-        bits_[i] = out[i];
-    }
-    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
-    util::Compose(qubit_num_, preparation_, restoration_);
-    ret.splice(ret.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+    /*
+     * Reduce out to the basis of in
+     */
+    PrepareLastPart(ret, in, out);
 
     return ret;
 }

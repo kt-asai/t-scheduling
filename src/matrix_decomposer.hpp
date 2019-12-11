@@ -6,7 +6,7 @@
 #include <string>
 
 #include "gate.hpp"
-#include "util.hpp"
+#include "util/util.hpp"
 
 namespace tskd {
 

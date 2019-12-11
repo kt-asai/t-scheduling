@@ -88,7 +88,7 @@ Circuit Synthesis::Execute()
 
     int dimension = chr_.num_data_qubit();
     util::IndependentOracle oracle(chr_.num_qubit(), dimension, chr_.num_data_qubit() + chr_.num_hadamard());
-    CircuitBuilder builder(chr_.num_qubit(), dimension + chr_.num_hadamard(), chr_.qubit_names(), chr_.phase_exponents());
+    CircuitBuilder builder(option_, chr_.num_qubit(), dimension + chr_.num_hadamard(), chr_.qubit_names(), chr_.phase_exponents());
 
     /*
     std::cout << "- wires" << std::endl;

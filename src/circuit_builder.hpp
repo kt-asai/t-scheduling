@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 
+#include "util/option.hpp"
 #include "gate.hpp"
 #include "circuit.hpp"
 #include "synthesis.hpp"
@@ -17,6 +18,8 @@ namespace tskd {
 class CircuitBuilder
 {
 private:
+    util::Option option_;
+
     int qubit_num_;
     int dimension_;
 
@@ -30,6 +33,8 @@ private:
     bool Init(const std::vector<util::xor_func>& in,
               const std::vector<util::xor_func>& out);
 
+    void InitBits(const std::set<int>& phase_exponent_index_set);
+
     void Prepare(std::list<Gate>& gate_list,
                  const std::vector<util::xor_func>& in,
                  const int num_partition);
@@ -37,14 +42,22 @@ private:
     void ApplyPhaseGates(std::list<Gate>& gate_list,
                          const std::set<int>& phase_exponent_index_set);
 
+    void UnPrepare();
+
+    void PrepareLastPart(std::list<Gate>& gate_list,
+                         const std::vector<util::xor_func>& in,
+                         const std::vector<util::xor_func>& out);
+
 public:
     CircuitBuilder() = default;
 
-    CircuitBuilder(int qubit_num,
+    CircuitBuilder(const util::Option& option,
+                   int qubit_num,
                    int dimension,
                    const std::vector<std::string>& qubit_names,
                    const std::vector<util::phase_exponent>& phase_exponent)
-        : qubit_num_(qubit_num),
+        : option_(option),
+          qubit_num_(qubit_num),
           dimension_(dimension),
           qubit_names_(qubit_names),
           phase_exponent_(phase_exponent) { }

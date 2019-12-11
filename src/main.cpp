@@ -1,18 +1,27 @@
 #include <iostream>
 
+#include "util/option.hpp"
 #include "io/circuit_reader.hpp"
 #include "circuit.hpp"
 #include "character.hpp"
 #include "synthesis.hpp"
 
-int main()
+int main(int argc, char** argv)
 {
     std::cout << "T-scheduling" << std::endl;
 
-    const std::string path("../benchmarks/tof_3.qc");
+    /*
+     * Parse arguments
+     */
+    tskd::util::Option option;
+    option.set_input_path("../benchmarks/tof_3.qc");
+    option.set_change_row_order(false);
+    option.set_part_type(PartitionType::kmatroid);
+    option.set_dec_type(DecompositionType::kgauss);
+    option.show();
 
     std::cout << "-->> read file" << std::endl;
-    tskd::CircuitReader reader(path);
+    tskd::CircuitReader reader(option.input_path());
     tskd::Circuit qc = reader.read();
 
     std::cout << "# ----------------" << std::endl;
@@ -25,13 +34,13 @@ int main()
     character.Parse();
 
     std::cout << "-->> synthsis" << std::endl;
-    tskd::Synthesis synthesis(character);
+    tskd::Synthesis synthesis(character, option);
     tskd::Circuit result = synthesis.Execute();
 
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-    result.print_gate_list();
+//    result.print_gate_list();
 
     return 0;
 }

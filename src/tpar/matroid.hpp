@@ -3,9 +3,9 @@
 
 #include <vector>
 #include <deque>
-#include "partition.hpp"
-
 #include <cassert>
+
+#include "partition.hpp"
 
 namespace tskd {
 namespace tpar {
