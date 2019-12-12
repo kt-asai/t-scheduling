@@ -142,11 +142,11 @@ void CircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
 
 void CircuitBuilder::ChangeRowOrder()
 {
-    std::cout << "--- prepartion" << std::endl;
-    for (auto&& e : preparation_)
-    {
-        std::cout << e << std::endl;
-    }
+//    std::cout << "--- prepartion" << std::endl;
+//    for (auto&& e : preparation_)
+//    {
+//        std::cout << e << std::endl;
+//    }
 }
 
 std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,

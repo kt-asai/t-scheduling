@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-    result.print_gate_list();
+//    result.print_gate_list();
 
     return 0;
 }

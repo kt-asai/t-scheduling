@@ -2,9 +2,10 @@
 #define T_SCHEDULING_CIRCUIT_HPP
 
 #include <iostream>
+#include <string>
 #include <vector>
 #include <list>
-#include <string>
+#include <map>
 #include <unordered_map>
 #include <algorithm>
 
@@ -258,6 +259,7 @@ public:
         std::cout << "# P: " << num_p << std::endl;
         std::cout << "# Z: " << num_z << std::endl;
         std::cout << "# Toffoli: " << num_toffoli << std::endl;
+        std::cout << "# T-depth: " << CountTgateDepth() << std::endl;
     }
 
     /**
@@ -269,6 +271,38 @@ public:
         {
             gate.print();
         }
+    }
+
+    /**
+     * count t depth
+     */
+    int CountTgateDepth()
+    {
+        std::map<std::string, int> t_map;
+        int t_depth = 0;
+
+        // init
+        for (auto&& name : qubit_names_)
+        {
+            t_map.insert(std::make_pair(name, 0));
+        }
+
+        // count t gate applied each qubit
+        for (auto&& gate : gate_list_)
+        {
+            if (gate.type() == "T" || gate.type() == "T*")
+            {
+                t_map[gate.target_list().front()]++;
+            }
+        }
+
+        // count T depth
+        for (auto&& e : t_map)
+        {
+            t_depth = std::max(t_depth, e.second);
+        }
+
+        return t_depth;
     }
 };
 
