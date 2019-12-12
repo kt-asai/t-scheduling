@@ -1,6 +1,5 @@
 #include "circuit_builder.hpp"
-#include "gate.hpp"
-#include "gaussian_decomposer.hpp"
+#include "decomposer/gaussian_decomposer.hpp"
 
 namespace tskd {
 
@@ -64,9 +63,14 @@ void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
     }
      */
 
+    if (option_.change_row_order())
+    {
+        ChangeRowOrder();
+    }
+
     if (option_.dec_type() == DecompositionType::kgauss)
     {
-        gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+        gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
     }
 }
 
@@ -132,7 +136,16 @@ void CircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
 
     if (option_.dec_type() == DecompositionType::kgauss)
     {
-        gate_list.splice(gate_list.end(), GaussianDecomposer()(qubit_num_, 0, preparation_, qubit_names_));
+        gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
+    }
+}
+
+void CircuitBuilder::ChangeRowOrder()
+{
+    std::cout << "--- prepartion" << std::endl;
+    for (auto&& e : preparation_)
+    {
+        std::cout << e << std::endl;
     }
 }
 
@@ -181,20 +194,7 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
     for (auto&& it : partition)
     {
         InitBits(it);
-//        std::set<int>::iterator ti;
-//        int counter = 0;
-//        for (ti = it.begin(), counter = 0; counter < qubit_num_; counter++)
-//        {
-//            if (counter < static_cast<int>(it.size()))
-//            {
-//                bits_[counter] = phase_exponent_[*ti].second;
-//                ti++;
-//            }
-//            else
-//            {
-//                bits_[counter] = util::xor_func(dimension_ + 1, 0);
-//            }
-//        }
+
         /*
          * Prepare the bits
          */

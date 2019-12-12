@@ -1,5 +1,5 @@
 #include "gaussian_decomposer.hpp"
-#include "util/util.hpp"
+#include "../util/util.hpp"
 
 namespace tskd {
 

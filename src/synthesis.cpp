@@ -1,5 +1,6 @@
 #include "tpar/partition.hpp"
 #include "tpar/matroid.hpp"
+
 #include "synthesis.hpp"
 #include "character.hpp"
 #include "circuit_builder.hpp"
@@ -53,8 +54,7 @@ void Synthesis::init(const Character& chr)
     }
 }
 
-template<typename oracle_type>
-void Synthesis::CreatePartition(const oracle_type& oracle)
+void Synthesis::CreatePartition()
 {
     for (int j = 0; j < 2; j++)
     {
@@ -63,7 +63,7 @@ void Synthesis::CreatePartition(const oracle_type& oracle)
             util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
             if (tmp.none())
             {
-                tpar::add_to_partition(floats_[j], *it, chr_.phase_exponents(), oracle);
+                tpar::add_to_partition(floats_[j], *it, chr_.phase_exponents(), oracle_);
                 it = remaining_[j].erase(it);
             }
             else
@@ -71,6 +71,27 @@ void Synthesis::CreatePartition(const oracle_type& oracle)
                 it++;
             }
         }
+    }
+}
+
+void Synthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
+{
+    for (int i = 0; i < 2; i++)
+    {
+        // TODO: freeze_partisionsの第二引数のconst化
+        frozen_[i] = tpar::freeze_partitions(floats_[i], hadamard.in_);
+    }
+}
+
+void Synthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
+{
+    //        std::cout << "-->> frozen[0] build start" << std::endl;
+    circuit_.add_gate_list(builder_.Build(frozen_[0], wires_, wires_));
+//        std::cout << "-->> frozen[1] build start" << std::endl;
+    circuit_.add_gate_list(builder_.Build(frozen_[1], wires_, hadamard.input_wires_parity_));
+    for (int i = 0; i < chr_.num_qubit(); i++)
+    {
+        wires_[i] = hadamard.input_wires_parity_[i];
     }
 }
 
@@ -82,17 +103,45 @@ void Synthesis::ApplyHadamard(const Character::Hadamard& hadamard)
     mask_.set(hadamard.previous_qubit_index_);
 }
 
+int Synthesis::CheckDimension(int current_dimension)
+{
+    int new_dimension = 0;
+    const int updated_dimension = util::ComputeRank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
+    if (updated_dimension > current_dimension)
+    {
+        new_dimension = updated_dimension;
+        oracle_.set_dim(new_dimension);
+        tpar::repartition(floats_[0], chr_.phase_exponents(), oracle_);
+        tpar::repartition(floats_[1], chr_.phase_exponents(), oracle_);
+    }
+
+    return new_dimension;
+}
+
+void Synthesis::ConstructFinalSubCircuit()
+{
+//    std::cout << "->>> last synthesis to output" << std::endl;
+//    std::cout << "-->> frozen[0] build start" << std::endl;
+    circuit_.add_gate_list(builder_.Build(floats_[0], wires_, wires_));
+//    std::cout << "-->> frozen[1] build start" << std::endl;
+    circuit_.add_gate_list(builder_.Build(floats_[1], wires_, chr_.outputs()));
+
+    /*
+     * Add the global phase
+     */
+    circuit_.add_gate_list(builder_.BuildGlobalPhase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
+}
+
+
 Circuit Synthesis::Execute()
 {
     std::cout << "running..." << std::endl;
 
     int dimension = chr_.num_data_qubit();
-    util::IndependentOracle oracle(chr_.num_qubit(), dimension, chr_.num_data_qubit() + chr_.num_hadamard());
-    CircuitBuilder builder(option_, chr_.num_qubit(), dimension + chr_.num_hadamard(), chr_.qubit_names(), chr_.phase_exponents());
 
     /*
     std::cout << "- wires" << std::endl;
-    for (auto&& w : wires_)
+    for (auto&& w : `wires_)
     {
         std::cout << w << std::endl;
     }
@@ -113,7 +162,7 @@ Circuit Synthesis::Execute()
     /*
      * create an initial partition
      */
-    CreatePartition(oracle);
+    CreatePartition();
 
     /*
     std::cout << "- floats[0]" << std::endl;
@@ -135,7 +184,6 @@ Circuit Synthesis::Execute()
         }
     }
      */
-
 
     /**
      * Synthesize the circuit by applying H-gate to greed
@@ -165,10 +213,7 @@ Circuit Synthesis::Execute()
         /*
          * determine frozen partitions
          */
-        for (int i = 0; i < 2; i++)
-        {
-            frozen_[i] = tpar::freeze_partitions(floats_[i], hadamard.in_);
-        }
+        DetermineApplyPartition(hadamard);
 
         /*
         std::cout << "---- frozen[0]" << std::endl;
@@ -200,14 +245,7 @@ Circuit Synthesis::Execute()
         /*
          * Construct {CNOT, T} subcircuit for the frozen partitions
          */
-//        std::cout << "-->> frozen[0] build start" << std::endl;
-        circuit_.add_gate_list(builder.Build(frozen_[0], wires_, wires_));
-//        std::cout << "-->> frozen[1] build start" << std::endl;
-        circuit_.add_gate_list(builder.Build(frozen_[1], wires_, hadamard.input_wires_parity_));
-        for (int i = 0; i < chr_.num_qubit(); i++)
-        {
-            wires_[i] = hadamard.input_wires_parity_[i];
-        }
+        ConstructSubCircuit(hadamard);
 
         /*
          * Apply Hadamard gate
@@ -241,14 +279,7 @@ Circuit Synthesis::Execute()
         /*
          * Check for increases in dimension
          */
-        const int updated_dimension = util::ComputeRank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
-        if (updated_dimension > dimension)
-        {
-            dimension = updated_dimension;
-            oracle.set_dim(dimension);
-            tpar::repartition(floats_[0], chr_.phase_exponents(), oracle);
-            tpar::repartition(floats_[1], chr_.phase_exponents(), oracle);
-        }
+        dimension = CheckDimension(dimension);
 
         /*
         std::cout << "-- wire 3" << std::endl;
@@ -261,22 +292,13 @@ Circuit Synthesis::Execute()
         /*
          * Add new functions to the partition
          */
-        CreatePartition(oracle);
+        CreatePartition();
     }
 
     /*
      * Construct the final {CNOT, T} subcircuit
      */
-//    std::cout << "->>> last synthesis to output" << std::endl;
-//    std::cout << "-->> frozen[0] build start" << std::endl;
-    circuit_.add_gate_list(builder.Build(floats_[0], wires_, wires_));
-//    std::cout << "-->> frozen[1] build start" << std::endl;
-    circuit_.add_gate_list(builder.Build(floats_[1], wires_, chr_.outputs()));
-
-    /*
-     * Add the global phase
-     */
-    circuit_.add_gate_list(builder.BuildGlobalPhase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
+    ConstructFinalSubCircuit();
 
     return circuit_;
 }

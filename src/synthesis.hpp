@@ -2,6 +2,8 @@
 #define T_SCHEDULING_SYNTHESIS_HPP
 
 #include "character.hpp"
+#include "circuit_builder.hpp"
+
 #include "util/util.hpp"
 #include "util/option.hpp"
 
@@ -16,6 +18,10 @@ private:
 
     util::Option option_;
 
+    CircuitBuilder builder_;
+
+    util::IndependentOracle oracle_;
+
     Circuit circuit_;
 
     int global_phase_;
@@ -28,12 +34,17 @@ private:
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
 
-    template<typename oracle_type>
-    void CreatePartition(const oracle_type& oracle);
+    void CreatePartition();
 
-    void ConstructCircuit();
+    void DetermineApplyPartition(Character::Hadamard& hadamard);
+
+    void ConstructSubCircuit(const Character::Hadamard& hadamard);
 
     void ApplyHadamard(const Character::Hadamard& hadamard);
+
+    int CheckDimension(int dimension);
+
+    void ConstructFinalSubCircuit();
 
 public:
     Synthesis(const Character& chr,
@@ -42,6 +53,11 @@ public:
           option_(option)
     {
         init(chr);
+
+        builder_ = CircuitBuilder(option, chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(),
+                                  chr.qubit_names(), chr.phase_exponents());
+
+        oracle_ = util::IndependentOracle(chr.num_qubit(), chr.num_data_qubit(), chr.num_data_qubit() + chr.num_hadamard());
     }
 
     void init(const Character& chr);

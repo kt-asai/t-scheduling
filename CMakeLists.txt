@@ -21,7 +21,7 @@ add_executable(${TARGETS} src/main.cpp
         src/character.cpp
         src/synthesis.cpp
         src/circuit_builder.cpp
-        src/gaussian_decomposer.cpp)
+        src/decomposer/gaussian_decomposer.cpp src/decomposer/parallel_decomposer.cpp src/decomposer/parallel_decomposer.hpp)
 
 
 set(CMAKE_CXX_COMPILER "g++")

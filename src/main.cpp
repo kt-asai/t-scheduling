@@ -15,7 +15,7 @@ int main(int argc, char** argv)
      */
     tskd::util::Option option;
     option.set_input_path("../benchmarks/tof_3.qc");
-    option.set_change_row_order(false);
+    option.set_change_row_order(true);
     option.set_part_type(PartitionType::kmatroid);
     option.set_dec_type(DecompositionType::kgauss);
     option.show();
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-//    result.print_gate_list();
+    result.print_gate_list();
 
     return 0;
 }

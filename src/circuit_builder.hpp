@@ -4,11 +4,18 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <memory>
 
 #include "util/option.hpp"
+
 #include "gate.hpp"
 #include "circuit.hpp"
-#include "synthesis.hpp"
+
+#include "tpar/partition.hpp"
+
+#include "decomposer/matrix_decomposer.hpp"
+#include "decomposer/gaussian_decomposer.hpp"
+#include "decomposer/parallel_decomposer.hpp"
 
 namespace tskd {
 
@@ -19,6 +26,8 @@ class CircuitBuilder
 {
 private:
     util::Option option_;
+
+    std::shared_ptr<MatrixDecomposer> decomposer_;
 
     int qubit_num_;
     int dimension_;
@@ -48,6 +57,8 @@ private:
                          const std::vector<util::xor_func>& in,
                          const std::vector<util::xor_func>& out);
 
+    void ChangeRowOrder();
+
 public:
     CircuitBuilder() = default;
 
@@ -60,7 +71,23 @@ public:
           qubit_num_(qubit_num),
           dimension_(dimension),
           qubit_names_(qubit_names),
-          phase_exponent_(phase_exponent) { }
+          phase_exponent_(phase_exponent)
+    {
+        if (option.dec_type() == DecompositionType::kgauss)
+        {
+            decomposer_ = std::make_shared<GaussianDecomposer>();
+        }
+        else if (option.dec_type() == DecompositionType::ktskd)
+        {
+            decomposer_ = std::make_shared<ParallelDecomposer>();
+        }
+        else
+        {
+            std::cerr << "invalid type of decomposer" << std::endl;
+
+            exit(1);
+        }
+    }
 
     std::list<Gate> Build(const tpar::partitioning& partition,
                           std::vector<util::xor_func>& in,

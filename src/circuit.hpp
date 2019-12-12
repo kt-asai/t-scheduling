@@ -138,7 +138,7 @@ public:
     void add_gate_list(std::list<Gate>&& gate_list)
     {
         num_gate_ += static_cast<int>(gate_list.size());
-        gate_list_.splice(gate_list_.end(), gate_list);
+        gate_list_.splice(gate_list_.end(), std::forward<std::list<Gate>>(gate_list));
     }
 
     /**
