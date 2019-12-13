@@ -1,6 +1,6 @@
 #include <map>
 
-#include "../gate.hpp"
+#include "../circuit/gate.hpp"
 #include "util.hpp"
 
 namespace tskd {

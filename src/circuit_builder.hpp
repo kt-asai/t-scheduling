@@ -8,8 +8,8 @@
 
 #include "util/option.hpp"
 
-#include "gate.hpp"
-#include "circuit.hpp"
+#include "circuit/gate.hpp"
+#include "circuit/circuit.hpp"
 
 #include "tpar/partition.hpp"
 
@@ -77,7 +77,7 @@ public:
         {
             decomposer_ = std::make_shared<GaussianDecomposer>();
         }
-        else if (option.dec_type() == DecompositionType::ktskd)
+        else if (option.dec_type() == DecompositionType::kparallel)
         {
             decomposer_ = std::make_shared<ParallelDecomposer>();
         }

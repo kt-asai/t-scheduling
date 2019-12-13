@@ -1,17 +1,19 @@
-#ifndef T_SCHEDULING_SYNTHESIS_HPP
-#define T_SCHEDULING_SYNTHESIS_HPP
+#ifndef T_SCHEDULING_TPAR_SYNTHESIS_HPP
+#define T_SCHEDULING_TPAR_SYNTHESIS_HPP
 
-#include "character.hpp"
-#include "circuit_builder.hpp"
+#include "synthesis.hpp"
 
-#include "util/util.hpp"
-#include "util/option.hpp"
+#include "../character.hpp"
+#include "../circuit_builder.hpp"
 
-#include "tpar/partition.hpp"
+#include "../util/util.hpp"
+#include "../util/option.hpp"
+
+#include "../tpar/partition.hpp"
 
 namespace tskd {
 
-class Synthesis
+class TparSynthesis : public Synthesis
 {
 private:
     Character chr_;
@@ -47,8 +49,8 @@ private:
     void ConstructFinalSubCircuit();
 
 public:
-    Synthesis(const Character& chr,
-              const util::Option& option)
+    TparSynthesis(const Character& chr,
+                  const util::Option& option)
         : chr_(chr),
           option_(option)
     {
@@ -62,10 +64,10 @@ public:
 
     void init(const Character& chr);
 
-    Circuit Execute();
+    Circuit Execute() final;
 };
 
 }
 
 
-#endif //T_SCHEDULING_SYNTHESIS_HPP
+#endif //T_SCHEDULING_TPAR_SYNTHESIS_HPP

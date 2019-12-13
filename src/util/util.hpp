@@ -5,7 +5,7 @@
 #include <list>
 #include <boost/dynamic_bitset.hpp>
 
-#include "../gate.hpp"
+#include "../circuit/gate.hpp"
 
 namespace tskd {
 namespace util {

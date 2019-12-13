@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#include "../gate.hpp"
+#include "../circuit/gate.hpp"
 #include "../util/util.hpp"
 
 namespace tskd {

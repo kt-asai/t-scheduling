@@ -1,13 +1,13 @@
-#include "tpar/partition.hpp"
-#include "tpar/matroid.hpp"
+#include "../tpar/partition.hpp"
+#include "../tpar/matroid.hpp"
 
-#include "synthesis.hpp"
-#include "character.hpp"
-#include "circuit_builder.hpp"
+#include "tpar_synthesis.hpp"
+#include "../character.hpp"
+#include "../circuit_builder.hpp"
 
 namespace tskd {
 
-void Synthesis::init(const Character& chr)
+void TparSynthesis::init(const Character& chr)
 {
     floats_.resize(2);
     frozen_.resize(2);
@@ -54,7 +54,7 @@ void Synthesis::init(const Character& chr)
     }
 }
 
-void Synthesis::CreatePartition()
+void TparSynthesis::CreatePartition()
 {
     for (int j = 0; j < 2; j++)
     {
@@ -74,7 +74,7 @@ void Synthesis::CreatePartition()
     }
 }
 
-void Synthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
+void TparSynthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
 {
     for (int i = 0; i < 2; i++)
     {
@@ -83,7 +83,7 @@ void Synthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
     }
 }
 
-void Synthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
+void TparSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
 {
     //        std::cout << "-->> frozen[0] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(frozen_[0], wires_, wires_));
@@ -95,7 +95,7 @@ void Synthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
     }
 }
 
-void Synthesis::ApplyHadamard(const Character::Hadamard& hadamard)
+void TparSynthesis::ApplyHadamard(const Character::Hadamard& hadamard)
 {
     circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
     wires_[hadamard.target_].reset();
@@ -103,7 +103,7 @@ void Synthesis::ApplyHadamard(const Character::Hadamard& hadamard)
     mask_.set(hadamard.previous_qubit_index_);
 }
 
-int Synthesis::CheckDimension(int current_dimension)
+int TparSynthesis::CheckDimension(int current_dimension)
 {
     int new_dimension = 0;
     const int updated_dimension = util::ComputeRank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
@@ -118,9 +118,9 @@ int Synthesis::CheckDimension(int current_dimension)
     return new_dimension;
 }
 
-void Synthesis::ConstructFinalSubCircuit()
+void TparSynthesis::ConstructFinalSubCircuit()
 {
-//    std::cout << "->>> last synthesis to output" << std::endl;
+//    std::cout << "->>> last TparSynthesis to output" << std::endl;
 //    std::cout << "-->> frozen[0] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(floats_[0], wires_, wires_));
 //    std::cout << "-->> frozen[1] build start" << std::endl;
@@ -133,7 +133,7 @@ void Synthesis::ConstructFinalSubCircuit()
 }
 
 
-Circuit Synthesis::Execute()
+Circuit TparSynthesis::Execute()
 {
     std::cout << "running..." << std::endl;
 

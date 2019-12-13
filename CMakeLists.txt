@@ -17,12 +17,12 @@ add_executable(${TARGETS} src/main.cpp
         src/util/util.cpp
         src/tpar/partition.cpp
         src/tpar/matroid.hpp
-        src/circuit.cpp
+        src/circuit/circuit.cpp
         src/character.cpp
-        src/synthesis.cpp
+        src/synthesis/tpar_synthesis.cpp
         src/circuit_builder.cpp
         src/decomposer/gaussian_decomposer.cpp
-        src/decomposer/parallel_decomposer.cpp)
+        src/decomposer/parallel_decomposer.cpp src/synthesis/tskd_synthesis.cpp src/synthesis/tskd_synthesis.hpp)
 
 
 set(CMAKE_CXX_COMPILER "g++")
