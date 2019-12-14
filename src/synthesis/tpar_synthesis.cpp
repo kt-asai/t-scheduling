@@ -7,8 +7,9 @@
 
 namespace tskd {
 
-void TparSynthesis::init(const Character& chr)
+void TparSynthesis::Init(const Character& chr)
 {
+    global_phase_ = 0;
     floats_.resize(2);
     frozen_.resize(2);
     remaining_.resize(2);
@@ -16,7 +17,6 @@ void TparSynthesis::init(const Character& chr)
     /*
      * initialize some stuff
      */
-    global_phase_ = 0;
     mask_ = util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
     mask_.set(chr.num_data_qubit() + chr.num_hadamard());
     for (int i = 0, j = 0; i < chr.num_qubit(); i++)
@@ -135,7 +135,7 @@ void TparSynthesis::ConstructFinalSubCircuit()
 
 Circuit TparSynthesis::Execute()
 {
-    std::cout << "running..." << std::endl;
+    std::cout << "t-par running..." << std::endl;
 
     int dimension = chr_.num_data_qubit();
 

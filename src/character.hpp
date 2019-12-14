@@ -154,6 +154,29 @@ public:
      * parse circuit info and calculate parity
      */
     void Parse();
+
+    /**
+     * sort phase exponents based on function F
+     * @tparam F
+     * @param f comparison function object
+     */
+    template <typename F>
+    void SortPhaseExponents(F& f)
+    {
+//        std::cout << "--- before sort" << std::endl;
+//        for (auto&& e : phase_exponents_)
+//        {
+//            std::cout << e.second << std::endl;
+//        }
+
+        std::sort(phase_exponents_.begin(), phase_exponents_.end(), f);
+
+//        std::cout << "--- after sort" << std::endl;
+//        for (auto&& e : phase_exponents_)
+//        {
+//            std::cout << e.second << std::endl;
+//        }
+    }
 };
 
 }

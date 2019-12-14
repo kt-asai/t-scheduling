@@ -22,7 +22,8 @@ add_executable(${TARGETS} src/main.cpp
         src/synthesis/tpar_synthesis.cpp
         src/circuit_builder.cpp
         src/decomposer/gaussian_decomposer.cpp
-        src/decomposer/parallel_decomposer.cpp src/synthesis/tskd_synthesis.cpp src/synthesis/tskd_synthesis.hpp)
+        src/decomposer/parallel_decomposer.cpp
+        src/synthesis/tskd_synthesis.cpp)
 
 
 set(CMAKE_CXX_COMPILER "g++")

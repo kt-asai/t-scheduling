@@ -54,7 +54,7 @@ public:
         : chr_(chr),
           option_(option)
     {
-        init(chr);
+        Init(chr);
 
         builder_ = CircuitBuilder(option, chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(),
                                   chr.qubit_names(), chr.phase_exponents());
@@ -62,7 +62,7 @@ public:
         oracle_ = util::IndependentOracle(chr.num_qubit(), chr.num_data_qubit(), chr.num_data_qubit() + chr.num_hadamard());
     }
 
-    void init(const Character& chr);
+    void Init(const Character& chr);
 
     Circuit Execute() final;
 };

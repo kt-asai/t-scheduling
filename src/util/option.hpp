@@ -144,6 +144,16 @@ public:
         std::cout << "## output file: " << output_path_ << std::endl;
         std::cout << "## number of distillatoion: " << num_distillation_ << std::endl;
         std::cout << "## required distillation step: " << distillation_step_ << std::endl;
+        std::cout << "## synthesis method: ";
+        switch (syn_method_)
+        {
+            case SynthesisMethod::ktpar:
+                std::cout << "t-par" << std::endl;
+                break;
+            case SynthesisMethod::ktskd:
+                std::cout << "t-scheduling" << std::endl;
+                break;
+        }
         std::cout << "## change row order: " << std::boolalpha << change_row_order_ << std::endl;
         std::cout << "## partition type: ";
         switch (part_type_)
