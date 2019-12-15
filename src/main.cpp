@@ -21,8 +21,8 @@ int main(int argc, char** argv)
     option.set_input_path("../benchmarks/tof_2.qc");
     option.set_num_distillation(4);
     option.set_distillation_step(10);
-    option.set_change_row_order(true);
-    option.set_syn_method((SynthesisMethod::ktpar));
+    option.set_change_row_order(false);
+    option.set_syn_method((SynthesisMethod::ktskd));
     option.set_part_type(PartitionType::kmatroid);
     option.set_dec_type(DecompositionType::kgauss);
     option.show();

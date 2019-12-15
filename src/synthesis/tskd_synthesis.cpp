@@ -6,23 +6,22 @@ void TskdSynthesis::Init(const Character& chr)
 {
     global_phase_ = 0;
     remaining_.resize(2);
-    part_.resize(2);
 
     /**
      * sort phase exponents
      */
-    auto compare = [](auto& lhs, auto& rhs) -> bool
-    {
-        if (lhs.second.count() == rhs.second.count())
-        {
-            return lhs.second < rhs.second;
-        }
-        else
-        {
-            return lhs.second.count() < rhs.second.count();
-        }
-    };
-    chr_.SortPhaseExponents(compare);
+//    auto compare = [](auto& lhs, auto& rhs) -> bool
+//    {
+//        if (lhs.second.count() == rhs.second.count())
+//        {
+//            return lhs.second < rhs.second;
+//        }
+//        else
+//        {
+//            return lhs.second.count() < rhs.second.count();
+//        }
+//    };
+//    chr_.SortPhaseExponents(compare);
 
     /*
      * initialize some stuff
@@ -64,70 +63,114 @@ void TskdSynthesis::Init(const Character& chr)
     }
 }
 
-template<class T, typename oracle_type>
-tpar::partitioning TskdSynthesis::AddPartition(std::list<int>& remaining_index_list_,
-                                               const std::vector<T>& elts,
-                                               const oracle_type& oracle)
+Circuit TskdSynthesis::Execute()
 {
-    const int limited_step = option_.distillation_step();
-    tpar::partitioning partition;
+    std::cout << "t-scheduling running..." << std::endl;
 
-    bool update = true;
-    while (update)
+    int dimension = chr_.num_data_qubit();
+
+    /**
+     *
+     */
+    std::vector<std::list<int>> index_list(2);
+    std::vector<std::list<int>> carry_index_list(2);
+//    for (int i = 0; i < 2; ++i)
+//    {
+//        for (auto it = remaining_[i].begin(); it != remaining_[i].end();)
+//        {
+//            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
+//            if (tmp.none())
+//            {
+//                index_list[i].push_back(*it);
+//            }
+//        }
+//    }
+
+    for (auto&& hadamard : chr_.hadamards())
     {
-        update = false;
-        std::set<int> sub_part;
-        for (auto it = remaining_index_list_.begin(); it != remaining_index_list_.end();)
+        /*
+         * determine apply (carry) index list
+         */
+        index_list[0].clear();
+        index_list[1].clear();
+        carry_index_list[0].clear();
+        carry_index_list[1].clear();
+        for (int i = 0; i < 2; ++i)
         {
-            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
-            if (tmp.none())
+            for (auto it = remaining_[i].begin(); it != remaining_[i].end();)
             {
-                sub_part.insert(*it);
-                std::set<int> tmp_sub_part = sub_part;
-                if (oracle_(elts, tmp_sub_part) && tmp_sub_part.size() < 3/* && build() > limited_step * tmmp_sub_part.size() */)
+                util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
+                if (tmp.none())
                 {
-                    sub_part = tmp_sub_part;
-                    it = remaining_index_list_.erase(it);
-                    update = true;
+                    auto ti = hadamard.in_.find(*it);
+                    if (ti != hadamard.in_.end())
+                    {
+                        index_list[i].push_back(*it);
+                    }
+                    else
+                    {
+                        carry_index_list[i].push_back(*it);
+                    }
+                    it = remaining_[i].erase(it);
                 }
                 else
                 {
                     it++;
                 }
             }
-            else
-            {
-                it++;
-            }
         }
-        partition.push_back(sub_part);
+
+//        std::cout << "----------------" << std::endl;
+//        std::cout << "--- index list[0]" << std::endl;
+//        for (auto&& e : index_list[0])
+//        {
+//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
+//        }
+//        std::cout << "--- carry index list[0]" << std::endl;
+//        for (auto&& e : carry_index_list[0])
+//        {
+//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
+//        }
+//        std::cout << "--- index list[1]" << std::endl;
+//        for (auto&& e : index_list[1])
+//        {
+//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
+//        }
+//        std::cout << "--- carry index list[1]" << std::endl;
+//        for (auto&& e : carry_index_list[1])
+//        {
+//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
+//        }
+//        std::cout << std::endl;
+
+
+        /**
+         * Construct sub-circuit
+         */
+        circuit_.add_gate_list(builder_.Build(index_list[0], carry_index_list[0], wires_, wires_));
+        circuit_.add_gate_list(builder_.Build(index_list[1], carry_index_list[1], wires_, hadamard.input_wires_parity_));
+        remaining_[0].splice(remaining_[0].begin(), carry_index_list[0]);
+        remaining_[1].splice(remaining_[1].begin(), carry_index_list[1]);
+        for (int i = 0; i < chr_.num_qubit(); i++)
+        {
+            wires_[i] = hadamard.input_wires_parity_[i];
+        }
+
+        /*
+         * Check for increases in dimension
+         */
+        dimension = builder_.CheckDimension(chr_, wires_, dimension);
+
+        /*
+         * Apply Hadamard gate
+        */
+        circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
+        wires_[hadamard.target_].reset();
+        wires_[hadamard.target_].set(hadamard.previous_qubit_index_);
+        mask_.set(hadamard.previous_qubit_index_);
     }
 
-    return partition;
-}
-
-void TskdSynthesis::CreatePartition()
-{
-    for (int i = 0; i < 2; ++i)
-    {
-        part_[i] = AddPartition(remaining_[i], chr_.phase_exponents(), oracle_);
-    }
-}
-
-Circuit TskdSynthesis::Execute()
-{
-    std::cout << "t-scheduling running..." << std::endl;
-
-    /**
-     *
-     */
-
-    for (auto&& hadamard : chr_.hadamards())
-    {
-
-    }
-
-    return tskd::Circuit();
+    return circuit_;
 }
 
 }

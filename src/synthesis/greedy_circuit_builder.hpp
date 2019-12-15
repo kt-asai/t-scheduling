@@ -11,6 +11,8 @@
 #include "../circuit/gate.hpp"
 #include "../circuit/circuit.hpp"
 
+#include "../character/character.hpp"
+
 #include "../tpar/partition.hpp"
 
 #include "../decomposer/matrix_decomposer.hpp"
@@ -90,6 +92,10 @@ public:
     static std::list <Gate> BuildGlobalPhase(int qubit_num,
                                              int phase,
                                              const std::vector <std::string>& qubit_names);
+
+    int CheckDimension(const Character& chr,
+                       std::vector <util::xor_func>& wires,
+                       int current_dimension);
 };
 
 }

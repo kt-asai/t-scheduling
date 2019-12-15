@@ -3,7 +3,7 @@
 
 #include "synthesis.hpp"
 
-#include "simple_circuit_builder.hpp"
+#include "greedy_circuit_builder.hpp"
 
 #include "../util/util.hpp"
 
@@ -16,7 +16,7 @@ private:
 
     util::Option option_;
 
-    SimpleCircuitBuilder builder_;
+    GreedyCircuitBuilder builder_;
 
     util::IndependentOracle oracle_;
 
@@ -24,19 +24,10 @@ private:
 
     int global_phase_;
 
-    std::vector<tpar::partitioning> part_;
-
     util::xor_func mask_;
 
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
-
-    template<class T, typename oracle_type>
-    tpar::partitioning AddPartition(std::list<int>& remaining_index_list_,
-                                    const std::vector <T>& elts,
-                                    const oracle_type& oracle);
-    
-    void CreatePartition();
 
 public:
     TskdSynthesis(const Character& chr,
@@ -46,15 +37,16 @@ public:
     {
         Init(chr);
 
-        builder_ = SimpleCircuitBuilder(option,
+        oracle_ = util::IndependentOracle(chr.num_qubit(),
+                                          chr.num_data_qubit(),
+                                          chr.num_data_qubit() + chr.num_hadamard());
+
+        builder_ = GreedyCircuitBuilder(option,
+                                        oracle_,
                                         chr.num_qubit(),
                                         chr.num_data_qubit() + chr.num_hadamard(),
                                         chr.qubit_names(),
                                         chr.phase_exponents());
-
-        oracle_ = util::IndependentOracle(chr.num_qubit(),
-                                          chr.num_data_qubit(),
-                                          chr.num_data_qubit() + chr.num_hadamard());
     }
 
     void Init(const Character& chr);

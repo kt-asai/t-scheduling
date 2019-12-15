@@ -4,6 +4,8 @@
 
 #include "../circuit/gate.hpp"
 
+#include "../tpar/partition.hpp"
+
 namespace tskd {
 
 bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
@@ -68,6 +70,21 @@ void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
     }
 }
 
+int GreedyCircuitBuilder::CheckDimension(const Character& chr,
+                                         std::vector <util::xor_func>& wires,
+                                         int current_dimension)
+{
+    int new_dimension = 0;
+    const int updated_dimension = util::ComputeRank(chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(), wires);
+    if (updated_dimension > current_dimension)
+    {
+        new_dimension = updated_dimension;
+        oracle_.set_dim(new_dimension);
+    }
+
+    return new_dimension;
+}
+
 std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                                             std::list<int>& carry_index_list,
                                             std::vector<util::xor_func>& in,
@@ -75,7 +92,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 {
     std::list<Gate> ret;
 
-    if (Init(in, out))
+    if (Init(in, out) && index_list.empty())
     {
         return ret;
     }
@@ -91,8 +108,15 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         restoration[i].set(i);
     }
 
+    /*
+     * Reduce in to echelon form to decide on a basis
+     */
+    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation, std::vector<std::string>());
+
     while (!index_list.empty())
     {
+        std::cout << "while loop" << std::endl;
+
         /**
          * first build sub-circuit
          */
@@ -289,8 +313,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             restoration[i].set(i);
         }
     }
-
-
 
     return ret;
 }
