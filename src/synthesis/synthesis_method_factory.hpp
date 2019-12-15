@@ -4,7 +4,7 @@
 #include "synthesis.hpp"
 #include "tpar_synthesis.hpp"
 #include "tskd_synthesis.hpp"
-#include "../character.hpp"
+#include "../character/character.hpp"
 #include "../util/option.hpp"
 
 namespace tskd {

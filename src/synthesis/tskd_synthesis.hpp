@@ -3,7 +3,7 @@
 
 #include "synthesis.hpp"
 
-#include "../circuit_builder.hpp"
+#include "simple_circuit_builder.hpp"
 
 #include "../util/util.hpp"
 
@@ -16,7 +16,7 @@ private:
 
     util::Option option_;
 
-    CircuitBuilder builder_;
+    SimpleCircuitBuilder builder_;
 
     util::IndependentOracle oracle_;
 
@@ -46,10 +46,15 @@ public:
     {
         Init(chr);
 
-        builder_ = CircuitBuilder(option, chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(),
-                                  chr.qubit_names(), chr.phase_exponents());
+        builder_ = SimpleCircuitBuilder(option,
+                                        chr.num_qubit(),
+                                        chr.num_data_qubit() + chr.num_hadamard(),
+                                        chr.qubit_names(),
+                                        chr.phase_exponents());
 
-        oracle_ = util::IndependentOracle(chr.num_qubit(), chr.num_data_qubit(), chr.num_data_qubit() + chr.num_hadamard());
+        oracle_ = util::IndependentOracle(chr.num_qubit(),
+                                          chr.num_data_qubit(),
+                                          chr.num_data_qubit() + chr.num_hadamard());
     }
 
     void Init(const Character& chr);

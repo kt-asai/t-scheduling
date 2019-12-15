@@ -7,9 +7,10 @@
 #include <unordered_map>
 #include <set>
 
-#include "circuit/circuit.hpp"
-#include "circuit/gate.hpp"
-#include "util/util.hpp"
+#include "../circuit/circuit.hpp"
+#include "../circuit/gate.hpp"
+
+#include "../util/util.hpp"
 
 namespace tskd {
 

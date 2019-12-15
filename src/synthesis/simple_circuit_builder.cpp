@@ -1,10 +1,11 @@
-#include "circuit_builder.hpp"
-#include "decomposer/gaussian_decomposer.hpp"
+#include "simple_circuit_builder.hpp"
+
+#include "../decomposer/gaussian_decomposer.hpp"
 
 namespace tskd {
 
-bool CircuitBuilder::Init(const std::vector<util::xor_func>& in,
-                          const std::vector<util::xor_func>& out)
+bool SimpleCircuitBuilder::Init(const std::vector<util::xor_func>& in,
+                                const std::vector<util::xor_func>& out)
 {
     bool is_io_different = true;
 
@@ -24,7 +25,7 @@ bool CircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
-void CircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_set)
+void SimpleCircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_set)
 {
     std::set<int>::iterator ti;
     int counter = 0;
@@ -42,9 +43,9 @@ void CircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_set)
     }
 }
 
-void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
-                             const std::vector<util::xor_func>& in,
-                             const int num_partition)
+void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
+                                   const std::vector<util::xor_func>& in,
+                                   const int num_partition)
 {
     util::ToUpperEchelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::FixBasis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
@@ -74,8 +75,8 @@ void CircuitBuilder::Prepare(std::list<Gate>& gate_list,
     }
 }
 
-void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
-                                     const std::set<int>& phase_exponent_index_set)
+void SimpleCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
+                                           const std::set<int>& phase_exponent_index_set)
 {
     int index = 0;
     for (auto&& phase_exponent_index : phase_exponent_index_set)
@@ -110,7 +111,7 @@ void CircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
     }
 }
 
-void CircuitBuilder::UnPrepare()
+void SimpleCircuitBuilder::UnPrepare()
 {
     preparation_ = std::move(restoration_);
     restoration_ = std::vector<util::xor_func>(qubit_num_);
@@ -122,9 +123,9 @@ void CircuitBuilder::UnPrepare()
     }
 }
 
-void CircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
-                                     const std::vector<util::xor_func>& in,
-                                     const std::vector<util::xor_func>& out)
+void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
+                                           const std::vector<util::xor_func>& in,
+                                           const std::vector<util::xor_func>& out)
 {
     for (int i = 0; i < qubit_num_; i++)
     {
@@ -140,7 +141,7 @@ void CircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     }
 }
 
-void CircuitBuilder::ChangeRowOrder()
+void SimpleCircuitBuilder::ChangeRowOrder()
 {
 //    std::cout << "--- prepartion" << std::endl;
 //    for (auto&& e : preparation_)
@@ -149,9 +150,9 @@ void CircuitBuilder::ChangeRowOrder()
 //    }
 }
 
-std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
-                                      std::vector<util::xor_func>& in,
-                                      const std::vector<util::xor_func>& out)
+std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
+                                            std::vector<util::xor_func>& in,
+                                            const std::vector<util::xor_func>& out)
 {
     std::list<Gate> ret;
 
@@ -201,7 +202,7 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
         Prepare(ret, in, static_cast<int>(it.size()));
 
         /*
-         * Apply the T gates
+         * Apply the phase gates
          */
         ApplyPhaseGates(ret, it);
 
@@ -219,9 +220,9 @@ std::list<Gate> CircuitBuilder::Build(const tpar::partitioning& partition,
     return ret;
 }
 
-std::list<Gate> CircuitBuilder::BuildGlobalPhase(int qubit_num,
-                                                 int phase,
-                                                 const std::vector<std::string>& qubit_names)
+std::list<Gate> SimpleCircuitBuilder::BuildGlobalPhase(int qubit_num,
+                                                       int phase,
+                                                       const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> acc;
     int qubit = 0;

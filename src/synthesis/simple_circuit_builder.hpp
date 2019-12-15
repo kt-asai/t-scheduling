@@ -1,28 +1,28 @@
-#ifndef T_SCHEDULING_CIRCUIT_BUILDER_HPP
-#define T_SCHEDULING_CIRCUIT_BUILDER_HPP
+#ifndef T_SCHEDULING_SIMPLE_CIRCUIT_BUILDER_HPP
+#define T_SCHEDULING_SIMPLE_CIRCUIT_BUILDER_HPP
 
 #include <vector>
 #include <list>
 #include <string>
 #include <memory>
 
-#include "util/option.hpp"
+#include "../util/option.hpp"
 
-#include "circuit/gate.hpp"
-#include "circuit/circuit.hpp"
+#include "../circuit/gate.hpp"
+#include "../circuit/circuit.hpp"
 
-#include "tpar/partition.hpp"
+#include "../tpar/partition.hpp"
 
-#include "decomposer/matrix_decomposer.hpp"
-#include "decomposer/gaussian_decomposer.hpp"
-#include "decomposer/parallel_decomposer.hpp"
+#include "../decomposer/matrix_decomposer.hpp"
+#include "../decomposer/gaussian_decomposer.hpp"
+#include "../decomposer/parallel_decomposer.hpp"
 
 namespace tskd {
 
 /**
- * this class build {CNOT, T} subcircuit for given partitions
+ * this class build {CNOT, T} sub-circuit for given partitions
  */
-class CircuitBuilder
+class SimpleCircuitBuilder
 {
 private:
     util::Option option_;
@@ -60,13 +60,13 @@ private:
     void ChangeRowOrder();
 
 public:
-    CircuitBuilder() = default;
+    SimpleCircuitBuilder() = default;
 
-    CircuitBuilder(const util::Option& option,
-                   int qubit_num,
-                   int dimension,
-                   const std::vector<std::string>& qubit_names,
-                   const std::vector<util::phase_exponent>& phase_exponent)
+    SimpleCircuitBuilder(const util::Option& option,
+                         int qubit_num,
+                         int dimension,
+                         const std::vector<std::string>& qubit_names,
+                         const std::vector<util::phase_exponent>& phase_exponent)
         : option_(option),
           qubit_num_(qubit_num),
           dimension_(dimension),
@@ -100,4 +100,4 @@ public:
 
 }
 
-#endif //T_SCHEDULING_CIRCUIT_BUILDER_HPP
+#endif //T_SCHEDULING_SIMPLE_CIRCUIT_BUILDER_HPP

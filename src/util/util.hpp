@@ -13,6 +13,8 @@ namespace util {
 using xor_func = boost::dynamic_bitset<>;
 using phase_exponent = std::pair<int, xor_func>;
 
+using gate_list = std::list<Gate>;
+
 class IndependentOracle
 {
 private:

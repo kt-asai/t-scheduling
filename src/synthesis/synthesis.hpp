@@ -1,8 +1,8 @@
 #ifndef T_SCHEDULING_SYNTHESIS_HPP
 #define T_SCHEDULING_SYNTHESIS_HPP
 
-#include "../character.hpp"
-#include "../circuit_builder.hpp"
+#include "../character/character.hpp"
+#include "simple_circuit_builder.hpp"
 
 #include "../util/option.hpp"
 #include "../util/util.hpp"

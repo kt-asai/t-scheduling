@@ -1,7 +1,8 @@
 #include <map>
 
-#include "../circuit/gate.hpp"
 #include "util.hpp"
+
+#include "../circuit/gate.hpp"
 
 namespace tskd {
 namespace util {

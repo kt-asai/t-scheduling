@@ -1,9 +1,9 @@
+#include "tpar_synthesis.hpp"
+
 #include "../tpar/partition.hpp"
 #include "../tpar/matroid.hpp"
 
-#include "tpar_synthesis.hpp"
-#include "../character.hpp"
-#include "../circuit_builder.hpp"
+#include "../character/character.hpp"
 
 namespace tskd {
 
