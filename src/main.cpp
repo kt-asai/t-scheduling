@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     tskd::util::Option option;
     option.set_input_path("../benchmarks/tof_2.qc");
     option.set_num_distillation(4);
-    option.set_distillation_step(10);
+    option.set_distillation_step(8);
     option.set_change_row_order(false);
     option.set_syn_method((SynthesisMethod::ktskd));
     option.set_part_type(PartitionType::kmatroid);
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-//    result.print_gate_list();
+    result.print_gate_list();
 
     return 0;
 }

@@ -31,7 +31,7 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
 
 int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
 {
-    return static_cast<int>(gate_list.size()) * 2;
+    return static_cast<int>(gate_list.size());
 }
 
 void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
@@ -90,6 +90,20 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                                             std::vector<util::xor_func>& in,
                                             const std::vector<util::xor_func>& out)
 {
+//    std::cout << std::endl;
+//    std::cout << "-->> greedy circuit builder" << std::endl;
+//    std::cout << "# input" << std::endl;
+//    std::cout << "-- index list" << std::endl;
+//    for (auto&& e : index_list)
+//    {
+//        std::cout << e << ":" << phase_exponent_[e].second << std::endl;
+//    }
+//    std::cout << "-- carry index list" << std::endl;
+//    for (auto&& e : carry_index_list)
+//    {
+//        std::cout << e << ":" << phase_exponent_[e].second << std::endl;
+//    }
+
     std::list<Gate> ret;
 
     if (Init(in, out) && index_list.empty())
@@ -115,7 +129,12 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 
     while (!index_list.empty())
     {
-        std::cout << "while loop" << std::endl;
+//        std::cout << "-- index list size: " << index_list.size() << std::endl;
+//        std::cout << "-- index list in loop" << std::endl;
+//        for (auto&& e : index_list)
+//        {
+//            std::cout << e << ":" << phase_exponent_[e].second << std::endl;
+//        }
 
         /**
          * first build sub-circuit
@@ -132,6 +151,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         }
         std::list<Gate> result_gate_list;
         std::set<int> result_sub_part;
+        std::list<int> delete_index_list;
 
         for (auto it = index_list.begin(); it != index_list.end();)
         {
@@ -145,6 +165,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 
             if (oracle_(phase_exponent_, tmp_sub_part))
             {
+//                std::cout << "oracle part num: " << tmp_sub_part.size() << std::endl;
                 /**
                  * create bits matrix
                  */
@@ -166,7 +187,28 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 /**
                  * prepare preparation matrix
                  */
+
                 const int num_partition = static_cast<int>(tmp_sub_part.size());
+//                std::cout << std::endl;
+//                std::cout << "# prepare" << std::endl;
+//                std::cout << "## num qubit: " << qubit_num_ << std::endl;
+//                std::cout << "## dimension: " << dimension_ << std::endl;
+//                std::cout << "## num partition: " << num_partition << std::endl;
+//                std::cout << "## in" << std::endl;
+//                for (auto&& e : in)
+//                {
+//                    std::cout << e << std::endl;
+//                }
+//                std::cout << "## tmp_bits" << std::endl;
+//                for (auto&& e : tmp_bits)
+//                {
+//                    std::cout << e << std::endl;
+//                }
+//                std::cout << "## tmp_restoration" << std::endl;
+//                for (auto&& e : tmp_restoration)
+//                {
+//                    std::cout << e << std::endl;
+//                }
                 util::ToUpperEchelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
                 util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
@@ -199,6 +241,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
+//                    delete_index_list.push_back(*it);
                     it = index_list.erase(it);
                 }
                 else
@@ -211,6 +254,15 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 it++;
             }
         }
+
+//        index_list.splice(index_list.end(), std::move(delete_index_list));
+//        index_list.unique();
+//        std::cout << "after unique" << std::endl;
+//        for (auto&& e : index_list)
+//        {
+//            std::cout << e << " ";
+//        }
+//        std::cout << std::endl;
 
         /**
          * second build sub-circuit
@@ -281,7 +333,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
-                    it = index_list.erase(it);
+                    it = carry_index_list.erase(it);
                 }
                 else
                 {
@@ -312,6 +364,22 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             restoration[i] = util::xor_func(qubit_num_ + 1, 0);
             restoration[i].set(i);
         }
+    }
+
+    /*
+     * Reduce out to the basis of in
+     */
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        bits[i] = out[i];
+    }
+    util::ToUpperEchelon(qubit_num_, dimension_, bits, &restoration, std::vector<std::string>());
+    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits, &restoration, std::vector<std::string>());
+    util::Compose(qubit_num_, preparation, restoration);
+
+    if (option_.dec_type() == DecompositionType::kgauss)
+    {
+        ret.splice(ret.end(), (*decomposer_)(qubit_num_, 0, preparation, qubit_names_));
     }
 
     return ret;

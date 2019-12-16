@@ -38,8 +38,8 @@ private:
     int qubit_num_;
     int dimension_;
 
-    std::vector <std::string> qubit_names_;
-    std::vector <util::phase_exponent> phase_exponent_;
+    std::vector<std::string> qubit_names_;
+    std::vector<util::phase_exponent> phase_exponent_;
 
     bool Init(const std::vector <util::xor_func>& in,
               const std::vector <util::xor_func>& out);
