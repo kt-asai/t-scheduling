@@ -44,12 +44,16 @@ private:
     bool Init(const std::vector <util::xor_func>& in,
               const std::vector <util::xor_func>& out);
 
-    void ChnageRowOrder() { }
+    void ChangeRowOrder(std::vector<std::pair<int, int>>& phase_target_list,
+                        std::vector<util::xor_func>& matrix);
 
     int ComputeTimeStep(const std::list<Gate>& gate_list);
 
     void ApplyPhaseGates(std::list<Gate>& gate_list,
                          const std::set<int>& phase_exponent_index_set);
+
+    void ApplyPhaseGates(std::list<Gate>& gate_list,
+                         const std::vector<std::pair<int, int>>& phase_target_list);
 
 public:
     GreedyCircuitBuilder() = default;

@@ -29,6 +29,12 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
+void GreedyCircuitBuilder::ChangeRowOrder(std::vector<std::pair<int, int>>& phase_target_list,
+                                          std::vector<util::xor_func>& matrix)
+{
+
+}
+
 int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
 {
     return static_cast<int>(gate_list.size());
@@ -67,6 +73,43 @@ void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
             }
         }
         index++;
+    }
+}
+
+void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
+                                           const std::vector<std::pair<int, int>>& phase_target_list)
+{
+    for (auto&& p : phase_target_list)
+    {
+        const int phase_exponent_index = p.first;
+        const int target = p.second;
+
+        if (phase_exponent_[phase_exponent_index].first <= 4)
+        {
+            if (phase_exponent_[phase_exponent_index].first / 4 == 1)
+            {
+                gate_list.emplace_back("Z", qubit_names_[target]);
+            }
+            if (phase_exponent_[phase_exponent_index].first / 2 == 1)
+            {
+                gate_list.emplace_back("P", qubit_names_[target]);
+            }
+            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
+            {
+                gate_list.emplace_back("T", qubit_names_[target]);
+            }
+        }
+        else
+        {
+            if (phase_exponent_[phase_exponent_index].first == 5 || phase_exponent_[phase_exponent_index].first == 6)
+            {
+                gate_list.emplace_back("P*", qubit_names_[target]);
+            }
+            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
+            {
+                gate_list.emplace_back("T*", qubit_names_[target]);
+            }
+        }
     }
 }
 
@@ -121,6 +164,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         preparation[i].set(i);
         restoration[i].set(i);
     }
+    std::vector<std::pair<int, int>> phase_target_list;
 
     /*
      * Reduce in to echelon form to decide on a basis
@@ -152,6 +196,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         std::list<Gate> result_gate_list;
         std::set<int> result_sub_part;
         std::list<int> delete_index_list;
+        std::vector<std::pair<int, int>> result_phase_target_list;
 
         for (auto it = index_list.begin(); it != index_list.end();)
         {
@@ -162,6 +207,8 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             std::vector<util::xor_func> tmp_bits(qubit_num_);
             std::vector<util::xor_func> tmp_preparation = preparation;
             std::vector<util::xor_func> tmp_restoration = restoration;
+
+            std::vector<std::pair<int, int>> tmp_phase_target_list;
 
             if (oracle_(phase_exponent_, tmp_sub_part))
             {
@@ -220,6 +267,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 if (option_.change_row_order())
                 {
                     // ChangeRowOrder();
+                    ChangeRowOrder(tmp_phase_target_list, tmp_preparation);
                 }
 
                 /**
@@ -241,6 +289,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
+                    result_phase_target_list = tmp_phase_target_list;
 //                    delete_index_list.push_back(*it);
                     it = index_list.erase(it);
                 }
