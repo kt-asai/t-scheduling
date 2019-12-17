@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "tskd_synthesis.hpp"
 
 namespace tskd {
@@ -8,22 +10,6 @@ void TskdSynthesis::Init(const Character& chr)
     index_list_.resize(2);
     carry_index_list_.resize(2);
     remaining_.resize(2);
-
-    /**
-     * sort phase exponents
-     */
-//    auto compare = [](auto& lhs, auto& rhs) -> bool
-//    {
-//        if (lhs.second.count() == rhs.second.count())
-//        {
-//            return lhs.second < rhs.second;
-//        }
-//        else
-//        {
-//            return lhs.second.count() < rhs.second.count();
-//        }
-//    };
-//    chr_.SortPhaseExponents(compare);
 
     /*
      * initialize some stuff
@@ -47,7 +33,7 @@ void TskdSynthesis::Init(const Character& chr)
      * initialize the remaining list
      */
     int index = 0;
-    for (auto&& phase_exponent : chr_.phase_exponents())
+    for (auto&& phase_exponent : chr.phase_exponents())
     {
         if (phase_exponent.second == util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0))
         {
@@ -63,6 +49,37 @@ void TskdSynthesis::Init(const Character& chr)
         }
         index++;
     }
+
+//    std::cout << std::endl;
+//    std::cout << "--- before index sort" << std::endl;
+//    for (auto&& r : remaining_[0])
+//    {
+//        std::cout << std::setw(3) << r << ":" << chr.phase_exponents()[r].second << std::endl;
+//    }
+
+    /**
+     * sort index of phase exponents
+     */
+    for (int i = 0; i < 2; ++i)
+    {
+        remaining_[i].sort([&chr](int lhs, int rhs) -> bool
+                           {
+                               if (chr.phase_exponents()[lhs].second.count() == chr.phase_exponents()[rhs].second.count())
+                               {
+                                   return chr.phase_exponents()[lhs].second < chr.phase_exponents()[rhs].second;
+                               }
+                               else
+                               {
+                                   return chr.phase_exponents()[lhs].second.count() < chr.phase_exponents()[rhs].second.count();
+                               }
+                           });
+    }
+
+//    std::cout << "--- after index sort" << std::endl;
+//    for (auto&& r : remaining_[0])
+//    {
+//        std::cout << std::setw(3) <<  r << ":" << chr.phase_exponents()[r].second << std::endl;
+//    }
 }
 
 void TskdSynthesis::DetermineApplyPhaseSet(Character::Hadamard& hadamard)
@@ -257,7 +274,7 @@ Circuit TskdSynthesis::Execute()
         /**
          * Construct sub-circuit
          */
-         ConstructSubCircuit(hadamard);
+        ConstructSubCircuit(hadamard);
 
         /*
 //        std::cout << std::endl;
