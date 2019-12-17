@@ -385,4 +385,25 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
     return ret;
 }
 
+std::list<Gate> GreedyCircuitBuilder::BuildGlobalPhase(int qubit_num,
+                                                       int phase,
+                                                       const std::vector<std::string>& qubit_names)
+{
+    std::list<Gate> acc;
+    int qubit = 0;
+
+    if (phase % 2 == 1)
+    {
+        acc.splice(acc.end(), util::ComposeOM(qubit, qubit_names));
+        qubit = (qubit + 1) % qubit_num;
+    }
+    for (int i = phase / 2; i > 0; i--)
+    {
+        acc.splice(acc.end(), util::ComposeImaginaryUnit(qubit, qubit_names));
+        qubit = (qubit + 1) % qubit_num;
+    }
+
+    return acc;
+}
+
 }

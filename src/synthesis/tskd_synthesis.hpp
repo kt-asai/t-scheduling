@@ -24,10 +24,21 @@ private:
 
     int global_phase_;
 
+    std::vector<std::list<int>> index_list_;
+    std::vector<std::list<int>> carry_index_list_;
+
     util::xor_func mask_;
 
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
+
+    void DetermineApplyPhaseSet(Character::Hadamard& hadamard);
+
+    void ConstructSubCircuit(const Character::Hadamard& hadamard);
+
+    void ApplyHadamard(const Character::Hadamard& hadamard);
+
+    void ConstructFinalSubCircuit();
 
 public:
     TskdSynthesis(const Character& chr,

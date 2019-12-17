@@ -84,14 +84,14 @@ public:
         }
     }
 
-    std::list <Gate> Build(std::list<int>& index_list,
-                           std::list<int>& carry_index_list,
-                           std::vector <util::xor_func>& in,
-                           const std::vector <util::xor_func>& out);
+    std::list<Gate> Build(std::list<int>& index_list,
+                          std::list<int>& carry_index_list,
+                          std::vector <util::xor_func>& in,
+                          const std::vector <util::xor_func>& out);
 
-    static std::list <Gate> BuildGlobalPhase(int qubit_num,
-                                             int phase,
-                                             const std::vector <std::string>& qubit_names);
+    static std::list<Gate> BuildGlobalPhase(int qubit_num,
+                                            int phase,
+                                            const std::vector <std::string>& qubit_names);
 
     int CheckDimension(const Character& chr,
                        std::vector <util::xor_func>& wires,
