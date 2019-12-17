@@ -29,10 +29,33 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
-void GreedyCircuitBuilder::ChangeRowOrder(std::vector<std::pair<int, int>>& phase_target_list,
+void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
                                           std::vector<util::xor_func>& matrix)
 {
+    int i = 0;
+    int j = 0;
+    std::swap(matrix[i], matrix[j]);
+    int target_a = -1;
+    int target_b = -1;
+    if (target_phase_map.count(i))
+    {
+        target_a = target_phase_map[i];
+        target_phase_map.erase(i);
+    }
+    if (target_phase_map.count(j))
+    {
+        target_b = target_phase_map[j];
+        target_phase_map.erase(j);
+    }
 
+    if (target_a > -1)
+    {
+        target_phase_map.emplace(j, target_a);
+    }
+    if (target_b > -1)
+    {
+        target_phase_map.emplace(i, target_b);
+    }
 }
 
 int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
@@ -77,12 +100,12 @@ void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
 }
 
 void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
-                                           const std::vector<std::pair<int, int>>& phase_target_list)
+                                           const std::unordered_map<int, int>& target_phase_map)
 {
-    for (auto&& p : phase_target_list)
+    for (auto&& tp : target_phase_map)
     {
-        const int phase_exponent_index = p.first;
-        const int target = p.second;
+        const int target = tp.first;
+        const int phase_exponent_index = tp.second;
 
         if (phase_exponent_[phase_exponent_index].first <= 4)
         {
@@ -196,7 +219,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         std::list<Gate> result_gate_list;
         std::set<int> result_sub_part;
         std::list<int> delete_index_list;
-        std::vector<std::pair<int, int>> result_phase_target_list;
+        std::unordered_map<int, int> result_target_phase_map;
 
         for (auto it = index_list.begin(); it != index_list.end();)
         {
@@ -208,7 +231,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             std::vector<util::xor_func> tmp_preparation = preparation;
             std::vector<util::xor_func> tmp_restoration = restoration;
 
-            std::vector<std::pair<int, int>> tmp_phase_target_list;
+            std::unordered_map<int, int> tmp_target_phase_map;
 
             if (oracle_(phase_exponent_, tmp_sub_part))
             {
@@ -223,6 +246,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     if (counter < static_cast<int>(tmp_sub_part.size()))
                     {
                         tmp_bits[counter] = phase_exponent_[*ti].second;
+                        tmp_target_phase_map.emplace(counter, *ti);
                         ti++;
                     }
                     else
@@ -267,7 +291,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 if (option_.change_row_order())
                 {
                     // ChangeRowOrder();
-                    ChangeRowOrder(tmp_phase_target_list, tmp_preparation);
+                    ChangeRowOrder(tmp_target_phase_map, tmp_preparation);
                 }
 
                 /**
@@ -289,8 +313,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
-                    result_phase_target_list = tmp_phase_target_list;
-//                    delete_index_list.push_back(*it);
+                    result_target_phase_map = tmp_target_phase_map;
                     it = index_list.erase(it);
                 }
                 else
@@ -326,6 +349,8 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             std::vector<util::xor_func> tmp_preparation = preparation;
             std::vector<util::xor_func> tmp_restoration = restoration;
 
+            std::unordered_map<int, int> tmp_target_phase_map;
+
             if (oracle_(phase_exponent_, tmp_sub_part))
             {
                 /**
@@ -338,6 +363,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     if (counter < static_cast<int>(tmp_sub_part.size()))
                     {
                         tmp_bits[counter] = phase_exponent_[*ti].second;
+                        tmp_target_phase_map.emplace(counter, *ti);
                         ti++;
                     }
                     else
@@ -360,7 +386,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                  */
                 if (option_.change_row_order())
                 {
-                    // ChangeRowOrder();
+                     ChangeRowOrder(tmp_target_phase_map, tmp_preparation);
                 }
 
                 /**
@@ -382,6 +408,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
+                    result_target_phase_map = tmp_target_phase_map;
                     it = carry_index_list.erase(it);
                 }
                 else
@@ -400,7 +427,8 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         /*
          * Apply the phase gates
          */
-        ApplyPhaseGates(ret, result_sub_part);
+//        ApplyPhaseGates(ret, result_sub_part);
+        ApplyPhaseGates(ret, result_target_phase_map);
 
         /*
          * Unprepare the bits
