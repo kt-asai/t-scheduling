@@ -47,6 +47,7 @@ std::list<Gate> GaussianDecomposer::operator()(const int n,
         if (!flg)
         {
             std::cerr << "ERROR: not full rank" << std::endl;
+
             exit(1);
         }
     }
