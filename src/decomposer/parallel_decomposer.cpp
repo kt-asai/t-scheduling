@@ -1,12 +1,15 @@
-#include <queue>
+#include <unordered_map>
 
 #include "parallel_decomposer.hpp"
 
 namespace tskd {
 
 static
-std::vector<std::list<Gate>> GenerateCandidates(int pivot,
-                                                const std::vector<int>& one_array)
+std::vector<std::list<Gate>> UpdateGateSetList(const int pivot,
+                                               const std::vector<int>& one_array,
+                                               std::unordered_map<std::string, int>& depth,
+                                               std::vector<std::list<Gate>>& gate_set_list,
+                                               const std::vector<std::string>& qubit_names)
 {
     
 }
@@ -18,7 +21,14 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
 {
     std::list<Gate> ret;
     std::vector<int> one_array(static_cast<int>(matrix.size()));
-    std::priority_queue<int> que;
+    std::unordered_map<std::string, int> depth;
+    std::vector<std::list<Gate>> gate_set_list;
+
+    // init
+    for (auto&& name : qubit_names)
+    {
+        depth.emplace(name, 0);
+    }
 
     for (int j = 0; j < n; j++)
     {
@@ -65,7 +75,8 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
 
         // generate candidate cnot list
-        std::vector<std::list<Gate>> candidates = GenerateCandidates(i, one_array);
+        AddGate(i, one_array, depth, qubit_names)
+
     }
 
     //Finish the job
