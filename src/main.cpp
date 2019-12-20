@@ -18,13 +18,13 @@ int main(int argc, char** argv)
      * Parse arguments
      */
     tskd::util::Option option;
-    option.set_input_path("../benchmarks/tof_2.qc");
+    option.set_input_path("../benchmarks/tof_1.qc");
     option.set_num_distillation(4);
-    option.set_distillation_step(8);
+    option.set_distillation_step(20);
     option.set_change_row_order(false);
-    option.set_syn_method((SynthesisMethod::ktskd));
+    option.set_syn_method((SynthesisMethod::ktpar));
     option.set_part_type(PartitionType::kmatroid);
-    option.set_dec_type(DecompositionType::kgauss);
+    option.set_dec_type(DecompositionType::kparallel);
     option.show();
 
     std::cout << "-->> read file" << std::endl;

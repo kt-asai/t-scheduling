@@ -69,10 +69,7 @@ void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
         ChangeRowOrder();
     }
 
-    if (option_.dec_type() == DecompositionType::kgauss)
-    {
-        gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
-    }
+    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
 void SimpleCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
