@@ -16,21 +16,46 @@ bool CanParallelization(const std::list<Gate>& mappled_gate_list,
         return true;
     }
 
-    return true;
+    return false;
 }
 
 static void UpdateUpperGateSetList(const int pivot,
                                    const std::vector<int>& one_array,
+                                   const std::pair<int, int>& swap_pair,
                                    std::unordered_map<std::string, int>& depth,
                                    std::vector<std::list<Gate>>& gate_set_list,
-                                   std::vector<util::xor_func>& matrix,
                                    const std::vector<std::string>& qubit_names)
 {
-    std::map<int, std::vector<int>> depth_bit_map; // <depth, qubit_index>
+    /*
+     * Generate swap
+     */
+    if (swap_pair.first != -1)
+    {
+        std::string swap_a = qubit_names[swap_pair.first];
+        std::string swap_b = qubit_names[swap_pair.second];
+        int swap_depth = std::max(depth[swap_a], depth[swap_b]);
+        depth[swap_a] = swap_depth;
+        depth[swap_b] = swap_depth;
+        int counter = 3;
+        while (counter > 0)
+        {
+            Gate gate("tof", swap_a, swap_b);
+            if (CanParallelization(gate_set_list[swap_depth], gate))
+            {
+                counter--;
+                gate_set_list[swap_depth].push_back(gate);
+                std::swap(swap_a, swap_b);
+            }
+            depth[swap_a]++;
+            depth[swap_b]++;
+            swap_depth++;
+        }
+    }
 
     /*
-     * Init
+     * Init depth of each qubit
      */
+    std::map<int, std::vector<int>> depth_bit_map; // <depth, qubit_index>
     depth_bit_map.emplace(depth[qubit_names[pivot]], std::vector<int>(1, pivot));
     for (auto&& o : one_array)
     {
@@ -46,7 +71,7 @@ static void UpdateUpperGateSetList(const int pivot,
     }
 
     /*
-     * check and generate cnot gate
+     * generate cnot gate
      */
     std::vector<int> carry_bit_set;
     for (auto&& m : depth_bit_map)
@@ -54,6 +79,12 @@ static void UpdateUpperGateSetList(const int pivot,
         const int bit_depth = m.first;
         std::vector<int> bit_set = m.second;
 
+        // carry move process
+        for (auto&& carry : carry_bit_set)
+        {
+            const std::string carry_qubit_name = qubit_names[carry];
+            depth[carry_qubit_name] = bit_depth;
+        }
         bit_set.insert(bit_set.end(), carry_bit_set.begin(), carry_bit_set.end());
         carry_bit_set.clear();
 
@@ -76,7 +107,7 @@ static void UpdateUpperGateSetList(const int pivot,
                 continue;
             }
 
-            const std::string control = qubit_names[i];
+            const std::string control = qubit_names[bit_set[i]];
             std::vector<std::string> target_list;
             std::vector<Gate> candidates;
 
@@ -87,13 +118,14 @@ static void UpdateUpperGateSetList(const int pivot,
                     continue;
                 }
 
-                target_list.push_back(qubit_names[j]);
+                const std::string candidate_target = qubit_names[bit_set[j]];
+                target_list.push_back(candidate_target);
                 const Gate new_gate("tof", control, target_list);
 
                 if (CanParallelization(gate_set_list[bit_depth], new_gate))
                 {
                     bit_set[j] = -1;
-                    depth[qubit_names[j]]++;
+                    depth[candidate_target]++;
                     candidates.push_back(new_gate);
                 }
                 else
@@ -104,7 +136,7 @@ static void UpdateUpperGateSetList(const int pivot,
 
             if (!candidates.empty())
             {
-                depth[qubit_names[i]]++;
+                depth[control]++;
                 gate_set_list[bit_depth].push_back(candidates.back());
             }
         }
@@ -113,6 +145,8 @@ static void UpdateUpperGateSetList(const int pivot,
         {
             if (e != -1)
             {
+                const std::string qubit_name = qubit_names[e];
+                depth[qubit_name]++;
                 carry_bit_set.push_back(e);
             }
         }
@@ -145,12 +179,12 @@ static std::list<Gate> GenerateGateList(const std::vector<std::list<Gate>>& gate
     {
         if (gate_group.empty()) break;
 
-        ret.emplace_back("block");
+//        ret.emplace_front("block");
         for (auto&& gate : gate_group)
         {
-            ret.push_back(gate);
+            ret.push_front(gate);
         }
-        ret.emplace_back("block");
+//        ret.emplace_front("block");
     }
 
     return ret;
@@ -158,6 +192,7 @@ static std::list<Gate> GenerateGateList(const std::vector<std::list<Gate>>& gate
 
 static void UpdateLowerGateSetList(const int pivot,
                                    const std::vector<int>& one_array,
+                                   const std::pair<int, int>& swap_pair,
                                    std::unordered_map<std::string, int>& depth,
                                    std::vector<std::list<Gate>>& gate_set_list,
                                    const std::vector<std::string>& qubit_names)
@@ -212,7 +247,7 @@ static void UpdateLowerGateSetList(const int pivot,
                 continue;
             }
 
-            const std::string control = qubit_names[i];
+            const std::string control = qubit_names[bit_set[i]];
             std::vector<std::string> target_list;
             std::vector<Gate> candidates;
 
@@ -223,13 +258,13 @@ static void UpdateLowerGateSetList(const int pivot,
                     continue;
                 }
 
-                target_list.push_back(qubit_names[j]);
+                target_list.push_back(qubit_names[bit_set[j]]);
                 const Gate new_gate("tof", control, target_list);
 
                 if (CanParallelization(gate_set_list[bit_depth], new_gate))
                 {
                     bit_set[j] = -1;
-                    depth[qubit_names[j]]++;
+                    depth[qubit_names[bit_set[j]]]++;
                     candidates.push_back(new_gate);
                 }
                 else
@@ -240,7 +275,7 @@ static void UpdateLowerGateSetList(const int pivot,
 
             if (!candidates.empty())
             {
-                depth[qubit_names[i]]++;
+                depth[qubit_names[bit_set[i]]]++;
                 gate_set_list[bit_depth].push_back(candidates.back());
             }
         }
@@ -274,7 +309,6 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
                                                const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
-    std::vector<int> one_array(static_cast<int>(matrix.size()));
     std::unordered_map<std::string, int> depth;
     std::vector<std::list<Gate>> gate_set_list(4 * (2 * matrix.size()));
 
@@ -300,9 +334,12 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
 //    }
 
     // Make triangular
+    std::vector<int> one_array(static_cast<int>(matrix.size()));
+    std::pair<int, int> swap_pair = std::make_pair(-1, -1); // <pivot, target>
     for (int i = 0; i < n; i++)
     {
         bool flg = false;
+        swap_pair = std::make_pair(-1, -1); // <pivot, target>
         one_array.clear();
         for (int j = i; j < n + m; j++)
         {
@@ -315,7 +352,7 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
                     if (j != i)
                     {
                         swap(matrix[i], matrix[j]);
-                        ret.splice(ret.begin(), util::ComposeSwap(i, j, qubit_names));
+                        swap_pair = std::make_pair(i, j);
                     }
                     flg = true;
                 }
@@ -334,11 +371,11 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
 
         // generate candidate cnot list
-        UpdateUpperGateSetList(i, one_array, depth, gate_set_list, matrix, qubit_names);
+        UpdateUpperGateSetList(i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
 
     // add gate
-    ret.splice(ret.end(), GenerateGateList(gate_set_list));
+    ret.splice(ret.begin(), GenerateGateList(gate_set_list));
 
 //    std::cout << "--- upper after matrix decompose" << std::endl;
 //    for (auto&& e : matrix)

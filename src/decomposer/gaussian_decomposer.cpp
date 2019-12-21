@@ -39,6 +39,7 @@ std::list<Gate> GaussianDecomposer::operator()(const int n,
                 }
                 else
                 {
+                    matrix[j] ^= matrix[i];
                     lst.splice(lst.begin(), util::ComposeCNOT(i, j, qubit_names));
                 }
             }

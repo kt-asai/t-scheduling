@@ -132,10 +132,8 @@ void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
     util::Compose(qubit_num_, preparation_, restoration_);
 
-    if (option_.dec_type() == DecompositionType::kgauss)
-    {
-        gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
-    }
+
+    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
 void SimpleCircuitBuilder::ChangeRowOrder()

@@ -28,7 +28,7 @@ public:
 
         Hadamard(int target,
                  int previous_qubit_index,
-                 std::vector<util::xor_func> input_wires_parity)
+                 std::vector<util::xor_func>& input_wires_parity)
                 : target_(target),
                   previous_qubit_index_(previous_qubit_index),
                   input_wires_parity_(input_wires_parity) { }

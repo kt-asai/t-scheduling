@@ -23,7 +23,7 @@ void TparSynthesis::Init(const Character& chr)
     {
         circuit_.add_qubit(chr.qubit_names()[i]);
         circuit_.set_ancilla(chr.qubit_names()[i], chr.ancilla_list()[i]);
-        wires_.emplace_back(chr.num_data_qubit() + chr.num_hadamard()+ 1, 0);
+        wires_.emplace_back(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
         if (!chr.ancilla_list()[i])
         {
             wires_[i].set(j);
