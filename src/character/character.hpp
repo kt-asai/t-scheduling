@@ -24,9 +24,11 @@ public:
         std::vector<util::xor_func> input_wires_parity_;
         std::set<int> in_;
 
+        Hadamard() { }
+
         Hadamard(int target,
                  int previous_qubit_index,
-                 std::vector<util::xor_func>& input_wires_parity)
+                 std::vector<util::xor_func> input_wires_parity)
                 : target_(target),
                   previous_qubit_index_(previous_qubit_index),
                   input_wires_parity_(input_wires_parity) { }
@@ -68,7 +70,6 @@ public:
         qubit_names_.resize(num_qubit_ + num_hadamard_);
         ancilla_list_.resize(num_qubit_);
     }
-
 
     /**
      * return number of qubit in circuit

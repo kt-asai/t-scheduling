@@ -149,7 +149,8 @@ void Circuit::DecomposeCZZ()
                                    Gate("cnot", control_a, control_b)};
 
             num_gate_ += static_cast<int>(czz.size());
-            gate_list_.splice(it, czz);
+            gate_list_.splice(it, std::move(czz));
+            it--;
         }
     }
 }

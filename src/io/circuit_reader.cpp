@@ -72,7 +72,8 @@ Circuit CircuitReader::read()
     if (extension == "qc")
     {
         ReadQC_(circuit);
-        circuit.RemoveIdentities();
+        // TODO: bug fix in remove identities function
+//        circuit.RemoveIdentities();
         circuit.DecomposeCZZ();
     }
     else
@@ -82,7 +83,7 @@ Circuit CircuitReader::read()
         exit(1);
     }
 
-    circuit.RemoveIdentities();
+//    circuit.RemoveIdentities();
 
     return circuit;
 }

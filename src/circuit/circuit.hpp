@@ -247,7 +247,7 @@ public:
         int num_p = count_gate("P") + count_gate("P*");
         int num_z = count_gate("Z");
         int num_toffoli = count_gate("ccz");
-        int num_cnot = count_gate("tof");
+        int num_cnot = count_gate("cnot") + count_gate("tof");
 
         std::cout << "# qubits: " << num_qubit_ << std::endl;
         std::cout << "# ancilla: " << num_ancilla_qubit_ << std::endl;

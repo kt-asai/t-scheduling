@@ -64,7 +64,6 @@ public:
               target_list_(target_list)
     {
         control_list_.push_back(control);
-        std::sort(target_list_.begin(), target_list_.end());
     }
 
     /**
@@ -80,7 +79,6 @@ public:
               control_list_(control_list)
     {
         target_list_.push_back(target);
-        std::sort(control_list_.begin(), control_list_.end());
     }
 
     /**
@@ -95,10 +93,7 @@ public:
             : type_(type),
               control_list_(control_list),
               target_list_(target_list)
-    {
-        std::sort(control_list_.begin(), control_list_.end());
-        std::sort(target_list_.begin(), target_list_.end());
-    }
+    { }
 
     /**
      * retunr gate name

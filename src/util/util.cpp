@@ -112,7 +112,7 @@ int ComputeRankDestructive(int num_qubit,
     for (int row = 0; row < num_qubit_and_hadamard; ++row)
     {
         bool flag = false;
-        for (int col = 0; col < num_qubit; ++col)
+        for (int col = rank; col < num_qubit; ++col)
         {
             if (bits[col].test(row))
             {
