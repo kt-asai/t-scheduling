@@ -52,7 +52,7 @@ void Character::Parse()
         name_map.insert(std::make_pair(name, name_max));
         qubit_names_[name_max] = name;
         ancilla_list_[name_max] = circuit_.is_ancilla_map().at(name);
-        wires[name_max] = util::xor_func((num_qubit_ - num_ancilla_) + num_hadamard_ + 1);
+        wires[name_max] = util::xor_func((num_qubit_ - num_ancilla_) + num_hadamard_ + 1, 0);
 
         if (!ancilla_list_[name_max])
         {
@@ -68,18 +68,6 @@ void Character::Parse()
      */
     for (const Gate& gate : circuit_.gate_list())
     {
-//        // print debug
-//        std::cout << "----------------" << std::endl;
-//        for(auto w : wires)
-//        {
-//            std::cout << w << std::endl;
-//        }
-//        std::cout<< "--- exp ---" << std::endl;
-//        for (auto e : phase_exponents_)
-//        {
-//            std::cout << e.first << ": " << e.second << std::endl;
-//        }
-
         if (gate.type() == "cnot")
         {
             wires[name_map.at(gate.target_list().front())] ^= wires[name_map[gate.control_list().front()]];
@@ -109,6 +97,7 @@ void Character::Parse()
 
             // compute rank
             wires[new_hadamard.target_].reset();
+
             util::ComputeRankDestructive(num_qubit_, (num_qubit_ - num_ancilla_) + num_hadamard_, wires);
             int index = 0;
             for (const auto& phase_exponent : phase_exponents_)
