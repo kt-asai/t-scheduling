@@ -86,13 +86,13 @@ void Character::Parse()
         }
         else if (gate.type() == "X")
         {
-            wires[name_map.at(gate.target_list().front())].flip(num_qubit_ + num_hadamard_);
+            wires[name_map.at(gate.target_list().front())].flip((num_qubit_ - num_ancilla_) + num_hadamard_);
         }
         else if (gate.type() == "Y")
         {
             gate_index = name_map.at(gate.target_list().front());
             InsertPhase_(gate_lookup.at(gate.type()), wires[gate_index]);
-            wires[name_map.at(gate.target_list().front())].flip(num_qubit_ + num_hadamard_);
+            wires[name_map.at(gate.target_list().front())].flip((num_qubit_ - num_ancilla_) + num_hadamard_);
         }
         else if (gate.type() == "T" || gate.type() == "T*"
                  || gate.type() == "P" || gate.type() == "P*"
@@ -109,13 +109,13 @@ void Character::Parse()
 
             // compute rank
             wires[new_hadamard.target_].reset();
-            util::ComputeRankDestructive(num_qubit_, num_qubit_ + num_hadamard_, wires);
+            util::ComputeRankDestructive(num_qubit_, (num_qubit_ - num_ancilla_) + num_hadamard_, wires);
             int index = 0;
             for (const auto& phase_exponent : phase_exponents_)
             {
                 if (phase_exponent.first != 0)
                 {
-                    if (util::IsIndependent(num_qubit_ + num_hadamard_, wires, phase_exponent.second))
+                    if (util::IsIndependent((num_qubit_ - num_ancilla_) + num_hadamard_, wires, phase_exponent.second))
                     {
                         new_hadamard.in_.insert(index);
                     }
