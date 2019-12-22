@@ -74,10 +74,10 @@ static void UpdateUpperGateSetList(const int pivot,
      * generate cnot gate
      */
     std::vector<int> carry_bit_set;
-    for (auto&& m : depth_bit_map)
+    for (auto it = depth_bit_map.begin(); it != depth_bit_map.end(); it++)
     {
-        const int bit_depth = m.first;
-        std::vector<int> bit_set = m.second;
+        const int bit_depth = it->first;
+        std::vector<int> bit_set = it->second;
 
         // carry move process
         for (auto&& carry : carry_bit_set)
@@ -87,6 +87,7 @@ static void UpdateUpperGateSetList(const int pivot,
         }
         bit_set.insert(bit_set.end(), carry_bit_set.begin(), carry_bit_set.end());
         carry_bit_set.clear();
+
 
         if (bit_set.size() == 1)
         {
@@ -136,34 +137,26 @@ static void UpdateUpperGateSetList(const int pivot,
 
             if (!candidates.empty())
             {
-                depth[control]++;
                 gate_set_list[bit_depth].push_back(candidates.back());
             }
         }
 
-        for (auto&& e : bit_set)
+        for (auto&& bit : bit_set)
         {
-            if (e != -1)
+            if (bit != -1)
             {
-                const std::string qubit_name = qubit_names[e];
+                const std::string qubit_name = qubit_names[bit];
                 depth[qubit_name]++;
-                carry_bit_set.push_back(e);
+                carry_bit_set.push_back(bit);
             }
         }
-    }
 
-    // debug
-//    std::cout << "# update gate set list" << std::endl;
-//    int d = 0;
-//    for (auto&& gate_group : gate_set_list)
-//    {
-//        std::cout << "## " << d << "part" << std::endl;
-//        for (auto&& gate : gate_group)
-//        {
-//            gate.print();
-//        }
-//        d++;
-//    }
+        if (carry_bit_set.size() >= 2 && std::next(it) == depth_bit_map.end())
+        {
+            const int next_bit_depth = bit_depth + 1;
+            depth_bit_map.insert(std::make_pair(next_bit_depth, std::vector<int>()));
+        }
+    }
 }
 
 static std::list<Gate> GenerateGateList(const std::vector<std::list<Gate>>& gate_set_list)
@@ -179,128 +172,21 @@ static std::list<Gate> GenerateGateList(const std::vector<std::list<Gate>>& gate
     {
         if (gate_group.empty()) break;
 
-//        ret.emplace_front("block");
+        if (gate_group.size() >= 2)
+        {
+            ret.emplace_front("block");
+        }
         for (auto&& gate : gate_group)
         {
             ret.push_front(gate);
         }
-//        ret.emplace_front("block");
+        if (gate_group.size() >= 2)
+        {
+            ret.emplace_front("block");
+        }
     }
 
     return ret;
-}
-
-static void UpdateLowerGateSetList(const int pivot,
-                                   const std::vector<int>& one_array,
-                                   const std::pair<int, int>& swap_pair,
-                                   std::unordered_map<std::string, int>& depth,
-                                   std::vector<std::list<Gate>>& gate_set_list,
-                                   const std::vector<std::string>& qubit_names)
-{
-    std::map<int, std::vector<int>> depth_bit_map; // <depth, qubit_index>
-
-    /*
-     * Init
-     */
-    depth_bit_map.emplace(depth[qubit_names[pivot]], std::vector<int>(1, pivot));
-    for (auto&& o : one_array)
-    {
-        const int bit_depth = depth[qubit_names[o]];
-        if (depth_bit_map.count(bit_depth))
-        {
-            depth_bit_map[bit_depth].push_back(o);
-        }
-        else
-        {
-            depth_bit_map.emplace(bit_depth, std::vector<int>(1, o));
-        }
-    }
-
-    /*
-     * check and generate cnot gate
-     */
-    std::vector<int> carry_bit_set;
-    for (auto&& m : depth_bit_map)
-    {
-        const int bit_depth = m.first;
-        std::vector<int> bit_set = m.second;
-
-        bit_set.insert(bit_set.end(), carry_bit_set.begin(), carry_bit_set.end());
-        carry_bit_set.clear();
-
-        if (bit_set.size() == 1)
-        {
-            carry_bit_set.push_back(bit_set.front());
-
-            continue;
-        }
-
-        std::sort(bit_set.begin(), bit_set.end(), std::greater<int>());
-
-        /*
-         * Search for gates that can be parallelized
-         */
-        for (size_t i = 0; i < bit_set.size(); i++)
-        {
-            if (bit_set[i] == -1)
-            {
-                continue;
-            }
-
-            const std::string control = qubit_names[bit_set[i]];
-            std::vector<std::string> target_list;
-            std::vector<Gate> candidates;
-
-            for (size_t j = i + 1; j < bit_set.size(); j++)
-            {
-                if (bit_set[j] == -1)
-                {
-                    continue;
-                }
-
-                target_list.push_back(qubit_names[bit_set[j]]);
-                const Gate new_gate("tof", control, target_list);
-
-                if (CanParallelization(gate_set_list[bit_depth], new_gate))
-                {
-                    bit_set[j] = -1;
-                    depth[qubit_names[bit_set[j]]]++;
-                    candidates.push_back(new_gate);
-                }
-                else
-                {
-                    target_list.pop_back();
-                }
-            }
-
-            if (!candidates.empty())
-            {
-                depth[qubit_names[bit_set[i]]]++;
-                gate_set_list[bit_depth].push_back(candidates.back());
-            }
-        }
-
-        for (auto&& e : bit_set)
-        {
-            if (e != -1)
-            {
-                carry_bit_set.push_back(e);
-            }
-        }
-    }
-
-    // debug
-//    std::cout << "# update gate set list" << std::endl;
-//    int d = 0;
-//    for (auto&& gate_group : gate_set_list)
-//    {
-//        std::cout << "## " << d << "part" << std::endl;
-//        for (auto&& gate : gate_group)
-//        {
-//            gate.print();
-//        }
-//        d++;
-//    }
 }
 
 std::list<Gate> ParallelDecomposer::operator()(const int n,
@@ -308,9 +194,12 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
                                                std::vector<util::xor_func>& matrix,
                                                const std::vector<std::string>& qubit_names)
 {
+    constexpr int swap_step = 3;
+    constexpr int cnot_step = 1;
+    const int max_num_gate = (swap_step + cnot_step) * (2 * matrix.size());
     std::list<Gate> ret;
     std::unordered_map<std::string, int> depth;
-    std::vector<std::list<Gate>> gate_set_list(4 * (2 * matrix.size()));
+    std::vector<std::list<Gate>> gate_set_list(max_num_gate);
 
     // init
     for (auto&& name : qubit_names)
