@@ -19,7 +19,8 @@ bool CanParallelization(const std::list<Gate>& mappled_gate_list,
     return false;
 }
 
-static void UpdateUpperGateSetList(const int pivot,
+static void UpdateUpperGateSetList(const int sign,
+                                   const int pivot,
                                    const std::vector<int>& one_array,
                                    const std::pair<int, int>& swap_pair,
                                    std::unordered_map<std::string, int>& depth,
@@ -55,6 +56,9 @@ static void UpdateUpperGateSetList(const int pivot,
     /*
      * Init depth of each qubit
      */
+    auto l = [](int lhs, int rhs){return lhs < rhs;};
+    auto g = [](int lhs, int rhs){return lhs > rhs;};
+    auto comp = sign ? g : l;
     std::map<int, std::vector<int>> depth_bit_map; // <depth, qubit_index>
     depth_bit_map.emplace(depth[qubit_names[pivot]], std::vector<int>(1, pivot));
     for (auto&& o : one_array)
@@ -96,7 +100,7 @@ static void UpdateUpperGateSetList(const int pivot,
             continue;
         }
 
-        std::sort(bit_set.begin(), bit_set.end());
+        std::sort(bit_set.begin(), bit_set.end(), comp);
 
         /*
          * Search for gates that can be parallelized
@@ -260,11 +264,11 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
 
         // generate candidate cnot list
-        UpdateUpperGateSetList(i, one_array, swap_pair, depth, gate_set_list, qubit_names);
+        UpdateUpperGateSetList(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
 
     // add gate
-    ret.splice(ret.begin(), GenerateGateList(gate_set_list));
+//    ret.splice(ret.begin(), GenerateGateList(gate_set_list));
 
 //    std::cout << "--- upper after matrix decompose" << std::endl;
 //    for (auto&& e : matrix)
@@ -273,26 +277,26 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
 //    }
 
     //Finish the job
-    std::vector<int> lower_one_array(static_cast<int>(matrix.size()));
+    swap_pair = std::make_pair(-1, -1); // <pivot, target>
+    one_array.clear();
     for (int i = n - 1; i > 0; i--)
     {
-        lower_one_array.clear();
+        one_array.clear();
         for (int j = i - 1; j >= 0; j--)
         {
             if (matrix[j].test(i))
             {
                 matrix[j] ^= matrix[i];
-                lower_one_array.push_back(j);
-                ret.splice(ret.begin(), util::ComposeCNOT(i, j, qubit_names));
+                one_array.push_back(j);
             }
         }
 
         // generate candidate cnot list
-//        UpdateLowerGateSetList(i, lower_one_array, depth, gate_set_list, qubit_names);
+        UpdateUpperGateSetList(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
 
-//    // add gate
-//    ret.splice(ret.end(), GenerateGateList(gate_set_list));
+    // add gate
+    ret.splice(ret.end(), GenerateGateList(gate_set_list));
 
     return ret;
 }
