@@ -57,7 +57,8 @@ private:
                          const std::vector<util::xor_func>& in,
                          const std::vector<util::xor_func>& out);
 
-    void ChangeRowOrder();
+    void ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
+                        std::vector<util::xor_func>& matrix);
 
 public:
     SimpleCircuitBuilder() = default;

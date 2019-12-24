@@ -1,3 +1,5 @@
+#include <random>
+
 #include "simple_circuit_builder.hpp"
 
 #include "../decomposer/gaussian_decomposer.hpp"
@@ -136,13 +138,62 @@ void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
-void SimpleCircuitBuilder::ChangeRowOrder()
+void SimpleCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
+                                          std::vector<util::xor_func>& matrix)
 {
-//    std::cout << "--- prepartion" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
+    std::random_device seed_gen;
+    std::mt19937 engine(seed_gen());
+    std::uniform_int_distribution<> dist(0, matrix.size() - 1);
+
+    std::vector<util::xor_func> tmp_matrix = matrix;
+    int eval = 1;
+
+    int cnt = 100;
+    while (cnt > 0)
+    {
+        const int index_a = dist(engine);
+        const int index_b = dist(engine);
+
+        if (index_a == index_b)
+        {
+            continue;
+        }
+
+        tmp_matrix = matrix;
+        
+        std::swap(tmp_matrix[index_a], tmp_matrix[index_b]);
+        int target_a = -1;
+        int target_b = -1;
+        if (target_phase_map.count(index_a))
+        {
+            target_a = target_phase_map[index_a];
+            target_phase_map.erase(index_a);
+        }
+        if (target_phase_map.count(index_b))
+        {
+            target_b = target_phase_map[index_b];
+            target_phase_map.erase(index_b);
+        }
+
+        if (target_a > -1)
+        {
+            target_phase_map.emplace(index_b, target_a);
+        }
+        if (target_b > -1)
+        {
+            target_phase_map.emplace(index_a, target_b);
+        }
+
+        // evaluate matrix
+        const int tmp_eval = 1; // TODO: create evaluation of matrix function
+        if (tmp_eval > eval)
+        {
+            eval = tmp_eval;
+            matrix = tmp_matrix;
+        }
+
+        cnt--;
+    }
 }
 
 std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
