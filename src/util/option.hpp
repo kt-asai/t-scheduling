@@ -10,13 +10,6 @@ enum SynthesisMethod
     ktskd
 };
 
-
-enum PartitionType
-{
-    kmatroid,
-    kgreed
-};
-
 enum DecompositionType
 {
     kgauss,
@@ -37,7 +30,6 @@ private:
     bool change_row_order_;
 
     SynthesisMethod syn_method_;
-    PartitionType part_type_;
     DecompositionType dec_type_;
 
 public:
@@ -48,14 +40,12 @@ public:
            int distillation_step,
            bool change_row_order,
            SynthesisMethod syn_method,
-           PartitionType part_type,
            DecompositionType dec_type)
             : input_path_(std::move(input_path_)),
               num_distillation_(num_distillation),
               distillation_step_(distillation_step),
               change_row_order_(change_row_order),
               syn_method_(syn_method),
-              part_type_(part_type),
               dec_type_(dec_type)
     {
         output_path_ = input_path_ + "-opt";
@@ -91,11 +81,6 @@ public:
         return syn_method_;
     }
 
-    PartitionType part_type() const
-    {
-        return part_type_;
-    }
-
     DecompositionType dec_type() const
     {
         return dec_type_;
@@ -127,11 +112,6 @@ public:
         syn_method_ = syn_method;
     }
 
-    void set_part_type(const PartitionType& part_type)
-    {
-        part_type_ = part_type;
-    }
-
     void set_dec_type(const DecompositionType& dec_type)
     {
         dec_type_ = dec_type;
@@ -155,16 +135,6 @@ public:
                 break;
         }
         std::cout << "## change row order: " << std::boolalpha << change_row_order_ << std::endl;
-        std::cout << "## partition type: ";
-        switch (part_type_)
-        {
-            case PartitionType::kmatroid:
-                std::cout << "matroid" << std::endl;
-                break;
-            case PartitionType::kgreed:
-                std::cout << "greed" << std::endl;
-                break;
-        }
         std::cout << "## decomposition type: ";
         switch (dec_type_)
         {

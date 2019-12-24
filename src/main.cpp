@@ -40,7 +40,6 @@ int main(int argc, char** argv)
     option.set_distillation_step(1000);
     option.set_change_row_order(false);
     option.set_syn_method((SynthesisMethod::ktskd));
-    option.set_part_type(PartitionType::kmatroid);
     option.show();
 
     std::cout << "-->> read file" << std::endl;
