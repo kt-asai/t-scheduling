@@ -31,6 +31,15 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
+static int EvaluateMatrix(std::vector<util::xor_func>& matrix)
+{
+    int result = 0;
+
+    for (int row = 0; row < )
+
+    return result;
+}
+
 void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
                                           std::vector<util::xor_func>& matrix)
 {
@@ -39,9 +48,10 @@ void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
     std::uniform_int_distribution<> dist(0, matrix.size() - 1);
 
     std::vector<util::xor_func> tmp_matrix = matrix;
-    int eval = 1;
+    int eval = EvaluateMatrix(matrix);
 
-    int cnt = 100;
+    // TODO: implement SA
+    int cnt = 5;
     while (cnt > 0)
     {
         const int index_a = dist(engine);
@@ -78,7 +88,7 @@ void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
         }
 
         // evaluate matrix
-        const int tmp_eval = 1; // TODO: create evaluation of matrix function
+        const int tmp_eval = EvaluateMatrix(tmp_matrix);
         if (tmp_eval > eval)
         {
             eval = tmp_eval;
