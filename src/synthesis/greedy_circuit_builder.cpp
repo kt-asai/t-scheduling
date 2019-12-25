@@ -1,4 +1,5 @@
 #include <random>
+#include <chrono>
 
 #include "greedy_circuit_builder.hpp"
 
@@ -31,11 +32,88 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
-static int EvaluateMatrix(std::vector<util::xor_func>& matrix)
+static int EvaluateMatrix(const int n,
+                          std::vector<util::xor_func> matrix)
 {
+    constexpr int not_cost = 1;
+    constexpr int cnot_cost = 1;
+    constexpr int swap_cost = cnot_cost * 3;
+
     int result = 0;
 
-    for (int row = 0; row < )
+    bool flg = false;
+    bool is_create = false;
+
+    for (int j = 0; j < n; j++)
+    {
+        if (matrix[j].test(n))
+        {
+            matrix[j].reset(n);
+
+            if (!is_create)
+            {
+                result += not_cost;
+                is_create = true;
+            }
+        }
+    }
+
+    // Make triangular
+    for (int i = 0; i < n; i++)
+    {
+        flg = false;
+        is_create = false;
+        for (int j = i; j < n; j++)
+        {
+            if (matrix[j].test(i))
+            {
+                if (!flg)
+                {
+                    if (j != i)
+                    {
+                        swap(matrix[i], matrix[j]);
+                        result += swap_cost;
+                    }
+                    flg = true;
+                }
+                else
+                {
+                    matrix[j] ^= matrix[i];
+
+                    if (!is_create)
+                    {
+                        result += cnot_cost;
+                        is_create = true;
+                    }
+                }
+            }
+        }
+        if (!flg)
+        {
+            std::cerr << "ERROR: not full rank" << std::endl;
+
+            exit(1);
+        }
+    }
+
+    // Finish the job
+    for (int i = n - 1; i > 0; i--)
+    {
+        is_create = false;
+        for (int j = i - 1; j >= 0; j--)
+        {
+            if (matrix[j].test(i))
+            {
+                matrix[j] ^= matrix[i];
+
+                if (!is_create)
+                {
+                    result += cnot_cost;
+                    is_create = true;
+                }
+            }
+        }
+    }
 
     return result;
 }
@@ -47,8 +125,15 @@ void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
     std::mt19937 engine(seed_gen());
     std::uniform_int_distribution<> dist(0, matrix.size() - 1);
 
-    std::vector<util::xor_func> tmp_matrix = matrix;
-    int eval = EvaluateMatrix(matrix);
+    int eval = EvaluateMatrix(qubit_num_, matrix);
+
+    std::vector<util::xor_func> current_matrix = matrix;
+    std::unordered_map<int, int>& current_target_phase_map = target_phase_map;
+
+    // SA parameters
+    auto req_time = std::chrono::seconds(1);
+    auto start = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now() + req_time;
 
     // TODO: implement SA
     int cnt = 5;
@@ -62,37 +147,40 @@ void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
             continue;
         }
 
-        tmp_matrix = matrix;
+        current_matrix = matrix;
+        current_target_phase_map = target_phase_map;
 
-        std::swap(tmp_matrix[index_a], tmp_matrix[index_b]);
+        std::swap(current_matrix[index_a], current_matrix[index_b]);
         int target_a = -1;
         int target_b = -1;
-        if (target_phase_map.count(index_a))
+        if (current_target_phase_map.count(index_a))
         {
-            target_a = target_phase_map[index_a];
-            target_phase_map.erase(index_a);
+            target_a = current_target_phase_map[index_a];
+            current_target_phase_map.erase(index_a);
         }
-        if (target_phase_map.count(index_b))
+        if (current_target_phase_map.count(index_b))
         {
-            target_b = target_phase_map[index_b];
-            target_phase_map.erase(index_b);
+            target_b = current_target_phase_map[index_b];
+            current_target_phase_map.erase(index_b);
         }
 
         if (target_a > -1)
         {
-            target_phase_map.emplace(index_b, target_a);
+            current_target_phase_map.emplace(index_b, target_a);
         }
         if (target_b > -1)
         {
-            target_phase_map.emplace(index_a, target_b);
+            current_target_phase_map.emplace(index_a, target_b);
         }
 
         // evaluate matrix
-        const int tmp_eval = EvaluateMatrix(tmp_matrix);
-        if (tmp_eval > eval)
+        const int current_eval = EvaluateMatrix(qubit_num_, current_matrix);
+        if (current_eval > eval)
         {
-            eval = tmp_eval;
-            matrix = tmp_matrix;
+            // update
+            eval = current_eval;
+            matrix = current_matrix;
+            target_phase_map = current_target_phase_map;
         }
 
         cnt--;
