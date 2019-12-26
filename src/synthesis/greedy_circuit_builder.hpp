@@ -50,9 +50,6 @@ private:
     int ComputeTimeStep(const std::list<Gate>& gate_list);
 
     void ApplyPhaseGates(std::list<Gate>& gate_list,
-                         const std::set<int>& phase_exponent_index_set);
-
-    void ApplyPhaseGates(std::list<Gate>& gate_list,
                          const std::unordered_map<int, int>& target_phase_map);
 
 public:

@@ -16,17 +16,9 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
 {
     bool is_io_different = true;
 
-//    bits_ = std::vector<util::xor_func>(qubit_num_);
-//    preparation_ = std::vector<util::xor_func>(qubit_num_);
-//    restoration_ = std::vector<util::xor_func>(qubit_num_);
-
     for (int i = 0; i < qubit_num_; i++)
     {
         is_io_different &= (in[i] == out[i]);
-//        preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
-//        restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
-//        preparation_[i].set(i);
-//        restoration_[i].set(i);
     }
 
     return is_io_different;
@@ -123,109 +115,92 @@ void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
 {
     std::random_device seed_gen;
     std::mt19937 engine(seed_gen());
-    std::uniform_int_distribution<> dist(0, matrix.size() - 1);
-
-    int eval = EvaluateMatrix(qubit_num_, matrix);
-
-    std::vector<util::xor_func> current_matrix = matrix;
-    std::unordered_map<int, int>& current_target_phase_map = target_phase_map;
+    std::uniform_int_distribution<> dist_index(0, matrix.size() - 1);
 
     // SA parameters
-    auto req_time = std::chrono::seconds(1);
-    auto start = std::chrono::system_clock::now();
-    auto end = std::chrono::system_clock::now() + req_time;
+    const auto req_time = std::chrono::milliseconds(100);
+    const auto start = std::chrono::system_clock::now();
+    const auto end = std::chrono::system_clock::now() + req_time;
+    auto current_time = start;
 
-    // TODO: implement SA
-    int cnt = 5;
-    while (cnt > 0)
+    constexpr auto rate = 10000;
+    std::uniform_int_distribution<> dist(1, rate);
+
+    int best_eval = EvaluateMatrix(qubit_num_, matrix);
+    int current_eval = best_eval;
+    std::vector<util::xor_func> current_matrix = matrix;
+    std::unordered_map<int, int> current_target_phase_map = target_phase_map;
+
+    /*
+     * implement SA
+     */
+    while (true)
     {
-        const int index_a = dist(engine);
-        const int index_b = dist(engine);
+        current_time = std::chrono::system_clock::now();
+        if (current_time > end)
+        {
+            break;
+        }
+
+        const int index_a = dist_index(engine);
+        const int index_b = dist_index(engine);
 
         if (index_a == index_b)
         {
             continue;
         }
 
-        current_matrix = matrix;
-        current_target_phase_map = target_phase_map;
+        std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
+        std::vector<util::xor_func> next_matrix(current_matrix);
 
-        std::swap(current_matrix[index_a], current_matrix[index_b]);
+        std::swap(next_matrix[index_a], next_matrix[index_b]);
         int target_a = -1;
         int target_b = -1;
-        if (current_target_phase_map.count(index_a))
+        if (next_target_phase_map.count(index_a))
         {
-            target_a = current_target_phase_map[index_a];
-            current_target_phase_map.erase(index_a);
+            target_a = next_target_phase_map[index_a];
+            next_target_phase_map.erase(index_a);
         }
-        if (current_target_phase_map.count(index_b))
+        if (next_target_phase_map.count(index_b))
         {
-            target_b = current_target_phase_map[index_b];
-            current_target_phase_map.erase(index_b);
+            target_b = next_target_phase_map[index_b];
+            next_target_phase_map.erase(index_b);
         }
 
         if (target_a > -1)
         {
-            current_target_phase_map.emplace(index_b, target_a);
+            next_target_phase_map.emplace(index_b, target_a);
         }
         if (target_b > -1)
         {
-            current_target_phase_map.emplace(index_a, target_b);
+            next_target_phase_map.emplace(index_a, target_b);
         }
 
         // evaluate matrix
-        const int current_eval = EvaluateMatrix(qubit_num_, current_matrix);
-        if (current_eval > eval)
+        const int next_eval = EvaluateMatrix(qubit_num_, next_matrix);
+        const auto time = current_time - start;
+        const bool force_next = (rate * (req_time - time)) > (req_time * dist(seed_gen));
+
+        // update
+        if (current_eval > next_eval || force_next)
         {
-            // update
-            eval = current_eval;
+            current_eval = next_eval;
+            current_matrix = next_matrix;
+            current_target_phase_map = next_target_phase_map;
+        }
+
+        if (best_eval > current_eval)
+        {
+            best_eval = current_eval;
             matrix = current_matrix;
             target_phase_map = current_target_phase_map;
         }
-
-        cnt--;
     }
 }
 
 int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
 {
     return static_cast<int>(gate_list.size());
-}
-
-void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
-                                           const std::set<int>& phase_exponent_index_set)
-{
-    int index = 0;
-    for (auto&& phase_exponent_index : phase_exponent_index_set)
-    {
-        if (phase_exponent_[phase_exponent_index].first <= 4)
-        {
-            if (phase_exponent_[phase_exponent_index].first / 4 == 1)
-            {
-                gate_list.emplace_back("Z", qubit_names_[index]);
-            }
-            if (phase_exponent_[phase_exponent_index].first / 2 == 1)
-            {
-                gate_list.emplace_back("P", qubit_names_[index]);
-            }
-            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
-            {
-                gate_list.emplace_back("T", qubit_names_[index]);
-            }
-        }
-        else
-        {
-            if (phase_exponent_[phase_exponent_index].first == 5 || phase_exponent_[phase_exponent_index].first == 6)
-            {
-                gate_list.emplace_back("P*", qubit_names_[index]);
-            }
-            if (phase_exponent_[phase_exponent_index].first % 2 == 1)
-            {
-                gate_list.emplace_back("T*", qubit_names_[index]);
-            }
-        }
-        index++;
-    }
 }
 
 void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
@@ -554,7 +529,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         /*
          * Apply the phase gates
          */
-//        ApplyPhaseGates(ret, result_sub_part);
         ApplyPhaseGates(ret, result_target_phase_map);
 
         /*
