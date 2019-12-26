@@ -58,11 +58,16 @@ void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
     util::FixBasis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
     util::Compose(qubit_num_, preparation_, restoration_);
 
-//    std::cout << "-- before preparation_" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
+    std::cout << "-- before preparation_" << std::endl;
+    std::cout << "target phase map size: " << target_phase_map.size() << std::endl;
+    int index = 0;
+    for (auto&& e : preparation_)
+    {
+        std::cout << e << " : ";
+        if (target_phase_map.count(index)) std::cout << target_phase_map[index] << std::endl;
+        else std::cout << "-1" << std::endl;
+        index++;
+    }
 //    std::cout << "---- restoration_" << std::endl;
 //    for (auto&& e : restoration_)
 //    {
@@ -74,11 +79,16 @@ void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
         ChangeRowOrder(target_phase_map, preparation_);
     }
 
-//    std::cout << "-- after preparation_" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
+    std::cout << "-- after preparation_" << std::endl;
+    std::cout << "target phase map size: " << target_phase_map.size() << std::endl;
+    index = 0;
+    for (auto&& e : preparation_)
+    {
+        std::cout << e << " : ";
+        if (target_phase_map.count(index)) std::cout << target_phase_map[index] << std::endl;
+        else std::cout << "-1" << std::endl;
+        index++;
+    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -266,38 +276,95 @@ void SimpleCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_p
             break;
         }
 
-        const int index_a = dist_index(engine);
-        const int index_b = dist_index(engine);
+        const int target_a = dist_index(engine);
+        const int target_b = dist_index(engine);
 
-        if (index_a == index_b)
+        if (target_a == target_b)
         {
             continue;
         }
 
+        // swap prcess
+//        std::swap(current_matrix[target_a], current_matrix[target_b]);
+//        int phase_index_a = -1;
+//        int phase_index_b = -1;
+//        if (current_target_phase_map.count(target_a))
+//        {
+//            phase_index_a = current_target_phase_map[target_a];
+//            current_target_phase_map.erase(target_a);
+//        }
+//        if (current_target_phase_map.count(target_b))
+//        {
+//            phase_index_b = current_target_phase_map[target_b];
+//            current_target_phase_map.erase(target_b);
+//        }
+//
+//        if (phase_index_a != -1)
+//        {
+//            current_target_phase_map.emplace(target_b, phase_index_a);
+//        }
+//        if (phase_index_b != -1)
+//        {
+//            current_target_phase_map.emplace(target_a, phase_index_b);
+//        }
+//
+//        // evaluate matrix
+//        const int next_eval = EvaluateMatrix(qubit_num_, current_matrix);
+//        const auto time = current_time - start;
+//        const bool force_current = false; //(rate * (req_time - time)) > (req_time * dist(seed_gen));
+//
+//        // update
+//        if (current_eval > next_eval || force_current)
+//        {
+//            current_eval = next_eval;
+//        }
+//        else
+//        {
+//            // recover
+//            std::swap(current_matrix[target_a], current_matrix[target_b]);
+//            if (phase_index_a != -1)
+//            {
+//                current_target_phase_map.erase(target_b);
+//                current_target_phase_map.emplace(target_a, phase_index_a);
+//            }
+//            if (phase_index_b != -1)
+//            {
+//                current_target_phase_map.erase(target_a);
+//                current_target_phase_map.emplace(target_b, phase_index_b);
+//            }
+//        }
+//
+//        if (best_eval > current_eval)
+//        {
+//            best_eval = current_eval;
+//            matrix = current_matrix;
+//            target_phase_map = current_target_phase_map;
+//        }
+
         std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
         std::vector<util::xor_func> next_matrix(current_matrix);
 
-        std::swap(next_matrix[index_a], next_matrix[index_b]);
-        int target_a = -1;
-        int target_b = -1;
-        if (next_target_phase_map.count(index_a))
+        std::swap(next_matrix[target_a], next_matrix[target_b]);
+        int phase_index_a = -1;
+        int phase_index_b = -1;
+        if (next_target_phase_map.count(target_a))
         {
-            target_a = next_target_phase_map[index_a];
-            next_target_phase_map.erase(index_a);
+            phase_index_a = next_target_phase_map[target_a];
+            next_target_phase_map.erase(target_a);
         }
-        if (next_target_phase_map.count(index_b))
+        if (next_target_phase_map.count(target_b))
         {
-            target_b = next_target_phase_map[index_b];
-            next_target_phase_map.erase(index_b);
+            phase_index_b = next_target_phase_map[target_b];
+            next_target_phase_map.erase(target_b);
         }
 
-        if (target_a > -1)
+        if (phase_index_a != -1)
         {
-            next_target_phase_map.emplace(index_b, target_a);
+            next_target_phase_map.emplace(target_b, phase_index_a);
         }
-        if (target_b > -1)
+        if (phase_index_b != -1)
         {
-            next_target_phase_map.emplace(index_a, target_b);
+            next_target_phase_map.emplace(target_a, phase_index_b);
         }
 
         // evaluate matrix

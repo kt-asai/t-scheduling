@@ -38,8 +38,8 @@ int main(int argc, char** argv)
     option.set_input_path(path);
     option.set_num_distillation(4);
     option.set_distillation_step(1000);
-    option.set_change_row_order(true);
-    option.set_syn_method((SynthesisMethod::ktskd));
+    option.set_change_row_order(false);
+    option.set_syn_method((SynthesisMethod::ktpar));
     option.show();
 
     std::cout << "-->> read file" << std::endl;
