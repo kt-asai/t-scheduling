@@ -14,9 +14,21 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
 {
     bool is_io_different = true;
 
+    bits_ = std::vector<util::xor_func>(qubit_num_);
+    preparation_ = std::vector<util::xor_func>(qubit_num_);
+    restoration_ = std::vector<util::xor_func>(qubit_num_);
+
     for (int i = 0; i < qubit_num_; i++)
     {
         is_io_different &= (in[i] == out[i]);
+        for (int i = 0; i < qubit_num_; i++)
+        {
+            is_io_different &= (in[i] == out[i]);
+            preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
+            restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+            preparation_[i].set(i);
+            restoration_[i].set(i);
+        }
     }
 
     return is_io_different;
@@ -64,6 +76,42 @@ void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
     }
 }
 
+void GreedyCircuitBuilder::UnPrepare(const std::vector <util::xor_func>& restoration)
+{
+    preparation_ = std::move(restoration);
+    restoration_ = std::vector<util::xor_func>(qubit_num_);
+    // re-initialize
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+        restoration_[i].set(i);
+    }
+}
+
+void GreedyCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
+                                           const std::vector<util::xor_func>& in,
+                                           const std::vector<util::xor_func>& out,
+                                           MatrixReconstructor& sa)
+{
+    for (int i = 0; i < qubit_num_; i++)
+    {
+        bits_[i] = out[i];
+    }
+
+    std::unordered_map<int, int> none;
+    if (option_.change_row_order())
+    {
+        bits_ = sa.Execute(static_cast<int>(bits_.size()), bits_, none);
+    }
+
+    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+
+    util::Compose(qubit_num_, preparation_, restoration_);
+
+    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
+}
+
 int GreedyCircuitBuilder::CheckDimension(const Character& chr,
                                          std::vector <util::xor_func>& wires,
                                          int current_dimension)
@@ -86,43 +134,26 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 {
     std::list<Gate> ret;
 
+    std::vector<std::pair<int, int>> phase_target_list;
+
     if (Init(in, out) && index_list.empty())
     {
         return ret;
     }
 
-    std::vector<util::xor_func> bits(qubit_num_);
-    std::vector<util::xor_func> preparation(qubit_num_);
-    std::vector<util::xor_func> restoration(qubit_num_);
-    for (int i = 0; i < qubit_num_; i++)
-    {
-        preparation[i] = util::xor_func(qubit_num_ + 1, 0);
-        restoration[i] = util::xor_func(qubit_num_ + 1, 0);
-        preparation[i].set(i);
-        restoration[i].set(i);
-    }
-    std::vector<std::pair<int, int>> phase_target_list;
-
     /*
      * Reduce in to echelon form to decide on a basis
      */
-    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation, std::vector<std::string>());
+    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 
     while (!index_list.empty())
     {
-        /**
-         * first build sub-circuit
-         */
-        std::vector<util::xor_func> result_bits(qubit_num_);
-        std::vector<util::xor_func> result_preparation(qubit_num_);
         std::vector<util::xor_func> result_restoration(qubit_num_);
         for (int i = 0; i < qubit_num_; i++)
         {
-            result_preparation[i] = util::xor_func(qubit_num_ + 1, 0);
             result_restoration[i] = util::xor_func(qubit_num_ + 1, 0);
-            result_preparation[i].set(i);
             result_restoration[i].set(i);
         }
         std::list<Gate> result_gate_list;
@@ -130,6 +161,9 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         std::list<int> delete_index_list;
         std::unordered_map<int, int> result_target_phase_map;
 
+        /**
+         * first build sub-circuit
+         */
         for (auto it = index_list.begin(); it != index_list.end();)
         {
             std::list<Gate> tmp_gate_list;
@@ -137,8 +171,8 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             tmp_sub_part.insert(*it);
 
             std::vector<util::xor_func> tmp_bits(qubit_num_);
-            std::vector<util::xor_func> tmp_preparation = preparation;
-            std::vector<util::xor_func> tmp_restoration = restoration;
+            std::vector<util::xor_func> tmp_preparation = preparation_;
+            std::vector<util::xor_func> tmp_restoration = restoration_;
 
             std::unordered_map<int, int> tmp_target_phase_map;
 
@@ -191,8 +225,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                  */
                 if (ComputeTimeStep(tmp_gate_list) < option_.distillation_step())
                 {
-                    result_bits = tmp_bits;
-                    result_preparation = tmp_preparation;
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
@@ -220,8 +252,8 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
             tmp_sub_part.insert(*it);
 
             std::vector<util::xor_func> tmp_bits(qubit_num_);
-            std::vector<util::xor_func> tmp_preparation = preparation;
-            std::vector<util::xor_func> tmp_restoration = restoration;
+            std::vector<util::xor_func> tmp_preparation = preparation_;
+            std::vector<util::xor_func> tmp_restoration = restoration_;
 
             std::unordered_map<int, int> tmp_target_phase_map;
 
@@ -274,8 +306,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                  */
                 if (ComputeTimeStep(tmp_gate_list) < option_.distillation_step())
                 {
-                    result_bits = tmp_bits;
-                    result_preparation = tmp_preparation;
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
                     result_gate_list = tmp_gate_list;
@@ -303,36 +333,13 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         /*
          * Unprepare the bits
          */
-        preparation = std::move(result_restoration);
-        restoration = std::vector<util::xor_func>(qubit_num_);
-        // re-initialize
-        for (int i = 0; i < qubit_num_; i++)
-        {
-            restoration[i] = util::xor_func(qubit_num_ + 1, 0);
-            restoration[i].set(i);
-        }
+        UnPrepare(result_restoration);
     }
 
     /*
      * Reduce out to the basis of in
      */
-    for (int i = 0; i < qubit_num_; i++)
-    {
-        bits[i] = out[i];
-    }
-
-    std::unordered_map<int, int> none;
-    if (option_.change_row_order())
-    {
-        bits = sa.Execute(static_cast<int>(bits.size()), bits, none);
-    }
-
-    util::ToUpperEchelon(qubit_num_, dimension_, bits, &restoration, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits, &restoration, std::vector<std::string>());
-
-    util::Compose(qubit_num_, preparation, restoration);
-
-    ret.splice(ret.end(), (*decomposer_)(qubit_num_, 0, preparation, qubit_names_));
+    PrepareLastPart(ret, in, out, sa);
 
     return ret;
 }

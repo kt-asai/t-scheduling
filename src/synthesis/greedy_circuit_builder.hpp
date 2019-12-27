@@ -19,6 +19,8 @@
 #include "../decomposer/gaussian_decomposer.hpp"
 #include "../decomposer/parallel_decomposer.hpp"
 
+#include "../matrix/matrix_reconstructor.hpp"
+
 
 namespace tskd {
 
@@ -41,6 +43,10 @@ private:
     std::vector<std::string> qubit_names_;
     std::vector<util::phase_exponent> phase_exponent_;
 
+    std::vector<util::xor_func> bits_;
+    std::vector<util::xor_func> preparation_;
+    std::vector<util::xor_func> restoration_;
+
     bool Init(const std::vector <util::xor_func>& in,
               const std::vector <util::xor_func>& out);
 
@@ -48,6 +54,13 @@ private:
 
     void ApplyPhaseGates(std::list<Gate>& gate_list,
                          const std::unordered_map<int, int>& target_phase_map);
+
+    void UnPrepare(const std::vector <util::xor_func>& restoration);
+
+    void PrepareLastPart(std::list<Gate>& gate_list,
+                         const std::vector<util::xor_func>& in,
+                         const std::vector<util::xor_func>& out,
+                         MatrixReconstructor& sa);
 
 public:
     GreedyCircuitBuilder() = default;

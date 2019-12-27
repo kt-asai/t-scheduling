@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     option.set_input_path(path);
     option.set_num_distillation(4);
     option.set_distillation_step(1000);
-    option.set_syn_method((SynthesisMethod::ktpar));
+    option.set_syn_method((SynthesisMethod::ktskd));
     option.show();
 
     std::cout << "-->> read file" << std::endl;
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-//    result.print_gate_list();
+    result.print_gate_list();
 
     return 0;
 }
