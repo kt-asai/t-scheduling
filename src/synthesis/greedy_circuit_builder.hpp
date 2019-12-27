@@ -44,9 +44,6 @@ private:
     bool Init(const std::vector <util::xor_func>& in,
               const std::vector <util::xor_func>& out);
 
-    void ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
-                        std::vector<util::xor_func>& matrix);
-
     int ComputeTimeStep(const std::list<Gate>& gate_list);
 
     void ApplyPhaseGates(std::list<Gate>& gate_list,

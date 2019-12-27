@@ -9,6 +9,8 @@
 
 #include "../tpar/partition.hpp"
 
+#include "../matrix/matrix_reconstructor.hpp"
+
 namespace tskd {
 
 bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
@@ -22,180 +24,6 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     }
 
     return is_io_different;
-}
-
-static int EvaluateMatrix(const int n,
-                          std::vector<util::xor_func> matrix)
-{
-    constexpr int not_cost = 1;
-    constexpr int cnot_cost = 1;
-    constexpr int swap_cost = cnot_cost * 3;
-
-    int result = 0;
-
-    bool flg = false;
-    bool is_create = false;
-
-    for (int j = 0; j < n; j++)
-    {
-        if (matrix[j].test(n))
-        {
-            matrix[j].reset(n);
-
-            if (!is_create)
-            {
-                result += not_cost;
-                is_create = true;
-            }
-        }
-    }
-
-    // Make triangular
-    for (int i = 0; i < n; i++)
-    {
-        flg = false;
-        is_create = false;
-        for (int j = i; j < n; j++)
-        {
-            if (matrix[j].test(i))
-            {
-                if (!flg)
-                {
-                    if (j != i)
-                    {
-                        swap(matrix[i], matrix[j]);
-                        result += swap_cost;
-                    }
-                    flg = true;
-                }
-                else
-                {
-                    matrix[j] ^= matrix[i];
-
-                    if (!is_create)
-                    {
-                        result += cnot_cost;
-                        is_create = true;
-                    }
-                }
-            }
-        }
-        if (!flg)
-        {
-            std::cerr << "ERROR: not full rank" << std::endl;
-
-            exit(1);
-        }
-    }
-
-    // Finish the job
-    for (int i = n - 1; i > 0; i--)
-    {
-        is_create = false;
-        for (int j = i - 1; j >= 0; j--)
-        {
-            if (matrix[j].test(i))
-            {
-                matrix[j] ^= matrix[i];
-
-                if (!is_create)
-                {
-                    result += cnot_cost;
-                    is_create = true;
-                }
-            }
-        }
-    }
-
-    return result;
-}
-
-void GreedyCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
-                                          std::vector<util::xor_func>& matrix)
-{
-    std::random_device seed_gen;
-    std::mt19937 engine(seed_gen());
-    std::uniform_int_distribution<> dist_index(0, matrix.size() - 1);
-
-    // SA parameters
-    const auto req_time = std::chrono::milliseconds(100);
-    const auto start = std::chrono::system_clock::now();
-    const auto end = std::chrono::system_clock::now() + req_time;
-    auto current_time = start;
-
-    constexpr auto rate = 10000;
-    std::uniform_int_distribution<> dist(1, rate);
-
-    int best_eval = EvaluateMatrix(qubit_num_, matrix);
-    int current_eval = best_eval;
-    std::vector<util::xor_func> current_matrix = matrix;
-    std::unordered_map<int, int> current_target_phase_map = target_phase_map;
-
-    /*
-     * implement SA
-     */
-    while (true)
-    {
-        current_time = std::chrono::system_clock::now();
-        if (current_time > end)
-        {
-            break;
-        }
-
-        const int index_a = dist_index(engine);
-        const int index_b = dist_index(engine);
-
-        if (index_a == index_b)
-        {
-            continue;
-        }
-
-        std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
-        std::vector<util::xor_func> next_matrix(current_matrix);
-
-        std::swap(next_matrix[index_a], next_matrix[index_b]);
-        int target_a = -1;
-        int target_b = -1;
-        if (next_target_phase_map.count(index_a))
-        {
-            target_a = next_target_phase_map[index_a];
-            next_target_phase_map.erase(index_a);
-        }
-        if (next_target_phase_map.count(index_b))
-        {
-            target_b = next_target_phase_map[index_b];
-            next_target_phase_map.erase(index_b);
-        }
-
-        if (target_a > -1)
-        {
-            next_target_phase_map.emplace(index_b, target_a);
-        }
-        if (target_b > -1)
-        {
-            next_target_phase_map.emplace(index_a, target_b);
-        }
-
-        // evaluate matrix
-        const int next_eval = EvaluateMatrix(qubit_num_, next_matrix);
-        const auto time = current_time - start;
-        const bool force_next = (rate * (req_time - time)) > (req_time * dist(seed_gen));
-
-        // update
-        if (current_eval > next_eval || force_next)
-        {
-            current_eval = next_eval;
-            current_matrix = next_matrix;
-            current_target_phase_map = next_target_phase_map;
-        }
-
-        if (best_eval > current_eval)
-        {
-            best_eval = current_eval;
-            matrix = current_matrix;
-            target_phase_map = current_target_phase_map;
-        }
-    }
 }
 
 int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
@@ -260,22 +88,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                                             std::vector<util::xor_func>& in,
                                             const std::vector<util::xor_func>& out)
 {
-    /*
-    std::cout << std::endl;
-    std::cout << "-->> greedy circuit builder" << std::endl;
-    std::cout << "# input" << std::endl;
-    std::cout << "-- index list" << std::endl;
-    for (auto&& e : index_list)
-    {
-        std::cout << e << ":" << phase_exponent_[e].second << std::endl;
-    }
-    std::cout << "-- carry index list" << std::endl;
-    for (auto&& e : carry_index_list)
-    {
-        std::cout << e << ":" << phase_exponent_[e].second << std::endl;
-    }
-     */
-
     std::list<Gate> ret;
 
     if (Init(in, out) && index_list.empty())
@@ -300,15 +112,10 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
      */
     util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation, std::vector<std::string>());
 
+    MatrixReconstructor sa(in, dimension_, qubit_num_);
+
     while (!index_list.empty())
     {
-//        std::cout << "-- index list size: " << index_list.size() << std::endl;
-//        std::cout << "-- index list in loop" << std::endl;
-//        for (auto&& e : index_list)
-//        {
-//            std::cout << e << ":" << phase_exponent_[e].second << std::endl;
-//        }
-
         /**
          * first build sub-circuit
          */
@@ -341,7 +148,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 
             if (oracle_(phase_exponent_, tmp_sub_part))
             {
-//                std::cout << "oracle part num: " << tmp_sub_part.size() << std::endl;
                 /**
                  * create bits matrix
                  */
@@ -362,45 +168,21 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 }
 
                 /**
-                 * prepare preparation matrix
-                 */
-
-                const int num_partition = static_cast<int>(tmp_sub_part.size());
-                /*
-                std::cout << std::endl;
-                std::cout << "# prepare" << std::endl;
-                std::cout << "## num qubit: " << qubit_num_ << std::endl;
-                std::cout << "## dimension: " << dimension_ << std::endl;
-                std::cout << "## num partition: " << num_partition << std::endl;
-                std::cout << "## in" << std::endl;
-                for (auto&& e : in)
-                {
-                    std::cout << e << std::endl;
-                }
-                std::cout << "## tmp_bits" << std::endl;
-                for (auto&& e : tmp_bits)
-                {
-                    std::cout << e << std::endl;
-                }
-                std::cout << "## tmp_restoration" << std::endl;
-                for (auto&& e : tmp_restoration)
-                {
-                    std::cout << e << std::endl;
-                }
-                 */
-                util::ToUpperEchelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
-                util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
-                               std::vector<std::string>());
-                util::Compose(qubit_num_, tmp_preparation, tmp_restoration);
-
-                /**
                  * change row order in the matrix
                  */
                 if (option_.change_row_order())
                 {
-                    // ChangeRowOrder();
-                    ChangeRowOrder(tmp_target_phase_map, tmp_preparation);
+                    tmp_bits = sa.Execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
                 }
+
+                /**
+                 * prepare preparation matrix
+                 */
+                const int num_partition = static_cast<int>(tmp_sub_part.size());
+                util::ToUpperEchelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
+                util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
+                               std::vector<std::string>());
+                util::Compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
                  * create gate list
@@ -431,15 +213,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 it++;
             }
         }
-
-//        index_list.splice(index_list.end(), std::move(delete_index_list));
-//        index_list.unique();
-//        std::cout << "after unique" << std::endl;
-//        for (auto&& e : index_list)
-//        {
-//            std::cout << e << " ";
-//        }
-//        std::cout << std::endl;
 
         /**
          * second build sub-circuit
@@ -478,6 +251,14 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 }
 
                 /**
+                 * change row order in the matrix
+                 */
+                if (option_.change_row_order())
+                {
+                    tmp_bits = sa.Execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
+                }
+
+                /**
                  * prepare preparation matrix
                  */
                 const int num_partition = static_cast<int>(tmp_sub_part.size());
@@ -485,14 +266,6 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
                 util::Compose(qubit_num_, tmp_preparation, tmp_restoration);
-
-                /**
-                 * change row order in the matrix
-                 */
-                if (option_.change_row_order())
-                {
-                     ChangeRowOrder(tmp_target_phase_map, tmp_preparation);
-                }
 
                 /**
                  * create gate list
@@ -551,8 +324,16 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
     {
         bits[i] = out[i];
     }
+
+    std::unordered_map<int, int> none;
+    if (option_.change_row_order())
+    {
+        bits = sa.Execute(static_cast<int>(bits.size()), bits, none);
+    }
+
     util::ToUpperEchelon(qubit_num_, dimension_, bits, &restoration, std::vector<std::string>());
     util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits, &restoration, std::vector<std::string>());
+
     util::Compose(qubit_num_, preparation, restoration);
 
     ret.splice(ret.end(), (*decomposer_)(qubit_num_, 0, preparation, qubit_names_));

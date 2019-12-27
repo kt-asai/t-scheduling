@@ -17,6 +17,8 @@
 #include "../decomposer/gaussian_decomposer.hpp"
 #include "../decomposer/parallel_decomposer.hpp"
 
+#include "../matrix/matrix_reconstructor.hpp"
+
 namespace tskd {
 
 /**
@@ -57,7 +59,8 @@ private:
 
     void PrepareLastPart(std::list<Gate>& gate_list,
                          const std::vector<util::xor_func>& in,
-                         const std::vector<util::xor_func>& out);
+                         const std::vector<util::xor_func>& out,
+                         MatrixReconstructor& sa);
 
 public:
     SimpleCircuitBuilder() = default;

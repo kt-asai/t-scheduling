@@ -114,11 +114,17 @@ void SimpleCircuitBuilder::UnPrepare()
 
 void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
                                            const std::vector<util::xor_func>& in,
-                                           const std::vector<util::xor_func>& out)
+                                           const std::vector<util::xor_func>& out,
+                                           MatrixReconstructor& sa)
 {
     for (int i = 0; i < qubit_num_; i++)
     {
         bits_[i] = out[i];
+    }
+    std::unordered_map<int, int> none;
+    if (option_.change_row_order())
+    {
+        bits_ = sa.Execute(static_cast<int>(bits_.size()), bits_, none);
     }
     util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
@@ -184,7 +190,7 @@ std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
     /*
      * Reduce out to the basis of in
      */
-    PrepareLastPart(ret, in, out);
+    PrepareLastPart(ret, in, out, sa);
 
     return ret;
 }
