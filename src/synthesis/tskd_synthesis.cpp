@@ -50,13 +50,6 @@ void TskdSynthesis::Init(const Character& chr)
         index++;
     }
 
-//    std::cout << std::endl;
-//    std::cout << "--- before index sort" << std::endl;
-//    for (auto&& r : remaining_[0])
-//    {
-//        std::cout << std::setw(3) << r << ":" << chr.phase_exponents()[r].second << std::endl;
-//    }
-
     /**
      * sort index of phase exponents
      */
@@ -74,12 +67,6 @@ void TskdSynthesis::Init(const Character& chr)
                                }
                            });
     }
-
-//    std::cout << "--- after index sort" << std::endl;
-//    for (auto&& r : remaining_[0])
-//    {
-//        std::cout << std::setw(3) <<  r << ":" << chr.phase_exponents()[r].second << std::endl;
-//    }
 }
 
 void TskdSynthesis::DetermineApplyPhaseSet(Character::Hadamard& hadamard)
@@ -119,36 +106,7 @@ void TskdSynthesis::DetermineApplyPhaseSet(Character::Hadamard& hadamard)
 
 void TskdSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
 {
-
-    /*
-    std::cout << std::endl;
-    std::cout << "----- after hadamard -----" << std::endl;
-    std::cout << "--- index list[0]" << std::endl;
-    for (auto&& e : index_list[0])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-    std::cout << "--- carry index list[0]" << std::endl;
-    for (auto&& e : carry_index_list[0])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-     */
-
     circuit_.add_gate_list(builder_.Build(index_list_[0], carry_index_list_[0], wires_, wires_));
-
-    /*
-    std::cout << "--- index list[1]" << std::endl;
-    for (auto&& e : index_list[1])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-    std::cout << "--- carry index list[1]" << std::endl;
-    for (auto&& e : carry_index_list[1])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-     */
     circuit_.add_gate_list(builder_.Build(index_list_[1], carry_index_list_[1], wires_, hadamard.input_wires_parity_));
     remaining_[0].splice(remaining_[0].begin(), carry_index_list_[0]);
     remaining_[1].splice(remaining_[1].begin(), carry_index_list_[1]);
@@ -178,21 +136,6 @@ void TskdSynthesis::ConstructFinalSubCircuit()
         }
     }
 
-    /*
-    std::cout << std::endl;
-    std::cout << "----- final part -----" << std::endl;
-    std::cout << "-- final index list[0]" << std::endl;
-    for (auto&& e : final_index_list[0])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-    std::cout << "-- carry index list[1]" << std::endl;
-    for (auto&& e : final_index_list[1])
-    {
-        std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-    }
-     */
-
     circuit_.add_gate_list(builder_.Build(final_index_list[0], none_list, wires_, wires_));
     circuit_.add_gate_list(builder_.Build(final_index_list[1], none_list, wires_, chr_.outputs()));
 
@@ -208,100 +151,17 @@ Circuit TskdSynthesis::Execute()
 
     int dimension = chr_.num_data_qubit();
 
-    /*
-    for (int i = 0; i < 2; ++i)
-    {
-        for (auto it = remaining_[i].begin(); it != remaining_[i].end();)
-        {
-            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
-            if (tmp.none())
-            {
-                index_list[i].push_back(*it);
-            }
-        }
-    }
-     */
-
     for (auto&& hadamard : chr_.hadamards())
     {
         /*
-        std::cout << std::endl;
-        std::cout << "------- hadamard -------" << std::endl;
-        std::cout << "--- remining[0]" << std::endl;
-        for (auto&& r : remaining_[0])
-        {
-            std::cout << r << std::endl;
-        }
-        std::cout << "--- remining[1]" << std::endl;
-        for (auto&& r : remaining_[1])
-        {
-            std::cout << r << std::endl;
-        }
-         */
-
-        /*
          * determine apply (carry) index list
          */
-
-        /*
-        std::cout << std::endl;
-        std::cout << "----- before hadamard -----" << std::endl;
-        std::cout << "--- index list[0]" << std::endl;
-        for (auto&& e : index_list[0])
-        {
-            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-        }
-        std::cout << "--- carry index list[0]" << std::endl;
-        for (auto&& e : carry_index_list[0])
-        {
-            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-        }
-
-        std::cout << "--- index list[1]" << std::endl;
-        for (auto&& e : index_list[1])
-        {
-            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-        }
-        std::cout << "--- carry index list[1]" << std::endl;
-        for (auto&& e : carry_index_list[1])
-        {
-            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-        }
-         */
-
         DetermineApplyPhaseSet(hadamard);
 
         /**
          * Construct sub-circuit
          */
         ConstructSubCircuit(hadamard);
-
-        /*
-//        std::cout << std::endl;
-//        std::cout << "----- after construct -----" << std::endl;
-//        std::cout << "--- index list[0]" << std::endl;
-//        for (auto&& e : index_list[0])
-//        {
-//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-//        }
-//        std::cout << "--- carry index list[0]" << std::endl;
-//        for (auto&& e : carry_index_list[0])
-//        {
-//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-//        }
-//        circuit_.add_gate_list(builder_.Build(index_list[0], carry_index_list[0], wires_, wires_));
-
-//        std::cout << "--- index list[1]" << std::endl;
-//        for (auto&& e : index_list[1])
-//        {
-//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-//        }
-//        std::cout << "--- carry index list[1]" << std::endl;
-//        for (auto&& e : carry_index_list[1])
-//        {
-//            std::cout << e << ":" << chr_.phase_exponents()[e].second << std::endl;
-//        }
-         */
 
         /*
          * Apply Hadamard gate

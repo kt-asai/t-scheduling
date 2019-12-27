@@ -85,9 +85,7 @@ void TparSynthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
 
 void TparSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
 {
-    //        std::cout << "-->> frozen[0] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(frozen_[0], wires_, wires_));
-//        std::cout << "-->> frozen[1] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(frozen_[1], wires_, hadamard.input_wires_parity_));
     for (int i = 0; i < chr_.num_qubit(); i++)
     {
@@ -120,10 +118,7 @@ int TparSynthesis::CheckDimension(int current_dimension)
 
 void TparSynthesis::ConstructFinalSubCircuit()
 {
-//    std::cout << "->>> last TparSynthesis to output" << std::endl;
-//    std::cout << "-->> frozen[0] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(floats_[0], wires_, wires_));
-//    std::cout << "-->> frozen[1] build start" << std::endl;
     circuit_.add_gate_list(builder_.Build(floats_[1], wires_, chr_.outputs()));
 
     /*
@@ -140,50 +135,9 @@ Circuit TparSynthesis::Execute()
     int dimension = chr_.num_data_qubit();
 
     /*
-    std::cout << "- wires" << std::endl;
-    for (auto&& w : `wires_)
-    {
-        std::cout << w << std::endl;
-    }
-    std::cout << "- mask" << std::endl;
-    std::cout << mask_ << std::endl;
-    std::cout << "- remaining[0]" << std::endl;
-    for (auto&& r : remaining_[0])
-    {
-        std::cout << r << ":" << chr_.phase_exponents()[r].second << std::endl;
-    }
-    std::cout << "- remaining[1]" << std::endl;
-    for (auto&& r : remaining_[1])
-    {
-        std::cout << r << ":" << chr_.phase_exponents()[r].second << std::endl;
-    }
-    */
-
-    /*
      * create an initial partition
      */
     CreatePartition();
-
-    /*
-    std::cout << "- floats[0]" << std::endl;
-    for (auto f : floats_[0])
-    {
-        std::cout << "--" << std::endl;
-        for (auto ff : f)
-        {
-            std::cout << ff << ":" << chr_.phase_exponents()[ff].second << std::endl;
-        }
-    }
-    std::cout << "- floats[1]" << std::endl;
-    for (auto f : floats_[1])
-    {
-        std::cout << "--" << std::endl;
-        for (auto ff : f)
-        {
-            std::cout << ff << ":" << chr_.phase_exponents()[ff].second << std::endl;
-        }
-    }
-     */
 
     /**
      * Synthesize the circuit by applying H-gate to greed
@@ -195,52 +149,9 @@ Circuit TparSynthesis::Execute()
     for (auto&& hadamard : chr_.hadamards())
     {
         /*
-        std::cout << h_count << ".番目--" << std::endl;
-        std::cout << hadamard.target_ << std::endl;
-        std::cout << hadamard.previous_qubit_index_ << std::endl;
-        std::cout << "- input parity" << std::endl;
-        for (auto&& e : hadamard.input_wires_parity_)
-        {
-            std::cout << e << std::endl;
-        }
-        std::cout << "- in" << std::endl;
-        for (auto&& e : hadamard.in_)
-        {
-            std::cout << e << std::endl;
-        }
-        */
-
-        /*
          * determine frozen partitions
          */
         DetermineApplyPartition(hadamard);
-
-        /*
-        std::cout << "---- frozen[0]" << std::endl;
-        for (auto&& e : frozen_[0])
-        {
-            std::cout << "--" << std::endl;
-            for (auto&& ee : e)
-            {
-                std::cout << ee << ":" << chr_.phase_exponents()[ee].second << std::endl;
-            }
-        }
-        std::cout << "---- frozen[1]" << std::endl;
-        for (auto&& e : frozen_[1])
-        {
-            std::cout << "--" << std::endl;
-            for (auto&& ee : e)
-            {
-                std::cout << ee << ":" << chr_.phase_exponents()[ee].second << std::endl;
-            }
-        }
-
-        std::cout << "-- wire 1" << std::endl;
-        for (auto&& w : wires_)
-        {
-            std::cout << w << std::endl;
-        }
-         */
 
         /*
          * Construct {CNOT, T} subcircuit for the frozen partitions
@@ -250,44 +161,12 @@ Circuit TparSynthesis::Execute()
         /*
          * Apply Hadamard gate
          */
-        /*
-        std::cout << "---- hardamard" << std::endl;
-        std::cout << "target=" << hadamard.target_ << std::endl;
-        std::cout << "new index=" << hadamard.previous_qubit_index_ << std::endl;
-        std::cout << "- input parity" << std::endl;
-        for (auto&& e : hadamard.input_wires_parity_)
-        {
-            std::cout << e << std::endl;
-        }
-        std::cout << "- in" << std::endl;
-        for (auto&& e : hadamard.in_)
-        {
-            std::cout << e << std::endl;
-        }
-         */
-
         ApplyHadamard(hadamard);
-
-        /*
-        std::cout << "-- wire 2" << std::endl;
-        for (auto&& w : wires_)
-        {
-            std::cout << w << std::endl;
-        }
-         */
 
         /*
          * Check for increases in dimension
          */
         dimension = CheckDimension(dimension);
-
-        /*
-        std::cout << "-- wire 3" << std::endl;
-        for (auto&& w : wires_)
-        {
-            std::cout << w << std::endl;
-        }
-         */
 
         /*
          * Add new functions to the partition

@@ -3,10 +3,6 @@
 
 #include "greedy_circuit_builder.hpp"
 
-#include "../util/util.hpp"
-
-#include "../circuit/gate.hpp"
-
 #include "../tpar/partition.hpp"
 
 #include "../matrix/matrix_reconstructor.hpp"
