@@ -35,10 +35,19 @@ int main(int argc, char** argv)
         option.set_dec_type(DecompositionType::kgauss);
     }
 
+    const std::string change = argv[3];
+    if (change == "true")
+    {
+        option.set_change_row_order(true);
+    }
+    else
+    {
+        option.set_change_row_order(false);
+    }
+
     option.set_input_path(path);
     option.set_num_distillation(4);
     option.set_distillation_step(1000);
-    option.set_change_row_order(false);
     option.set_syn_method((SynthesisMethod::ktpar));
     option.show();
 
@@ -62,7 +71,7 @@ int main(int argc, char** argv)
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-    result.print_gate_list();
+//    result.print_gate_list();
 
     return 0;
 }

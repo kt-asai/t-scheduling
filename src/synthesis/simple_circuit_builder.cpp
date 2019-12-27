@@ -3,6 +3,8 @@
 
 #include "simple_circuit_builder.hpp"
 
+#include "../matrix/matrix_reconstructor.hpp"
+
 #include "../decomposer/gaussian_decomposer.hpp"
 
 namespace tskd {
@@ -57,38 +59,6 @@ void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
     util::ToUpperEchelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::FixBasis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
     util::Compose(qubit_num_, preparation_, restoration_);
-
-    std::cout << "-- before preparation_" << std::endl;
-    std::cout << "target phase map size: " << target_phase_map.size() << std::endl;
-    int index = 0;
-    for (auto&& e : preparation_)
-    {
-        std::cout << e << " : ";
-        if (target_phase_map.count(index)) std::cout << target_phase_map[index] << std::endl;
-        else std::cout << "-1" << std::endl;
-        index++;
-    }
-//    std::cout << "---- restoration_" << std::endl;
-//    for (auto&& e : restoration_)
-//    {
-//        std::cout << e << std::endl;
-//    }
-
-    if (option_.change_row_order())
-    {
-        ChangeRowOrder(target_phase_map, preparation_);
-    }
-
-    std::cout << "-- after preparation_" << std::endl;
-    std::cout << "target phase map size: " << target_phase_map.size() << std::endl;
-    index = 0;
-    for (auto&& e : preparation_)
-    {
-        std::cout << e << " : ";
-        if (target_phase_map.count(index)) std::cout << target_phase_map[index] << std::endl;
-        else std::cout << "-1" << std::endl;
-        index++;
-    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -154,239 +124,7 @@ void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
     util::Compose(qubit_num_, preparation_, restoration_);
 
-
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
-}
-
-static int EvaluateMatrix(const int n,
-                          std::vector<util::xor_func> matrix)
-{
-    constexpr int not_cost = 1;
-    constexpr int cnot_cost = 1;
-    constexpr int swap_cost = cnot_cost * 3;
-
-    int result = 0;
-
-    bool flg = false;
-    bool is_create = false;
-
-    for (int j = 0; j < n; j++)
-    {
-        if (matrix[j].test(n))
-        {
-            matrix[j].reset(n);
-
-            if (!is_create)
-            {
-                result += not_cost;
-                is_create = true;
-            }
-        }
-    }
-
-    // Make triangular
-    for (int i = 0; i < n; i++)
-    {
-        flg = false;
-        is_create = false;
-        for (int j = i; j < n; j++)
-        {
-            if (matrix[j].test(i))
-            {
-                if (!flg)
-                {
-                    if (j != i)
-                    {
-                        swap(matrix[i], matrix[j]);
-                        result += swap_cost;
-                    }
-                    flg = true;
-                }
-                else
-                {
-                    matrix[j] ^= matrix[i];
-
-                    if (!is_create)
-                    {
-                        result += cnot_cost;
-                        is_create = true;
-                    }
-                }
-            }
-        }
-        if (!flg)
-        {
-            std::cerr << "ERROR: not full rank" << std::endl;
-
-            exit(1);
-        }
-    }
-
-    // Finish the job
-    for (int i = n - 1; i > 0; i--)
-    {
-        is_create = false;
-        for (int j = i - 1; j >= 0; j--)
-        {
-            if (matrix[j].test(i))
-            {
-                matrix[j] ^= matrix[i];
-
-                if (!is_create)
-                {
-                    result += cnot_cost;
-                    is_create = true;
-                }
-            }
-        }
-    }
-
-    return result;
-}
-
-void SimpleCircuitBuilder::ChangeRowOrder(std::unordered_map<int, int>& target_phase_map,
-                                          std::vector<util::xor_func>& matrix)
-{
-    std::random_device seed_gen;
-    std::mt19937 engine(seed_gen());
-    std::uniform_int_distribution<> dist_index(0, matrix.size() - 1);
-
-    // SA parameters
-    const auto req_time = std::chrono::milliseconds(100);
-    const auto start = std::chrono::system_clock::now();
-    const auto end = std::chrono::system_clock::now() + req_time;
-    auto current_time = start;
-
-    constexpr auto rate = 10000;
-    std::uniform_int_distribution<> dist(1, rate);
-
-    int best_eval = EvaluateMatrix(qubit_num_, matrix);
-    int current_eval = best_eval;
-    std::vector<util::xor_func> current_matrix = matrix;
-    std::unordered_map<int, int> current_target_phase_map = target_phase_map;
-
-    /*
-     * implement SA
-     */
-    while (true)
-    {
-        current_time = std::chrono::system_clock::now();
-        if (current_time > end)
-        {
-            break;
-        }
-
-        const int target_a = dist_index(engine);
-        const int target_b = dist_index(engine);
-
-        if (target_a == target_b)
-        {
-            continue;
-        }
-
-        // swap prcess
-//        std::swap(current_matrix[target_a], current_matrix[target_b]);
-//        int phase_index_a = -1;
-//        int phase_index_b = -1;
-//        if (current_target_phase_map.count(target_a))
-//        {
-//            phase_index_a = current_target_phase_map[target_a];
-//            current_target_phase_map.erase(target_a);
-//        }
-//        if (current_target_phase_map.count(target_b))
-//        {
-//            phase_index_b = current_target_phase_map[target_b];
-//            current_target_phase_map.erase(target_b);
-//        }
-//
-//        if (phase_index_a != -1)
-//        {
-//            current_target_phase_map.emplace(target_b, phase_index_a);
-//        }
-//        if (phase_index_b != -1)
-//        {
-//            current_target_phase_map.emplace(target_a, phase_index_b);
-//        }
-//
-//        // evaluate matrix
-//        const int next_eval = EvaluateMatrix(qubit_num_, current_matrix);
-//        const auto time = current_time - start;
-//        const bool force_current = false; //(rate * (req_time - time)) > (req_time * dist(seed_gen));
-//
-//        // update
-//        if (current_eval > next_eval || force_current)
-//        {
-//            current_eval = next_eval;
-//        }
-//        else
-//        {
-//            // recover
-//            std::swap(current_matrix[target_a], current_matrix[target_b]);
-//            if (phase_index_a != -1)
-//            {
-//                current_target_phase_map.erase(target_b);
-//                current_target_phase_map.emplace(target_a, phase_index_a);
-//            }
-//            if (phase_index_b != -1)
-//            {
-//                current_target_phase_map.erase(target_a);
-//                current_target_phase_map.emplace(target_b, phase_index_b);
-//            }
-//        }
-//
-//        if (best_eval > current_eval)
-//        {
-//            best_eval = current_eval;
-//            matrix = current_matrix;
-//            target_phase_map = current_target_phase_map;
-//        }
-
-        std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
-        std::vector<util::xor_func> next_matrix(current_matrix);
-
-        std::swap(next_matrix[target_a], next_matrix[target_b]);
-        int phase_index_a = -1;
-        int phase_index_b = -1;
-        if (next_target_phase_map.count(target_a))
-        {
-            phase_index_a = next_target_phase_map[target_a];
-            next_target_phase_map.erase(target_a);
-        }
-        if (next_target_phase_map.count(target_b))
-        {
-            phase_index_b = next_target_phase_map[target_b];
-            next_target_phase_map.erase(target_b);
-        }
-
-        if (phase_index_a != -1)
-        {
-            next_target_phase_map.emplace(target_b, phase_index_a);
-        }
-        if (phase_index_b != -1)
-        {
-            next_target_phase_map.emplace(target_a, phase_index_b);
-        }
-
-        // evaluate matrix
-        const int next_eval = EvaluateMatrix(qubit_num_, next_matrix);
-        const auto time = current_time - start;
-        const bool force_next = (rate * (req_time - time)) > (req_time * dist(seed_gen));
-
-        // update
-        if (current_eval > next_eval || force_next)
-        {
-            current_eval = next_eval;
-            current_matrix = next_matrix;
-            current_target_phase_map = next_target_phase_map;
-        }
-
-        if (best_eval > current_eval)
-        {
-            best_eval = current_eval;
-            matrix = current_matrix;
-            target_phase_map = current_target_phase_map;
-        }
-    }
 }
 
 std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
@@ -403,38 +141,29 @@ std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
     }
 
     /*
-    std::cout << "-->> build circuit" << std::endl;
-    std::cout << "# partition size: " << static_cast<int>(partition.size()) << std::endl;
-    for (auto&& e : partition)
-    {
-        std::cout << "# --" << std::endl;
-        for (auto&& ee : e)
-        {
-            std::cout << "# " << phase_exponent_[ee].second << std::endl;
-        }
-    }
-    std::cout << "# input " << std::endl;
-    for (auto&& e : in)
-    {
-        std::cout << "# " << e << std::endl;
-    }
-    std::cout << "# output " << std::endl;
-    for (auto&& e : out)
-    {
-        std::cout << "# " << e << std::endl;
-    }
-     */
-
-    /*
      * Reduce in to echelon form to decide on a basis
      */
     util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
+
+    MatrixReconstructor sa(in, dimension_, qubit_num_);
+
     /*
      * For each partition... Compute *it, apply T gates, uncompute
      */
     for (auto&& it : partition)
     {
+        /*
+         * Initialize binary matrix
+         */
         InitBits(it, target_phase_map);
+
+        /*
+         * Re-construct binary matrix
+         */
+        if (option_.change_row_order())
+        {
+            bits_ = sa.Execute(static_cast<int>(it.size()), bits_, target_phase_map);
+        }
 
         /*
          * Prepare the bits

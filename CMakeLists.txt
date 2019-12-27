@@ -24,7 +24,8 @@ add_executable(${TARGETS} src/main.cpp
         src/synthesis/tpar_synthesis.cpp
         src/synthesis/tskd_synthesis.cpp
         src/synthesis/simple_circuit_builder.cpp
-        src/synthesis/greedy_circuit_builder.cpp)
+        src/synthesis/greedy_circuit_builder.cpp
+        src/matrix/matrix_reconstructor.cpp)
 
 
 set(CMAKE_CXX_COMPILER "g++")
