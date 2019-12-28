@@ -2,6 +2,7 @@
 #define T_SCHEDULING_MATRIX_RECONSTRUCTOR_HPP
 
 #include <random>
+#include <chrono>
 #include <unordered_map>
 
 #include "../util/util.hpp"

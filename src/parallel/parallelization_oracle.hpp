@@ -1,0 +1,14 @@
+//
+// Created by askt on 2019/12/28.
+//
+
+#ifndef T_SCHEDULING_PARALLELIZATION_ORACLE_HPP
+#define T_SCHEDULING_PARALLELIZATION_ORACLE_HPP
+
+
+class parallelization_oracle {
+
+};
+
+
+#endif //T_SCHEDULING_PARALLELIZATION_ORACLE_HPP
