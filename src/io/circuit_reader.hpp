@@ -18,7 +18,7 @@ private:
      * @param path file path
      * @return extension
      */
-    static inline std::string extension_(const std::string& path)
+    static inline std::string extension(const std::string& path)
     {
         std::string extension;
         std::string::size_type pos = path.find_last_of('.');
@@ -35,8 +35,8 @@ private:
      * @param delimiter a delimiter as like space and ',' etc...
      * @return some splitted strings
      */
-    static inline std::vector<std::string> split_(const std::string& input,
-                                                  char delimiter)
+    static inline std::vector<std::string> split(const std::string& input,
+                                                 char delimiter)
     {
         std::istringstream stream(input);
         std::string field;
@@ -52,7 +52,7 @@ private:
      * read qc format
      * @param qc empty Circuit class
      */
-    void ReadQC_(Circuit& circuit);
+    void read_qc(Circuit& circuit);
 
 public:
     /**

@@ -2,8 +2,8 @@
 
 namespace tskd {
 
-static int EvaluateMatrix(const int n,
-                          std::vector<util::xor_func> matrix)
+static int evaluate_matrix(const int n,
+                           std::vector<util::xor_func> matrix)
 {
     constexpr int not_cost = 1;
     constexpr int cnot_cost = 1;
@@ -88,7 +88,7 @@ static int EvaluateMatrix(const int n,
     return result;
 }
 
-std::vector<util::xor_func> MatrixReconstructor::Execute(const int num_partition,
+std::vector<util::xor_func> MatrixReconstructor::execute(const int num_partition,
                                                          const std::vector<util::xor_func>& bits,
                                                          std::unordered_map<int, int>& target_phase_map)
 {
@@ -110,10 +110,10 @@ std::vector<util::xor_func> MatrixReconstructor::Execute(const int num_partition
         init_restoration[i].set(i);
     }
     std::vector<util::xor_func> bits_backup(bits);
-    util::ToUpperEchelon(num_partition, dimension_, bits_backup, &init_restoration, std::vector<std::string>());
-    util::FixBasis(num_qubit_, dimension_, num_partition, input_, bits_backup, &init_restoration, std::vector<std::string>());
+    util::to_upper_echelon(num_partition, dimension_, bits_backup, &init_restoration, std::vector<std::string>());
+    util::fix_basis(num_qubit_, dimension_, num_partition, input_, bits_backup, &init_restoration, std::vector<std::string>());
 
-    int current_eval = EvaluateMatrix(num_qubit_, init_restoration);
+    int current_eval = evaluate_matrix(num_qubit_, init_restoration);
     std::vector<util::xor_func> current_bits = bits;
     std::unordered_map<int, int> current_target_phase_map = target_phase_map;
 
@@ -235,9 +235,9 @@ std::vector<util::xor_func> MatrixReconstructor::Execute(const int num_partition
         }
         std::vector<util::xor_func> next_bits_backup(next_bits);
 
-        util::ToUpperEchelon(num_partition, dimension_, next_bits, &tmp_restoration, std::vector<std::string>());
-        util::FixBasis(num_qubit_, dimension_, num_partition, input_, next_bits, &tmp_restoration, std::vector<std::string>());
-        const int next_eval = EvaluateMatrix(num_qubit_, tmp_restoration);
+        util::to_upper_echelon(num_partition, dimension_, next_bits, &tmp_restoration, std::vector<std::string>());
+        util::fix_basis(num_qubit_, dimension_, num_partition, input_, next_bits, &tmp_restoration, std::vector<std::string>());
+        const int next_eval = evaluate_matrix(num_qubit_, tmp_restoration);
         const auto time = current_time - start;
         const bool force_next = (rate_ * (req_time_ - time)) > (req_time_ * dist(seed_generator_));
 

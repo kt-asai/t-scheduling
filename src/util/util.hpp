@@ -74,9 +74,9 @@ public:
  * @param bits parity matrix
  * @return rank of matrix
 */
-int ComputeRankDestructive(int num_qubit,
-                           int num_qubit_and_hadamard,
-                           std::vector<xor_func>& bits);
+int compute_rank_destructive(int num_qubit,
+                             int num_qubit_and_hadamard,
+                             std::vector<xor_func>& bits);
 
 /**
  * make triangular to determine the rank
@@ -85,9 +85,9 @@ int ComputeRankDestructive(int num_qubit,
  * @param bits parity matrix
  * @return rank of matrix
 */
-int ComputeRank(int num_qubit,
-                int num_qubit_and_hadamard,
-                std::vector<xor_func>& bits);
+int compute_rank(int num_qubit,
+                 int num_qubit_and_hadamard,
+                 std::vector<xor_func>& bits);
 
 /**
  * check linear independence of one vector wrt a matrix (destructive)
@@ -96,9 +96,9 @@ int ComputeRank(int num_qubit,
  * @param parity parity to check
  * @return whether parity is linearly independent of bits
 */
-bool IsIndependentDestructive(int num_qubit,
-                              const std::vector<xor_func>& bits,
-                              xor_func& parity);
+bool is_independent_destructive(int num_qubit,
+                                const std::vector<xor_func>& bits,
+                                xor_func& parity);
 
 /**
  * check linear independence of one vector wrt a matrix
@@ -107,53 +107,53 @@ bool IsIndependentDestructive(int num_qubit,
  * @param parity parity to check
  * @return whether parity is linearly independent of bits
 */
-bool IsIndependent(int num_qubit,
-                   const std::vector<xor_func>& bits,
-                   const xor_func& parity);
+bool is_independent(int num_qubit,
+                    const std::vector<xor_func>& bits,
+                    const xor_func& parity);
 
-std::list<Gate> ToUpperEchelon(int m,
-                               int n,
-                               std::vector<xor_func>& bits,
-                               std::vector<xor_func> *mat,
-                               const std::vector<std::string>& qubit_names);
+std::list<Gate> to_upper_echelon(int m,
+                                 int n,
+                                 std::vector<xor_func>& bits,
+                                 std::vector<xor_func> *mat,
+                                 const std::vector<std::string>& qubit_names);
 
-std::list<Gate> ToLowerEchelon(int m,
-                               int n,
-                               std::vector<xor_func>& bits,
-                               std::vector<xor_func>* mat,
-                               const std::vector<std::string>& qubit_names);
+std::list<Gate> to_lower_echelon(int m,
+                                 int n,
+                                 std::vector<xor_func>& bits,
+                                 std::vector<xor_func>* mat,
+                                 const std::vector<std::string>& qubit_names);
 
-std::list<Gate> FixBasis(int m,
-                         int n,
-                         int k,
-                         const std::vector<xor_func>& fst,
-                         std::vector<xor_func>& snd,
-                         std::vector<xor_func>* mat,
-                         const std::vector<std::string>& qubit_names);
+std::list<Gate> fix_basis(int m,
+                          int n,
+                          int k,
+                          const std::vector<xor_func>& fst,
+                          std::vector<xor_func>& snd,
+                          std::vector<xor_func>* mat,
+                          const std::vector<std::string>& qubit_names);
 
 /*
  * A := B^{-1} A
  */
-void Compose(int num,
+void compose(int num,
              std::vector<xor_func>& A,
              const std::vector<xor_func>& B);
 
-std::list<Gate> ComposeX(int target,
-                         const std::vector<std::string>& qubit_names);
-
-std::list<Gate> ComposeSwap(int a,
-                            int b,
-                            const std::vector<std::string>& qubit_names);
-
-std::list<Gate> ComposeCNOT(int target,
-                            int control,
-                            const std::vector<std::string>& qubit_names);
-
-std::list<Gate> ComposeOM(int target,
+std::list<Gate> compose_x(int target,
                           const std::vector<std::string>& qubit_names);
 
-std::list<Gate> ComposeImaginaryUnit(int target,
-                                     const std::vector<std::string>& qubit_names);
+std::list<Gate> compose_swap(int a,
+                             int b,
+                             const std::vector<std::string>& qubit_names);
+
+std::list<Gate> compose_cnot(int target,
+                             int control,
+                             const std::vector<std::string>& qubit_names);
+
+std::list<Gate> compose_om(int target,
+                           const std::vector<std::string>& qubit_names);
+
+std::list<Gate> compose_imaginary_unit(int target,
+                                       const std::vector<std::string>& qubit_names);
 
 
 }

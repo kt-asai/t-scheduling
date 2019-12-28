@@ -41,26 +41,26 @@ private:
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 
-    bool Init(const std::vector<util::xor_func>& in,
+    bool init(const std::vector<util::xor_func>& in,
               const std::vector<util::xor_func>& out);
 
-    void InitBits(const std::set<int>& phase_exponent_index_set,
-                  std::unordered_map<int, int>& target_phase_map);
+    void init_bits(const std::set<int>& phase_exponent_index_set,
+                   std::unordered_map<int, int>& target_phase_map);
 
-    void Prepare(std::list<Gate>& gate_list,
+    void prepare(std::list<Gate>& gate_list,
                  const std::vector<util::xor_func>& in,
                  const int num_partition,
                  std::unordered_map<int, int>& target_phase_map);
 
-    void ApplyPhaseGates(std::list<Gate>& gate_list,
-                         const std::unordered_map<int, int>& target_phase_map);
+    void apply_phase_gates(std::list<Gate>& gate_list,
+                           const std::unordered_map<int, int>& target_phase_map);
 
-    void UnPrepare();
+    void unprepare();
 
-    void PrepareLastPart(std::list<Gate>& gate_list,
-                         const std::vector<util::xor_func>& in,
-                         const std::vector<util::xor_func>& out,
-                         MatrixReconstructor& sa);
+    void prepare_last_part(std::list<Gate>& gate_list,
+                           const std::vector<util::xor_func>& in,
+                           const std::vector<util::xor_func>& out,
+                           MatrixReconstructor& sa);
 
 public:
     SimpleCircuitBuilder() = default;
@@ -92,13 +92,13 @@ public:
         }
     }
 
-    std::list<Gate> Build(const tpar::partitioning& partition,
+    std::list<Gate> build(const tpar::partitioning& partition,
                           std::vector<util::xor_func>& in,
                           const std::vector<util::xor_func>& out);
 
-    static std::list<Gate> BuildGlobalPhase(int qubit_num,
-                                            int phase,
-                                            const std::vector<std::string>& qubit_names);
+    static std::list<Gate> build_global_phase(int qubit_num,
+                                              int phase,
+                                              const std::vector<std::string>& qubit_names);
 };
 
 }

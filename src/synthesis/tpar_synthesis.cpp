@@ -7,7 +7,7 @@
 
 namespace tskd {
 
-void TparSynthesis::Init(const Character& chr)
+void TparSynthesis::init(const Character& chr)
 {
     global_phase_ = 0;
     floats_.resize(2);
@@ -54,7 +54,7 @@ void TparSynthesis::Init(const Character& chr)
     }
 }
 
-void TparSynthesis::CreatePartition()
+void TparSynthesis::create_partition()
 {
     for (int j = 0; j < 2; j++)
     {
@@ -74,7 +74,7 @@ void TparSynthesis::CreatePartition()
     }
 }
 
-void TparSynthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
+void TparSynthesis::determine_apply_partition(Character::Hadamard& hadamard)
 {
     for (int i = 0; i < 2; i++)
     {
@@ -83,17 +83,17 @@ void TparSynthesis::DetermineApplyPartition(Character::Hadamard& hadamard)
     }
 }
 
-void TparSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
+void TparSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
 {
-    circuit_.add_gate_list(builder_.Build(frozen_[0], wires_, wires_));
-    circuit_.add_gate_list(builder_.Build(frozen_[1], wires_, hadamard.input_wires_parity_));
+    circuit_.add_gate_list(builder_.build(frozen_[0], wires_, wires_));
+    circuit_.add_gate_list(builder_.build(frozen_[1], wires_, hadamard.input_wires_parity_));
     for (int i = 0; i < chr_.num_qubit(); i++)
     {
         wires_[i] = hadamard.input_wires_parity_[i];
     }
 }
 
-void TparSynthesis::ApplyHadamard(const Character::Hadamard& hadamard)
+void TparSynthesis::apply_hadamard(const Character::Hadamard& hadamard)
 {
     circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
     wires_[hadamard.target_].reset();
@@ -101,10 +101,10 @@ void TparSynthesis::ApplyHadamard(const Character::Hadamard& hadamard)
     mask_.set(hadamard.previous_qubit_index_);
 }
 
-int TparSynthesis::CheckDimension(int current_dimension)
+int TparSynthesis::check_dimension(int current_dimension)
 {
     int new_dimension = 0;
-    const int updated_dimension = util::ComputeRank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
+    const int updated_dimension = util::compute_rank(chr_.num_qubit(), chr_.num_data_qubit() + chr_.num_hadamard(), wires_);
     if (updated_dimension > current_dimension)
     {
         new_dimension = updated_dimension;
@@ -116,19 +116,19 @@ int TparSynthesis::CheckDimension(int current_dimension)
     return new_dimension;
 }
 
-void TparSynthesis::ConstructFinalSubCircuit()
+void TparSynthesis::construct_final_subcircuit()
 {
-    circuit_.add_gate_list(builder_.Build(floats_[0], wires_, wires_));
-    circuit_.add_gate_list(builder_.Build(floats_[1], wires_, chr_.outputs()));
+    circuit_.add_gate_list(builder_.build(floats_[0], wires_, wires_));
+    circuit_.add_gate_list(builder_.build(floats_[1], wires_, chr_.outputs()));
 
     /*
      * Add the global phase
      */
-    circuit_.add_gate_list(builder_.BuildGlobalPhase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
+    circuit_.add_gate_list(builder_.build_global_phase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
 }
 
 
-Circuit TparSynthesis::Execute()
+Circuit TparSynthesis::execute()
 {
     std::cout << "t-par running..." << std::endl;
 
@@ -137,7 +137,7 @@ Circuit TparSynthesis::Execute()
     /*
      * create an initial partition
      */
-    CreatePartition();
+    create_partition();
 
     /**
      * Synthesize the circuit by applying H-gate to greed
@@ -151,33 +151,33 @@ Circuit TparSynthesis::Execute()
         /*
          * determine frozen partitions
          */
-        DetermineApplyPartition(hadamard);
+        determine_apply_partition(hadamard);
 
         /*
          * Construct {CNOT, T} subcircuit for the frozen partitions
          */
-        ConstructSubCircuit(hadamard);
+        construct_subcircuit(hadamard);
 
         /*
          * Apply Hadamard gate
          */
-        ApplyHadamard(hadamard);
+        apply_hadamard(hadamard);
 
         /*
          * Check for increases in dimension
          */
-        dimension = CheckDimension(dimension);
+        dimension = check_dimension(dimension);
 
         /*
          * Add new functions to the partition
          */
-        CreatePartition();
+        create_partition();
     }
 
     /*
      * Construct the final {CNOT, T} subcircuit
      */
-    ConstructFinalSubCircuit();
+    construct_final_subcircuit();
 
     return circuit_;
 }

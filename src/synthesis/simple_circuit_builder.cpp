@@ -9,7 +9,7 @@
 
 namespace tskd {
 
-bool SimpleCircuitBuilder::Init(const std::vector<util::xor_func>& in,
+bool SimpleCircuitBuilder::init(const std::vector<util::xor_func>& in,
                                 const std::vector<util::xor_func>& out)
 {
     bool is_io_different = true;
@@ -30,8 +30,8 @@ bool SimpleCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
-void SimpleCircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_set,
-                                    std::unordered_map<int, int>& target_phase_map)
+void SimpleCircuitBuilder::init_bits(const std::set<int>& phase_exponent_index_set,
+                                     std::unordered_map<int, int>& target_phase_map)
 {
     std::set<int>::iterator ti;
     int counter = 0;
@@ -51,19 +51,19 @@ void SimpleCircuitBuilder::InitBits(const std::set<int>& phase_exponent_index_se
     }
 }
 
-void SimpleCircuitBuilder::Prepare(std::list<Gate>& gate_list,
+void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
                                    const std::vector<util::xor_func>& in,
                                    const int num_partition,
                                    std::unordered_map<int, int>& target_phase_map)
 {
-    util::ToUpperEchelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
-    util::Compose(qubit_num_, preparation_, restoration_);
+    util::to_upper_echelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::fix_basis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
+    util::compose(qubit_num_, preparation_, restoration_);
 
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
-void SimpleCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
+void SimpleCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
                                            const std::unordered_map<int, int>& target_phase_map)
 {
     for (auto&& tp : target_phase_map)
@@ -100,7 +100,7 @@ void SimpleCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
     }
 }
 
-void SimpleCircuitBuilder::UnPrepare()
+void SimpleCircuitBuilder::unprepare()
 {
     preparation_ = std::move(restoration_);
     restoration_ = std::vector<util::xor_func>(qubit_num_);
@@ -112,10 +112,10 @@ void SimpleCircuitBuilder::UnPrepare()
     }
 }
 
-void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
-                                           const std::vector<util::xor_func>& in,
-                                           const std::vector<util::xor_func>& out,
-                                           MatrixReconstructor& sa)
+void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
+                                             const std::vector<util::xor_func>& in,
+                                             const std::vector<util::xor_func>& out,
+                                             MatrixReconstructor& sa)
 {
     for (int i = 0; i < qubit_num_; i++)
     {
@@ -124,16 +124,16 @@ void SimpleCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     std::unordered_map<int, int> none;
     if (option_.change_row_order())
     {
-        bits_ = sa.Execute(static_cast<int>(bits_.size()), bits_, none);
+        bits_ = sa.execute(static_cast<int>(bits_.size()), bits_, none);
     }
-    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
-    util::Compose(qubit_num_, preparation_, restoration_);
+    util::to_upper_echelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+    util::compose(qubit_num_, preparation_, restoration_);
 
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
-std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
+std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
                                             std::vector<util::xor_func>& in,
                                             const std::vector<util::xor_func>& out)
 {
@@ -141,7 +141,7 @@ std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
 
     std::unordered_map<int, int> target_phase_map;
 
-    if (Init(in, out) && partition.empty())
+    if (init(in, out) && partition.empty())
     {
         return ret;
     }
@@ -149,7 +149,7 @@ std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
     /*
      * Reduce in to echelon form to decide on a basis
      */
-    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
+    util::to_upper_echelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 
@@ -161,41 +161,41 @@ std::list<Gate> SimpleCircuitBuilder::Build(const tpar::partitioning& partition,
         /*
          * Initialize binary matrix
          */
-        InitBits(it, target_phase_map);
+        init_bits(it, target_phase_map);
 
         /*
          * Re-construct binary matrix
          */
         if (option_.change_row_order())
         {
-            bits_ = sa.Execute(static_cast<int>(it.size()), bits_, target_phase_map);
+            bits_ = sa.execute(static_cast<int>(it.size()), bits_, target_phase_map);
         }
 
         /*
          * Prepare the bits
          */
-        Prepare(ret, in, static_cast<int>(it.size()), target_phase_map);
+        prepare(ret, in, static_cast<int>(it.size()), target_phase_map);
 
         /*
          * Apply the phase gates
          */
-        ApplyPhaseGates(ret, target_phase_map);
+        apply_phase_gates(ret, target_phase_map);
 
         /*
          * Unprepare the bits
          */
-        UnPrepare();
+        unprepare();
     }
 
     /*
      * Reduce out to the basis of in
      */
-    PrepareLastPart(ret, in, out, sa);
+    prepare_last_part(ret, in, out, sa);
 
     return ret;
 }
 
-std::list<Gate> SimpleCircuitBuilder::BuildGlobalPhase(int qubit_num,
+std::list<Gate> SimpleCircuitBuilder::build_global_phase(int qubit_num,
                                                        int phase,
                                                        const std::vector<std::string>& qubit_names)
 {
@@ -204,12 +204,12 @@ std::list<Gate> SimpleCircuitBuilder::BuildGlobalPhase(int qubit_num,
 
     if (phase % 2 == 1)
     {
-        acc.splice(acc.end(), util::ComposeOM(qubit, qubit_names));
+        acc.splice(acc.end(), util::compose_om(qubit, qubit_names));
         qubit = (qubit + 1) % qubit_num;
     }
     for (int i = phase / 2; i > 0; i--)
     {
-        acc.splice(acc.end(), util::ComposeImaginaryUnit(qubit, qubit_names));
+        acc.splice(acc.end(), util::compose_imaginary_unit(qubit, qubit_names));
         qubit = (qubit + 1) % qubit_num;
     }
 

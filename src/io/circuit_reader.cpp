@@ -6,7 +6,7 @@
 
 namespace tskd {
 
-void CircuitReader::ReadQC_(Circuit& circuit)
+void CircuitReader::read_qc(Circuit& circuit)
 {
     std::ifstream ifs(path_);
     std::string str;
@@ -24,7 +24,7 @@ void CircuitReader::ReadQC_(Circuit& circuit)
         if (str.empty()) continue;
 
         // preparation
-        std::vector<std::string> buf = split_(str, ' ');
+        std::vector<std::string> buf = split(str, ' ');
         std::string id = buf.front();
         buf.erase(buf.begin());
 
@@ -67,14 +67,14 @@ void CircuitReader::ReadQC_(Circuit& circuit)
 Circuit CircuitReader::read()
 {
     Circuit circuit = Circuit();
-    const std::string extension = extension_(path_);
+    const std::string ext = extension(path_);
 
-    if (extension == "qc")
+    if (ext == "qc")
     {
-        ReadQC_(circuit);
+        read_qc(circuit);
         // TODO: bug fix in remove identities function
-//        circuit.RemoveIdentities();
-        circuit.DecomposeCZZ();
+//        circuit.remove_identities();
+        circuit.decompose_ccz();
     }
     else
     {
@@ -83,7 +83,7 @@ Circuit CircuitReader::read()
         exit(1);
     }
 
-//    circuit.RemoveIdentities();
+//    circuit.remove_identities();
 
     return circuit;
 }

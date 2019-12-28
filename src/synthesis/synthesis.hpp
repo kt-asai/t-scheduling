@@ -18,7 +18,7 @@ public:
 
     virtual ~Synthesis() = default;
 
-    virtual Circuit Execute() = 0;
+    virtual Circuit execute() = 0;
 };
 
 }

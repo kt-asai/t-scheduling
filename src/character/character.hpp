@@ -48,7 +48,7 @@ private:
     std::vector<util::xor_func> outputs_;
     std::vector<Hadamard> hadamards_;
 
-    int InsertPhase_(int coefficient,
+    int insert_phase(int coefficient,
                      const util::xor_func& function);
 
 public:
@@ -155,7 +155,7 @@ public:
     /**
      * parse circuit info and calculate parity
      */
-    void Parse();
+    void parse();
 };
 
 }

@@ -4,7 +4,9 @@
 #include "synthesis.hpp"
 #include "tpar_synthesis.hpp"
 #include "tskd_synthesis.hpp"
+
 #include "../character/character.hpp"
+
 #include "../util/option.hpp"
 
 namespace tskd {
@@ -17,7 +19,7 @@ private:
 public:
     SynthesisMethodFactory() = default;
 
-    Synthesis* Create(const SynthesisMethod synthesis_method,
+    Synthesis* create(const SynthesisMethod synthesis_method,
                       const Character& chr,
                       const util::Option& option)
     {

@@ -8,7 +8,7 @@
 namespace tskd {
 
 static
-bool CanParallelization(const std::list<Gate>& mappled_gate_list,
+bool can_parallelization(const std::list<Gate>& mappled_gate_list,
                         const Gate& new_gate)
 {
     if (mappled_gate_list.empty())
@@ -19,13 +19,13 @@ bool CanParallelization(const std::list<Gate>& mappled_gate_list,
     return false;
 }
 
-static void UpdateUpperGateSetList(const int sign,
-                                   const int pivot,
-                                   const std::vector<int>& one_array,
-                                   const std::pair<int, int>& swap_pair,
-                                   std::unordered_map<std::string, int>& depth,
-                                   std::vector<std::list<Gate>>& gate_set_list,
-                                   const std::vector<std::string>& qubit_names)
+static void update_gate_set_list(const int sign,
+                                 const int pivot,
+                                 const std::vector<int>& one_array,
+                                 const std::pair<int, int>& swap_pair,
+                                 std::unordered_map<std::string, int>& depth,
+                                 std::vector<std::list<Gate>>& gate_set_list,
+                                 const std::vector<std::string>& qubit_names)
 {
     /*
      * Generate swap
@@ -41,7 +41,7 @@ static void UpdateUpperGateSetList(const int sign,
         while (counter > 0)
         {
             Gate gate("tof", swap_a, swap_b);
-            if (CanParallelization(gate_set_list[swap_depth], gate))
+            if (can_parallelization(gate_set_list[swap_depth], gate))
             {
                 counter--;
                 gate_set_list[swap_depth].push_back(gate);
@@ -127,7 +127,7 @@ static void UpdateUpperGateSetList(const int sign,
                 target_list.push_back(candidate_target);
                 const Gate new_gate("tof", control, target_list);
 
-                if (CanParallelization(gate_set_list[bit_depth], new_gate))
+                if (can_parallelization(gate_set_list[bit_depth], new_gate))
                 {
                     bit_set[j] = -1;
                     depth[candidate_target]++;
@@ -163,7 +163,7 @@ static void UpdateUpperGateSetList(const int sign,
     }
 }
 
-static std::list<Gate> GenerateGateList(const std::vector<std::list<Gate>>& gate_set_list)
+static std::list<Gate> generate_gate_list(const std::vector<std::list<Gate>>& gate_set_list)
 {
     std::list<Gate> ret;
 
@@ -216,7 +216,7 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         if (matrix[j].test(n))
         {
             matrix[j].reset(n);
-            ret.splice(ret.begin(), util::ComposeX(j, qubit_names));
+            ret.splice(ret.begin(), util::compose_x(j, qubit_names));
         }
     }
 
@@ -258,7 +258,7 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
 
         // generate candidate cnot list
-        UpdateUpperGateSetList(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
+        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
 
     //Finish the job
@@ -277,11 +277,11 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
 
         // generate candidate cnot list
-        UpdateUpperGateSetList(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
+        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
 
     // add gate
-    ret.splice(ret.end(), GenerateGateList(gate_set_list));
+    ret.splice(ret.end(), generate_gate_list(gate_set_list));
 
     return ret;
 }

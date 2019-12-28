@@ -5,7 +5,7 @@
 
 namespace tskd {
 
-int Character::InsertPhase_(const int coefficient,
+int Character::insert_phase(const int coefficient,
                             const util::xor_func& function)
 {
     int index = 0;
@@ -25,7 +25,7 @@ int Character::InsertPhase_(const int coefficient,
     return index;
 }
 
-void Character::Parse()
+void Character::parse()
 {
     // gate value map
     const std::unordered_map<std::string, int> gate_lookup{
@@ -79,7 +79,7 @@ void Character::Parse()
         else if (gate.type() == "Y")
         {
             gate_index = name_map.at(gate.target_list().front());
-            InsertPhase_(gate_lookup.at(gate.type()), wires[gate_index]);
+            insert_phase(gate_lookup.at(gate.type()), wires[gate_index]);
             wires[name_map.at(gate.target_list().front())].flip((num_qubit_ - num_ancilla_) + num_hadamard_);
         }
         else if (gate.type() == "T" || gate.type() == "T*"
@@ -87,7 +87,7 @@ void Character::Parse()
                  || gate.type() == "Z")
         {
             gate_index = name_map.at(gate.target_list().front());
-            InsertPhase_(gate_lookup.at(gate.type()), wires[gate_index]);
+            insert_phase(gate_lookup.at(gate.type()), wires[gate_index]);
         }
         else if (gate.type() == "H")
         {
@@ -98,13 +98,13 @@ void Character::Parse()
             // compute rank
             wires[new_hadamard.target_].reset();
 
-            util::ComputeRankDestructive(num_qubit_, (num_qubit_ - num_ancilla_) + num_hadamard_, wires);
+            util::compute_rank_destructive(num_qubit_, (num_qubit_ - num_ancilla_) + num_hadamard_, wires);
             int index = 0;
             for (const auto& phase_exponent : phase_exponents_)
             {
                 if (phase_exponent.first != 0)
                 {
-                    if (util::IsIndependent((num_qubit_ - num_ancilla_) + num_hadamard_, wires, phase_exponent.second))
+                    if (util::is_independent((num_qubit_ - num_ancilla_) + num_hadamard_, wires, phase_exponent.second))
                     {
                         new_hadamard.in_.insert(index);
                     }

@@ -32,13 +32,13 @@ private:
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
 
-    void DetermineApplyPhaseSet(Character::Hadamard& hadamard);
+    void determine_apply_phase_set(Character::Hadamard& hadamard);
 
-    void ConstructSubCircuit(const Character::Hadamard& hadamard);
+    void construct_subcircuit(const Character::Hadamard& hadamard);
 
-    void ApplyHadamard(const Character::Hadamard& hadamard);
+    void apply_hadamard(const Character::Hadamard& hadamard);
 
-    void ConstructFinalSubCircuit();
+    void construct_final_subcircuit();
 
 public:
     TskdSynthesis(const Character& chr,
@@ -46,7 +46,7 @@ public:
             : chr_(chr),
               option_(option)
     {
-        Init(chr);
+        init(chr);
 
         oracle_ = util::IndependentOracle(chr.num_qubit(),
                                           chr.num_data_qubit(),
@@ -60,9 +60,9 @@ public:
                                         chr.phase_exponents());
     }
 
-    void Init(const Character& chr);
+    void init(const Character& chr);
 
-    Circuit Execute() final;
+    Circuit execute() final;
 };
 
 }

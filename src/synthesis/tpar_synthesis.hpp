@@ -37,17 +37,17 @@ private:
     std::vector<util::xor_func> wires_;
     std::vector<std::list<int>> remaining_;
 
-    void CreatePartition();
+    void create_partition();
 
-    void DetermineApplyPartition(Character::Hadamard& hadamard);
+    void determine_apply_partition(Character::Hadamard& hadamard);
 
-    void ConstructSubCircuit(const Character::Hadamard& hadamard);
+    void construct_subcircuit(const Character::Hadamard& hadamard);
 
-    void ApplyHadamard(const Character::Hadamard& hadamard);
+    void apply_hadamard(const Character::Hadamard& hadamard);
 
-    int CheckDimension(int dimension);
+    int check_dimension(int dimension);
 
-    void ConstructFinalSubCircuit();
+    void construct_final_subcircuit();
 
 public:
     TparSynthesis(const Character& chr,
@@ -55,7 +55,7 @@ public:
         : chr_(chr),
           option_(option)
     {
-        Init(chr);
+        init(chr);
 
         builder_ = SimpleCircuitBuilder(option,
                                         chr.num_qubit(),
@@ -68,9 +68,9 @@ public:
                                           chr.num_data_qubit() + chr.num_hadamard());
     }
 
-    void Init(const Character& chr);
+    void init(const Character& chr);
 
-    Circuit Execute() final;
+    Circuit execute() final;
 };
 
 }

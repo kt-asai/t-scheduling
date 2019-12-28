@@ -8,6 +8,8 @@
 #include "synthesis/synthesis_method_factory.hpp"
 #include "synthesis/synthesis.hpp"
 
+#include "parallel/parallelization_oracle.hpp"
+
 int main(int argc, char** argv)
 {
     std::cout << "T-scheduling" << std::endl;
@@ -61,11 +63,11 @@ int main(int argc, char** argv)
 
     std::cout << "-->> construct character" << std::endl;
     tskd::Character chr(qc);
-    chr.Parse();
+    chr.parse();
 
     std::cout << "-->> synthsis" << std::endl;
-    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().Create(option.syn_method(), chr, option);
-    tskd::Circuit result = synthesis->Execute();
+    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), chr, option);
+    tskd::Circuit result = synthesis->execute();
 
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;

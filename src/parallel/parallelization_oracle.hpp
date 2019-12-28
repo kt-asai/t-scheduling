@@ -15,6 +15,8 @@ private:
     std::list<Gate> gate_list_;
 
 public:
+    ParallelizationOracle() = default;
+
     ParallelizationOracle(const int num_qubit,
                           const std::list<Gate>& mapped_gate_list,
                           const Gate& new_gate)

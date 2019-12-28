@@ -37,7 +37,7 @@ public:
         req_time_ = std::chrono::milliseconds(500);
     }
 
-    std::vector<util::xor_func> Execute(const int num_partition,
+    std::vector<util::xor_func> execute(const int num_partition,
                                         const std::vector<util::xor_func>& bits,
                                         std::unordered_map<int, int>& target_phase_map);
 };

@@ -47,20 +47,20 @@ private:
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 
-    bool Init(const std::vector <util::xor_func>& in,
+    bool init(const std::vector <util::xor_func>& in,
               const std::vector <util::xor_func>& out);
 
-    int ComputeTimeStep(const std::list<Gate>& gate_list);
+    int compute_time_step(const std::list<Gate>& gate_list);
 
-    void ApplyPhaseGates(std::list<Gate>& gate_list,
-                         const std::unordered_map<int, int>& target_phase_map);
+    void apply_phase_gates(std::list<Gate>& gate_list,
+                           const std::unordered_map<int, int>& target_phase_map);
 
-    void UnPrepare(const std::vector <util::xor_func>& restoration);
+    void unprepare(const std::vector <util::xor_func>& restoration);
 
-    void PrepareLastPart(std::list<Gate>& gate_list,
-                         const std::vector<util::xor_func>& in,
-                         const std::vector<util::xor_func>& out,
-                         MatrixReconstructor& sa);
+    void prepare_last_part(std::list<Gate>& gate_list,
+                           const std::vector<util::xor_func>& in,
+                           const std::vector<util::xor_func>& out,
+                           MatrixReconstructor& sa);
 
 public:
     GreedyCircuitBuilder() = default;
@@ -95,18 +95,18 @@ public:
         }
     }
 
-    std::list<Gate> Build(std::list<int>& index_list,
+    std::list<Gate> build(std::list<int>& index_list,
                           std::list<int>& carry_index_list,
                           std::vector <util::xor_func>& in,
                           const std::vector <util::xor_func>& out);
 
-    static std::list<Gate> BuildGlobalPhase(int qubit_num,
-                                            int phase,
-                                            const std::vector <std::string>& qubit_names);
+    static std::list<Gate> build_global_phase(int qubit_num,
+                                              int phase,
+                                              const std::vector <std::string>& qubit_names);
 
-    int CheckDimension(const Character& chr,
-                       std::vector <util::xor_func>& wires,
-                       int current_dimension);
+    int check_dimension(const Character& chr,
+                        std::vector <util::xor_func>& wires,
+                        int current_dimension);
 };
 
 }

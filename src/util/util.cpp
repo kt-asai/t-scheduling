@@ -104,7 +104,7 @@ int IndependentOracle::retrieve_lin_dep(const std::vector<phase_exponent>& expnt
     return -1;
 }
 
-int ComputeRankDestructive(int num_qubit,
+int compute_rank_destructive(int num_qubit,
                            int num_qubit_and_hadamard,
                            std::vector<xor_func>& bits)
 {
@@ -139,18 +139,18 @@ int ComputeRankDestructive(int num_qubit,
     return rank;
 }
 
-int ComputeRank(int num_qubit,
-                int num_qubit_and_hadamard,
-                std::vector<xor_func>& bits)
+int compute_rank(int num_qubit,
+                 int num_qubit_and_hadamard,
+                 std::vector<xor_func>& bits)
 {
     std::vector<xor_func> parity_matrix = bits;
 
-    return ComputeRankDestructive(num_qubit, num_qubit_and_hadamard, parity_matrix);;
+    return compute_rank_destructive(num_qubit, num_qubit_and_hadamard, parity_matrix);;
 }
 
-bool IsIndependentDestructive(int num_qubit,
-                              const std::vector<xor_func>& bits,
-                              xor_func& parity)
+bool is_independent_destructive(int num_qubit,
+                                const std::vector<xor_func>& bits,
+                                xor_func& parity)
 {
     std::map<int, int> pivots;
     for (int row = 0, col = 0; row < num_qubit && col < static_cast<int>(bits.size());)
@@ -186,20 +186,20 @@ bool IsIndependentDestructive(int num_qubit,
     return false;
 }
 
-bool IsIndependent(int num_qubit,
+bool is_independent(int num_qubit,
                    const std::vector<xor_func>& bits,
                    const xor_func& parity)
 {
     xor_func temp_parity = parity;
 
-    return IsIndependentDestructive(num_qubit, bits, temp_parity);
+    return is_independent_destructive(num_qubit, bits, temp_parity);
 }
 
-std::list<Gate> ToUpperEchelon(int m,
-                               int n,
-                               std::vector<xor_func>& bits,
-                               std::vector<xor_func> *mat,
-                               const std::vector<std::string>& qubit_names)
+std::list<Gate> to_upper_echelon(int m,
+                                 int n,
+                                 std::vector<xor_func>& bits,
+                                 std::vector<xor_func> *mat,
+                                 const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> acc;
     int rank = 0;
@@ -210,7 +210,7 @@ std::list<Gate> ToUpperEchelon(int m,
             bits[j].reset(n);
             if (mat == NULL)
             {
-                acc.splice(acc.end(), ComposeX(j, qubit_names));
+                acc.splice(acc.end(), compose_x(j, qubit_names));
             }
             else
             {
@@ -238,7 +238,7 @@ std::list<Gate> ToUpperEchelon(int m,
                         swap(bits[rank], bits[j]);
                         if (mat == nullptr)
                         {
-                            acc.splice(acc.end(), ComposeSwap(rank, j, qubit_names));
+                            acc.splice(acc.end(), compose_swap(rank, j, qubit_names));
                         }
                         else
                         {
@@ -252,7 +252,7 @@ std::list<Gate> ToUpperEchelon(int m,
                     bits[j] ^= bits[rank];
                     if (mat == nullptr)
                     {
-                        acc.splice(acc.end(), ComposeCNOT(rank, j, qubit_names));
+                        acc.splice(acc.end(), compose_cnot(rank, j, qubit_names));
                     }
                     else
                     {
@@ -267,11 +267,11 @@ std::list<Gate> ToUpperEchelon(int m,
     return acc;
 }
 
-std::list<Gate> ToLowerEchelon(int m,
-                               int n,
-                               std::vector<xor_func>& bits,
-                               std::vector<xor_func>* mat,
-                               const std::vector<std::string>& qubit_names)
+std::list<Gate> to_lower_echelon(int m,
+                                 int n,
+                                 std::vector<xor_func>& bits,
+                                 std::vector<xor_func>* mat,
+                                 const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> acc;
     int i, j;
@@ -285,7 +285,7 @@ std::list<Gate> ToLowerEchelon(int m,
                 bits[j] ^= bits[i];
                 if (mat == NULL)
                 {
-                    acc.splice(acc.end(), ComposeCNOT(i, j, qubit_names));
+                    acc.splice(acc.end(), compose_cnot(i, j, qubit_names));
                 }
                 else
                 {
@@ -298,13 +298,13 @@ std::list<Gate> ToLowerEchelon(int m,
     return acc;
 }
 
-std::list<Gate> FixBasis(int m,
-                         int n,
-                         int k,
-                         const std::vector<xor_func>& fst,
-                         std::vector<xor_func>& snd,
-                         std::vector<xor_func>* mat,
-                         const std::vector<std::string>& qubit_names) {
+std::list<Gate> fix_basis(int m,
+                          int n,
+                          int k,
+                          const std::vector<xor_func>& fst,
+                          std::vector<xor_func>& snd,
+                          std::vector<xor_func>* mat,
+                          const std::vector<std::string>& qubit_names) {
     std::list<Gate> acc;
     int j = 0;
     bool flg = false;
@@ -334,7 +334,7 @@ std::list<Gate> FixBasis(int m,
                         swap(snd[h], snd[i]);
                         if (mat == NULL)
                         {
-                            acc.splice(acc.end(), ComposeSwap(h, i, qubit_names));
+                            acc.splice(acc.end(), compose_swap(h, i, qubit_names));
                         }
                         else
                         {
@@ -357,7 +357,7 @@ std::list<Gate> FixBasis(int m,
                     swap(snd[k], snd[i]);
                     if (mat == NULL)
                     {
-                        acc.splice(acc.end(), ComposeSwap(k, i, qubit_names));
+                        acc.splice(acc.end(), compose_swap(k, i, qubit_names));
                     }
                     else
                     {
@@ -385,7 +385,7 @@ std::list<Gate> FixBasis(int m,
                     snd[i] ^= snd[pivots[j]];
                     if (mat == NULL)
                     {
-                        acc.splice(acc.end(), ComposeCNOT(pivots[j], i, qubit_names));
+                        acc.splice(acc.end(), compose_cnot(pivots[j], i, qubit_names));
                     }
                     else
                     {
@@ -404,7 +404,7 @@ std::list<Gate> FixBasis(int m,
     return acc;
 }
 
-void Compose(int num,
+void compose(int num,
              std::vector<xor_func>& A,
              const std::vector<xor_func>& B)
 {
@@ -412,12 +412,12 @@ void Compose(int num,
     for (int i = 0; i < num; i++) {
         tmp[i] = B[i];
     }
-    ToUpperEchelon(num, num, tmp, &A, std::vector<std::string>());
-    ToLowerEchelon(num, num, tmp, &A, std::vector<std::string>());
+    to_upper_echelon(num, num, tmp, &A, std::vector<std::string>());
+    to_lower_echelon(num, num, tmp, &A, std::vector<std::string>());
 }
 
-std::list<Gate> ComposeX(int target,
-                         const std::vector<std::string>& qubit_names)
+std::list<Gate> compose_x(int target,
+                          const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
 
@@ -426,9 +426,9 @@ std::list<Gate> ComposeX(int target,
     return ret;
 }
 
-std::list<Gate> ComposeSwap(int a,
-                            int b,
-                            const std::vector<std::string>& qubit_names)
+std::list<Gate> compose_swap(int a,
+                             int b,
+                             const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
 
@@ -439,9 +439,9 @@ std::list<Gate> ComposeSwap(int a,
     return ret;
 }
 
-std::list<Gate> ComposeCNOT(int target,
-                            int control,
-                            const std::vector<std::string>& qubit_names)
+std::list<Gate> compose_cnot(int target,
+                             int control,
+                             const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
 
@@ -450,8 +450,8 @@ std::list<Gate> ComposeCNOT(int target,
     return ret;
 }
 
-std::list<Gate> ComposeOM(int target,
-                          const std::vector<std::string>& qubit_names)
+std::list<Gate> compose_om(int target,
+                           const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
 
@@ -465,8 +465,8 @@ std::list<Gate> ComposeOM(int target,
     return ret;
 }
 
-std::list<Gate> ComposeImaginaryUnit(int target,
-                                     const std::vector<std::string>& qubit_names)
+std::list<Gate> compose_imaginary_unit(int target,
+                                       const std::vector<std::string>& qubit_names)
 {
     std::list<Gate> ret;
 

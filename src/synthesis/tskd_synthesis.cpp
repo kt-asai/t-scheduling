@@ -4,7 +4,7 @@
 
 namespace tskd {
 
-void TskdSynthesis::Init(const Character& chr)
+void TskdSynthesis::init(const Character& chr)
 {
     global_phase_ = 0;
     index_list_.resize(2);
@@ -69,7 +69,7 @@ void TskdSynthesis::Init(const Character& chr)
     }
 }
 
-void TskdSynthesis::DetermineApplyPhaseSet(Character::Hadamard& hadamard)
+void TskdSynthesis::determine_apply_phase_set(Character::Hadamard& hadamard)
 {
     std::vector<std::list<int>> tmp_index_list(2);
     std::vector<std::list<int>> tmp_carry_index_list(2);
@@ -104,10 +104,10 @@ void TskdSynthesis::DetermineApplyPhaseSet(Character::Hadamard& hadamard)
     carry_index_list_[1] = tmp_carry_index_list[1];
 }
 
-void TskdSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
+void TskdSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
 {
-    circuit_.add_gate_list(builder_.Build(index_list_[0], carry_index_list_[0], wires_, wires_));
-    circuit_.add_gate_list(builder_.Build(index_list_[1], carry_index_list_[1], wires_, hadamard.input_wires_parity_));
+    circuit_.add_gate_list(builder_.build(index_list_[0], carry_index_list_[0], wires_, wires_));
+    circuit_.add_gate_list(builder_.build(index_list_[1], carry_index_list_[1], wires_, hadamard.input_wires_parity_));
     remaining_[0].splice(remaining_[0].begin(), carry_index_list_[0]);
     remaining_[1].splice(remaining_[1].begin(), carry_index_list_[1]);
     for (int i = 0; i < chr_.num_qubit(); i++)
@@ -116,7 +116,7 @@ void TskdSynthesis::ConstructSubCircuit(const Character::Hadamard& hadamard)
     }
 }
 
-void TskdSynthesis::ApplyHadamard(const Character::Hadamard& hadamard)
+void TskdSynthesis::apply_hadamard(const Character::Hadamard& hadamard)
 {
     circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
     wires_[hadamard.target_].reset();
@@ -124,7 +124,7 @@ void TskdSynthesis::ApplyHadamard(const Character::Hadamard& hadamard)
     mask_.set(hadamard.previous_qubit_index_);
 }
 
-void TskdSynthesis::ConstructFinalSubCircuit()
+void TskdSynthesis::construct_final_subcircuit()
 {
     std::list<int> none_list;
     std::vector<std::list<int>> final_index_list(2);
@@ -136,16 +136,16 @@ void TskdSynthesis::ConstructFinalSubCircuit()
         }
     }
 
-    circuit_.add_gate_list(builder_.Build(final_index_list[0], none_list, wires_, wires_));
-    circuit_.add_gate_list(builder_.Build(final_index_list[1], none_list, wires_, chr_.outputs()));
+    circuit_.add_gate_list(builder_.build(final_index_list[0], none_list, wires_, wires_));
+    circuit_.add_gate_list(builder_.build(final_index_list[1], none_list, wires_, chr_.outputs()));
 
     /*
      * Add the global phase
      */
-    circuit_.add_gate_list(builder_.BuildGlobalPhase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
+    circuit_.add_gate_list(builder_.build_global_phase(chr_.num_qubit(), global_phase_, chr_.qubit_names()));
 }
 
-Circuit TskdSynthesis::Execute()
+Circuit TskdSynthesis::execute()
 {
     std::cout << "t-scheduling running..." << std::endl;
 
@@ -156,28 +156,28 @@ Circuit TskdSynthesis::Execute()
         /*
          * determine apply (carry) index list
          */
-        DetermineApplyPhaseSet(hadamard);
+        determine_apply_phase_set(hadamard);
 
         /**
          * Construct sub-circuit
          */
-        ConstructSubCircuit(hadamard);
+        construct_subcircuit(hadamard);
 
         /*
          * Apply Hadamard gate
         */
-        ApplyHadamard(hadamard);
+        apply_hadamard(hadamard);
 
         /*
          * Check for increases in dimension
          */
-        dimension = builder_.CheckDimension(chr_, wires_, dimension);
+        dimension = builder_.check_dimension(chr_, wires_, dimension);
     }
 
     /*
      * Construct the final {CNOT, T} subcircuit
      */
-    ConstructFinalSubCircuit();
+    construct_final_subcircuit();
 
     return circuit_;
 }

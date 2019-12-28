@@ -4,7 +4,7 @@
 
 namespace tskd {
 
-bool Circuit::EqualGate_(const Gate& gate_a,
+bool Circuit::equal_gate(const Gate& gate_a,
                          const Gate& gate_b)
 {
     if (gate_a.type() != gate_b.type())
@@ -35,7 +35,7 @@ bool Circuit::EqualGate_(const Gate& gate_a,
     return equal_bits;
 }
 
-void Circuit::RemoveIdentities()
+void Circuit::remove_identities()
 {
     std::unordered_map<std::string, std::string> identity_map{
             {"ccz", "ccz"},
@@ -86,7 +86,7 @@ void Circuit::RemoveIdentities()
             }
 
             // remove identity gate
-            if (is_identity > 0 && EqualGate_(*it, *gate_map[compared_bit]))
+            if (is_identity > 0 && equal_gate(*it, *gate_map[compared_bit]))
             {
                 gate_list_.erase(it);
                 gate_list_.erase(gate_map.at(compared_bit));
@@ -111,7 +111,7 @@ void Circuit::RemoveIdentities()
     }
 }
 
-void Circuit::DecomposeCZZ()
+void Circuit::decompose_ccz()
 {
     for (auto it = gate_list_.begin(); it != gate_list_.end(); it++)
     {

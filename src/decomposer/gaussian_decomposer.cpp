@@ -15,7 +15,7 @@ std::list<Gate> GaussianDecomposer::operator()(const int n,
         if (matrix[j].test(n))
         {
             matrix[j].reset(n);
-            lst.splice(lst.begin(), util::ComposeX(j, qubit_names));
+            lst.splice(lst.begin(), util::compose_x(j, qubit_names));
         }
     }
 
@@ -33,14 +33,14 @@ std::list<Gate> GaussianDecomposer::operator()(const int n,
                     if (j != i)
                     {
                         swap(matrix[i], matrix[j]);
-                        lst.splice(lst.begin(), util::ComposeSwap(i, j, qubit_names));
+                        lst.splice(lst.begin(), util::compose_swap(i, j, qubit_names));
                     }
                     flg = true;
                 }
                 else
                 {
                     matrix[j] ^= matrix[i];
-                    lst.splice(lst.begin(), util::ComposeCNOT(i, j, qubit_names));
+                    lst.splice(lst.begin(), util::compose_cnot(i, j, qubit_names));
                 }
             }
         }
@@ -60,7 +60,7 @@ std::list<Gate> GaussianDecomposer::operator()(const int n,
             if (matrix[j].test(i))
             {
                 matrix[j] ^= matrix[i];
-                lst.splice(lst.begin(), util::ComposeCNOT(i, j, qubit_names));
+                lst.splice(lst.begin(), util::compose_cnot(i, j, qubit_names));
             }
         }
     }

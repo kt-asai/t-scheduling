@@ -9,7 +9,7 @@
 
 namespace tskd {
 
-bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
+bool GreedyCircuitBuilder::init(const std::vector<util::xor_func>& in,
                                 const std::vector<util::xor_func>& out)
 {
     bool is_io_different = true;
@@ -34,13 +34,13 @@ bool GreedyCircuitBuilder::Init(const std::vector<util::xor_func>& in,
     return is_io_different;
 }
 
-int GreedyCircuitBuilder::ComputeTimeStep(const std::list<Gate>& gate_list)
+int GreedyCircuitBuilder::compute_time_step(const std::list<Gate>& gate_list)
 {
     return static_cast<int>(gate_list.size());
 }
 
-void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
-                                           const std::unordered_map<int, int>& target_phase_map)
+void GreedyCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
+                                             const std::unordered_map<int, int>& target_phase_map)
 {
     for (auto&& tp : target_phase_map)
     {
@@ -76,7 +76,7 @@ void GreedyCircuitBuilder::ApplyPhaseGates(std::list<Gate>& gate_list,
     }
 }
 
-void GreedyCircuitBuilder::UnPrepare(const std::vector <util::xor_func>& restoration)
+void GreedyCircuitBuilder::unprepare(const std::vector <util::xor_func>& restoration)
 {
     preparation_ = std::move(restoration);
     restoration_ = std::vector<util::xor_func>(qubit_num_);
@@ -88,10 +88,10 @@ void GreedyCircuitBuilder::UnPrepare(const std::vector <util::xor_func>& restora
     }
 }
 
-void GreedyCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
-                                           const std::vector<util::xor_func>& in,
-                                           const std::vector<util::xor_func>& out,
-                                           MatrixReconstructor& sa)
+void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
+                                             const std::vector<util::xor_func>& in,
+                                             const std::vector<util::xor_func>& out,
+                                             MatrixReconstructor& sa)
 {
     for (int i = 0; i < qubit_num_; i++)
     {
@@ -101,23 +101,23 @@ void GreedyCircuitBuilder::PrepareLastPart(std::list<Gate>& gate_list,
     std::unordered_map<int, int> none;
     if (option_.change_row_order())
     {
-        bits_ = sa.Execute(static_cast<int>(bits_.size()), bits_, none);
+        bits_ = sa.execute(static_cast<int>(bits_.size()), bits_, none);
     }
 
-    util::ToUpperEchelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
-    util::FixBasis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+    util::to_upper_echelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
+    util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
 
-    util::Compose(qubit_num_, preparation_, restoration_);
+    util::compose(qubit_num_, preparation_, restoration_);
 
     gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
 }
 
-int GreedyCircuitBuilder::CheckDimension(const Character& chr,
-                                         std::vector <util::xor_func>& wires,
-                                         int current_dimension)
+int GreedyCircuitBuilder::check_dimension(const Character& chr,
+                                          std::vector <util::xor_func>& wires,
+                                          int current_dimension)
 {
     int new_dimension = 0;
-    const int updated_dimension = util::ComputeRank(chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(), wires);
+    const int updated_dimension = util::compute_rank(chr.num_qubit(), chr.num_data_qubit() + chr.num_hadamard(), wires);
     if (updated_dimension > current_dimension)
     {
         new_dimension = updated_dimension;
@@ -127,7 +127,7 @@ int GreedyCircuitBuilder::CheckDimension(const Character& chr,
     return new_dimension;
 }
 
-std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
+std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                                             std::list<int>& carry_index_list,
                                             std::vector<util::xor_func>& in,
                                             const std::vector<util::xor_func>& out)
@@ -136,7 +136,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
 
     std::vector<std::pair<int, int>> phase_target_list;
 
-    if (Init(in, out) && index_list.empty())
+    if (init(in, out) && index_list.empty())
     {
         return ret;
     }
@@ -144,7 +144,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
     /*
      * Reduce in to echelon form to decide on a basis
      */
-    util::ToUpperEchelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
+    util::to_upper_echelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 
@@ -202,17 +202,17 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                  */
                 if (option_.change_row_order())
                 {
-                    tmp_bits = sa.Execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
+                    tmp_bits = sa.execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
                 }
 
                 /**
                  * prepare preparation matrix
                  */
                 const int num_partition = static_cast<int>(tmp_sub_part.size());
-                util::ToUpperEchelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
-                util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
+                util::to_upper_echelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
+                util::fix_basis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
-                util::Compose(qubit_num_, tmp_preparation, tmp_restoration);
+                util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
                  * create gate list
@@ -223,7 +223,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-                if (ComputeTimeStep(tmp_gate_list) < option_.distillation_step())
+                if (compute_time_step(tmp_gate_list) < option_.distillation_step())
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
@@ -283,17 +283,17 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                  */
                 if (option_.change_row_order())
                 {
-                    tmp_bits = sa.Execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
+                    tmp_bits = sa.execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
                 }
 
                 /**
                  * prepare preparation matrix
                  */
                 const int num_partition = static_cast<int>(tmp_sub_part.size());
-                util::ToUpperEchelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
-                util::FixBasis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
+                util::to_upper_echelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
+                util::fix_basis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
-                util::Compose(qubit_num_, tmp_preparation, tmp_restoration);
+                util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
                  * create gate list
@@ -304,7 +304,7 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-                if (ComputeTimeStep(tmp_gate_list) < option_.distillation_step())
+                if (compute_time_step(tmp_gate_list) < option_.distillation_step())
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
@@ -328,23 +328,23 @@ std::list<Gate> GreedyCircuitBuilder::Build(std::list<int>& index_list,
         /*
          * Apply the phase gates
          */
-        ApplyPhaseGates(ret, result_target_phase_map);
+        apply_phase_gates(ret, result_target_phase_map);
 
         /*
          * Unprepare the bits
          */
-        UnPrepare(result_restoration);
+        unprepare(result_restoration);
     }
 
     /*
      * Reduce out to the basis of in
      */
-    PrepareLastPart(ret, in, out, sa);
+    prepare_last_part(ret, in, out, sa);
 
     return ret;
 }
 
-std::list<Gate> GreedyCircuitBuilder::BuildGlobalPhase(int qubit_num,
+std::list<Gate> GreedyCircuitBuilder::build_global_phase(int qubit_num,
                                                        int phase,
                                                        const std::vector<std::string>& qubit_names)
 {
@@ -353,12 +353,12 @@ std::list<Gate> GreedyCircuitBuilder::BuildGlobalPhase(int qubit_num,
 
     if (phase % 2 == 1)
     {
-        acc.splice(acc.end(), util::ComposeOM(qubit, qubit_names));
+        acc.splice(acc.end(), util::compose_om(qubit, qubit_names));
         qubit = (qubit + 1) % qubit_num;
     }
     for (int i = phase / 2; i > 0; i--)
     {
-        acc.splice(acc.end(), util::ComposeImaginaryUnit(qubit, qubit_names));
+        acc.splice(acc.end(), util::compose_imaginary_unit(qubit, qubit_names));
         qubit = (qubit + 1) % qubit_num;
     }
 

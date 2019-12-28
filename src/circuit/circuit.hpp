@@ -24,7 +24,7 @@ private:
     std::list<Gate> gate_list_;
     std::unordered_map<std::string, bool> is_ancilla_map_;
 
-    bool EqualGate_(const Gate& gate_a,
+    bool equal_gate(const Gate& gate_a,
                     const Gate& gate_b);
 
 public:
@@ -228,12 +228,12 @@ public:
     /**
      * remove identity gates
      */
-    void RemoveIdentities();
+    void remove_identities();
 
     /**
      * decompose a czz gate to {CNOT, T} gates
      */
-    void DecomposeCZZ();
+    void decompose_ccz();
 
     /**
      * print circuit status
@@ -259,7 +259,7 @@ public:
         std::cout << "# P: " << num_p << std::endl;
         std::cout << "# Z: " << num_z << std::endl;
         std::cout << "# Toffoli: " << num_toffoli << std::endl;
-        std::cout << "# T-depth: " << CountTgateDepth() << std::endl;
+        std::cout << "# T-depth: " << count_t_depth() << std::endl;
     }
 
     /**
@@ -276,7 +276,7 @@ public:
     /**
      * count t depth
      */
-    int CountTgateDepth()
+    int count_t_depth()
     {
         std::map<std::string, int> t_map;
         int t_depth = 0;
