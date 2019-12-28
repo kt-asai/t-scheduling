@@ -4,13 +4,21 @@ project(t-scheduling CXX)
 
 set(TARGETS t-scheduling)
 
+find_package(Z3)
+if(Z3_FOUND)
+    message(STATUS "Z3_FOUND: ${Z3_FOUND}")
+    message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
+    message(STATUS "Z3_DIR: ${Z3_DIR}")
+
+    include_directories(${Z3_CXX_INCLUDE_DIRS})
+    link_libraries(${Z3_LIBRARIES})
+endif()
+
 find_package(Boost)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     link_directories("${Boost_LIBRARY_DIRS}")
 endif()
-
-#add_subdirectory(src/tpar)
 
 add_executable(${TARGETS} src/main.cpp
         src/io/circuit_reader.cpp
@@ -25,8 +33,8 @@ add_executable(${TARGETS} src/main.cpp
         src/synthesis/tskd_synthesis.cpp
         src/synthesis/simple_circuit_builder.cpp
         src/synthesis/greedy_circuit_builder.cpp
-        src/matrix/matrix_reconstructor.cpp)
-
+        src/matrix/matrix_reconstructor.cpp
+        src/parallel/parallelization_oracle.cpp)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")

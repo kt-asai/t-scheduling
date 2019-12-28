@@ -8,7 +8,6 @@
 #include "synthesis/synthesis_method_factory.hpp"
 #include "synthesis/synthesis.hpp"
 
-
 int main(int argc, char** argv)
 {
     std::cout << "T-scheduling" << std::endl;

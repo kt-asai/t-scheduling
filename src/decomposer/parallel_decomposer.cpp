@@ -220,12 +220,6 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         }
     }
 
-//    std::cout << "--- init matrix decompose" << std::endl;
-//    for (auto&& e : matrix)
-//    {
-//        std::cout << e << std::endl;
-//    }
-
     // Make triangular
     std::vector<int> one_array(static_cast<int>(matrix.size()));
     std::pair<int, int> swap_pair = std::make_pair(-1, -1); // <pivot, target>
@@ -266,15 +260,6 @@ std::list<Gate> ParallelDecomposer::operator()(const int n,
         // generate candidate cnot list
         UpdateUpperGateSetList(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
     }
-
-    // add gate
-//    ret.splice(ret.begin(), GenerateGateList(gate_set_list));
-
-//    std::cout << "--- upper after matrix decompose" << std::endl;
-//    for (auto&& e : matrix)
-//    {
-//        std::cout << e << std::endl;
-//    }
 
     //Finish the job
     swap_pair = std::make_pair(-1, -1); // <pivot, target>
