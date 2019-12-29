@@ -11,15 +11,20 @@ void Layout::init()
     constexpr int ds_width = 4;
     constexpr int ds_height = 8;
     const std::vector<int> ds_length = {ds_width, ds_height};
+    const std::vector<LayoutType> types = {LayoutType::kuv, LayoutType::kuh, LayoutType::kudv, LayoutType::kudh};
 
     /*
      * 0.up and vertical
      * 1.up and horizontal
+     * 2.up, down vertical
+     * 3.up, down and horizontal
      */
     double ratio = 100000;
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 4; i++)
     {
-        const int width = ds_length[i] * option_.num_distillation();
+        const int rotation = i % 2;
+        const int width = i < 2 ? ds_length[rotation] * option_.num_distillation()
+                                : ds_length[rotation] * ((option_.num_distillation() + 1) / 2);
         const int horizontal_qubit_num = width / patch_size;
         const int height = (((circuit_.qubit_num() - 1) / horizontal_qubit_num) + 1) * patch_size;
         const std::pair<int, int> size = std::minmax(width, height);
@@ -27,31 +32,15 @@ void Layout::init()
         if (ratio > new_ration)
         {
             ratio = new_ration;
+            type_ = types[i];
             width_ = width;
             height_ = height;
         }
     }
 
     /*
-     * 0.up, down vertical
-     * 1.up, down and horizontal
+     * construct grid
      */
-    for (int i = 0; i < 2; i++)
-    {
-        const int width = ds_length[i] * ((option_.num_distillation() + 1) / 2);
-        const int horizontal_qubit_num = width / patch_size;
-        const int height = (((circuit_.qubit_num() - 1) / horizontal_qubit_num) + 1) * patch_size;
-        const std::pair<int, int> size = std::minmax(width, height);
-        const double new_ration = size.second / size.first;
-        if (ratio > new_ration)
-        {
-            ratio = new_ration;
-            width_ = width;
-            height_ = height;
-        }
-    }
-
-
     grid_ = std::vector<std::vector<LogicalBit>>(height_, std::vector<LogicalBit>(width_));
     int index = 0;
     for (int y = 0; y < height_; y++)

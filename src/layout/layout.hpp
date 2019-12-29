@@ -35,7 +35,7 @@ public:
 
         LogicalBit() { }
 
-        LogicalBit(std::string name,
+        LogicalBit(const std::string& name,
                    int x,
                    int y,
                    BitType type)
@@ -49,6 +49,8 @@ private:
     util::Option option_;
 
     Circuit circuit_;
+
+    LayoutType type_;
 
     int width_;
     int height_;
@@ -64,10 +66,16 @@ public:
            const Circuit& circuit)
         : option_(option),
           circuit_(circuit),
+          type_(LayoutType::kuv),
           width_(0),
           height_(0)
     {
         init();
+    }
+
+    LayoutType type() const
+    {
+        return type_;
     }
 
     int width() const
@@ -88,6 +96,22 @@ public:
     void print() const
     {
         std::cout << "# Layout info" << std::endl;
+        std::cout << "# type:  ";
+        switch (type_)
+        {
+            case LayoutType::kuv:
+                std::cout << "up vertical" << std::endl;
+                break;
+            case LayoutType::kuh:
+                std::cout << "up horizontal" << std::endl;
+                break;
+            case LayoutType::kudv:
+                std::cout << "up, down vertical" << std::endl;
+                break;
+            case LayoutType::kudh:
+                std::cout << "up, down horizontal" << std::endl;
+                break;
+        }
         std::cout << "# width: " << width_ << std::endl;
         std::cout << "# height:" << height_ << std::endl;
         for (int y = 0; y < height_; y++)
