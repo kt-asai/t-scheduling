@@ -7,14 +7,16 @@
 
 #include "../util/util.hpp"
 
+#include "../layout/layout.hpp"
+
 namespace tskd {
 
 class TskdSynthesis : public Synthesis
 {
 private:
-    Character chr_;
-
     util::Option option_;
+
+    Character chr_;
 
     GreedyCircuitBuilder builder_;
 
@@ -41,10 +43,11 @@ private:
     void construct_final_subcircuit();
 
 public:
-    TskdSynthesis(const Character& chr,
-                  const util::Option& option)
-            : chr_(chr),
-              option_(option)
+    TskdSynthesis(const util::Option& option,
+                  const Layout& layout,
+                  const Character& chr)
+            : option_(option),
+              chr_(chr)
     {
         init(chr);
 
@@ -53,6 +56,7 @@ public:
                                           chr.num_data_qubit() + chr.num_hadamard());
 
         builder_ = GreedyCircuitBuilder(option,
+                                        layout,
                                         oracle_,
                                         chr.num_qubit(),
                                         chr.num_data_qubit() + chr.num_hadamard(),

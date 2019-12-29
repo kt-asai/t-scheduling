@@ -1,9 +1,11 @@
 #include "gaussian_decomposer.hpp"
+
 #include "../util/util.hpp"
 
 namespace tskd {
 
-std::list<Gate> GaussianDecomposer::operator()(const int n,
+std::list<Gate> GaussianDecomposer::operator()(const Layout& layout,
+                                               const int n,
                                                const int m,
                                                std::vector<util::xor_func>& matrix,
                                                const std::vector<std::string>& qubit_names)

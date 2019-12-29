@@ -8,6 +8,8 @@
 
 #include "../util/option.hpp"
 
+#include "../layout/layout.hpp"
+
 #include "../circuit/gate.hpp"
 #include "../circuit/circuit.hpp"
 
@@ -32,6 +34,8 @@ class GreedyCircuitBuilder
 {
 private:
     util::Option option_;
+
+    Layout layout_;
 
     std::shared_ptr <MatrixDecomposer> decomposer_;
 
@@ -67,12 +71,14 @@ public:
 
     template<typename oracle_type>
     GreedyCircuitBuilder(const util::Option& option,
+                         const Layout& layout,
                          const oracle_type& oracle,
                          int qubit_num,
                          int dimension,
                          const std::vector <std::string>& qubit_names,
                          const std::vector <util::phase_exponent>& phase_exponent)
             : option_(option),
+              layout_(layout),
               oracle_(oracle),
               qubit_num_(qubit_num),
               dimension_(dimension),

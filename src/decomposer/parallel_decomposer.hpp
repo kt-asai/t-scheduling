@@ -3,6 +3,8 @@
 
 #include "matrix_decomposer.hpp"
 
+#include "../layout/layout.hpp"
+
 namespace tskd {
 
 class ParallelDecomposer : public MatrixDecomposer
@@ -14,7 +16,8 @@ public:
 
     ~ParallelDecomposer() final = default;
 
-    std::list<Gate> operator()(const int n,
+    std::list<Gate> operator()(const Layout& layout,
+                               const int n,
                                const int m,
                                std::vector<util::xor_func>& matrix,
                                const std::vector<std::string>& qubit_names) final;

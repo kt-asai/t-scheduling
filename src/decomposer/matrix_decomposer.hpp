@@ -5,8 +5,12 @@
 #include <vector>
 #include <string>
 
-#include "../circuit/gate.hpp"
 #include "../util/util.hpp"
+
+#include "../layout/layout.hpp"
+
+#include "../circuit/gate.hpp"
+
 
 namespace tskd {
 
@@ -19,7 +23,8 @@ public:
 
     virtual ~MatrixDecomposer() = default;
 
-    virtual std::list<Gate> operator()(const int n,
+    virtual std::list<Gate> operator()(const Layout& layout,
+                                       const int n,
                                        const int m,
                                        std::vector<util::xor_func>& matrix,
                                        const std::vector<std::string>& qubit_names) = 0;

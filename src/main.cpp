@@ -9,6 +9,7 @@
 #include "synthesis/synthesis.hpp"
 
 #include "parallel/parallelization_oracle.hpp"
+#include "layout/layout.hpp"
 
 //#include "z3++.h"
 //
@@ -89,27 +90,34 @@ int main(int argc, char** argv)
     option.set_syn_method((SynthesisMethod::ktskd));
     option.show();
 
-    std::cout << "-->> read file" << std::endl;
+
     tskd::CircuitReader reader(option.input_path());
     tskd::Circuit qc = reader.read();
+    std::cout << "-->> read file complete" << std::endl;
 
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Original circuit" << std::endl;
     qc.print();
 //    qc.print_gate_list();
+    std::cout << "# ----------------" << std::endl;
 
-    std::cout << "-->> construct character" << std::endl;
+    tskd::Layout layout(option, qc);
+//    layout.print();
+    std::cout << "-->> construct layout complete" << std::endl;
+
     tskd::Character chr(qc);
     chr.parse();
+    std::cout << "-->> construct character complete" << std::endl;
 
-    std::cout << "-->> synthsis" << std::endl;
-    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), chr, option);
+    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
     tskd::Circuit result = synthesis->execute();
+    std::cout << "-->> synthsis complete" << std::endl;
 
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Optimized circuit" << std::endl;
     result.print();
-    result.print_gate_list();
+//    result.print_gate_list();
+    std::cout << "# ----------------" << std::endl;
 
     return 0;
 }

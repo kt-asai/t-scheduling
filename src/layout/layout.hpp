@@ -5,6 +5,8 @@
 
 #include "../util/option.hpp"
 
+#include "../circuit/circuit.hpp"
+
 namespace tskd {
 
 enum BitType
@@ -13,23 +15,31 @@ enum BitType
     kancilla
 };
 
+enum LayoutType
+{
+    kuv,  // up and vertical
+    kuh,  // up and horizontal
+    kudv, // up, down and vertical
+    kudh, // up, down and horizontal
+};
+
 class Layout
 {
 public:
     struct LogicalBit
     {
-        int id_;
+        std::string name_;
         int x_;
         int y_;
         BitType type_;
 
         LogicalBit() { }
 
-        LogicalBit(int id,
+        LogicalBit(std::string name,
                    int x,
                    int y,
                    BitType type)
-            : id_(id),
+            : name_(name),
               x_(x),
               y_(y),
               type_(type) { }
@@ -37,6 +47,8 @@ public:
 
 private:
     util::Option option_;
+
+    Circuit circuit_;
 
     int width_;
     int height_;
@@ -46,7 +58,17 @@ private:
     void init();
 
 public:
-    Layout(const util::Option& option) : option_(option) { }
+    Layout() = default;
+
+    Layout(const util::Option& option,
+           const Circuit& circuit)
+        : option_(option),
+          circuit_(circuit),
+          width_(0),
+          height_(0)
+    {
+        init();
+    }
 
     int width() const
     {
@@ -61,6 +83,21 @@ public:
     std::vector<std::vector<LogicalBit>> grid() const
     {
         return grid_;
+    }
+
+    void print() const
+    {
+        std::cout << "# Layout info" << std::endl;
+        std::cout << "# width: " << width_ << std::endl;
+        std::cout << "# height:" << height_ << std::endl;
+        for (int y = 0; y < height_; y++)
+        {
+            for (int x = 0; x < width_; x++)
+            {
+                std::cout << grid_[y][x].name_;
+            }
+            std::cout << std::endl;
+        }
     }
 };
 

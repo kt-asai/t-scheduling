@@ -193,7 +193,8 @@ static std::list<Gate> generate_gate_list(const std::vector<std::list<Gate>>& ga
     return ret;
 }
 
-std::list<Gate> ParallelDecomposer::operator()(const int n,
+std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
+                                               const int n,
                                                const int m,
                                                std::vector<util::xor_func>& matrix,
                                                const std::vector<std::string>& qubit_names)

@@ -60,7 +60,7 @@ void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
     util::fix_basis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
     util::compose(qubit_num_, preparation_, restoration_);
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 void SimpleCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
@@ -130,7 +130,7 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
     util::compose(qubit_num_, preparation_, restoration_);
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,

@@ -10,6 +10,8 @@
 #include "../util/util.hpp"
 #include "../util/option.hpp"
 
+#include "../layout/layout.hpp"
+
 #include "../tpar/partition.hpp"
 
 namespace tskd {
@@ -17,9 +19,9 @@ namespace tskd {
 class TparSynthesis : public Synthesis
 {
 private:
-    Character chr_;
-
     util::Option option_;
+
+    Character chr_;
 
     SimpleCircuitBuilder builder_;
 
@@ -50,22 +52,24 @@ private:
     void construct_final_subcircuit();
 
 public:
-    TparSynthesis(const Character& chr,
-                  const util::Option& option)
-        : chr_(chr),
-          option_(option)
+    TparSynthesis(const util::Option& option,
+                  const Layout& layout,
+                  const Character& chr)
+            : option_(option),
+              chr_(chr)
     {
         init(chr);
-
-        builder_ = SimpleCircuitBuilder(option,
-                                        chr.num_qubit(),
-                                        chr.num_data_qubit() + chr.num_hadamard(),
-                                        chr.qubit_names(),
-                                        chr.phase_exponents());
 
         oracle_ = util::IndependentOracle(chr.num_qubit(),
                                           chr.num_data_qubit(),
                                           chr.num_data_qubit() + chr.num_hadamard());
+
+        builder_ = SimpleCircuitBuilder(option,
+                                        layout,
+                                        chr.num_qubit(),
+                                        chr.num_data_qubit() + chr.num_hadamard(),
+                                        chr.qubit_names(),
+                                        chr.phase_exponents());
     }
 
     void init(const Character& chr);

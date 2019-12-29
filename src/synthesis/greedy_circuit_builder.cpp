@@ -109,7 +109,7 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
 
     util::compose(qubit_num_, preparation_, restoration_);
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 int GreedyCircuitBuilder::check_dimension(const Character& chr,
@@ -218,7 +218,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  * create gate list
                  */
                 tmp_gate_list.splice(tmp_gate_list.end(),
-                                     (*decomposer_)(qubit_num_, 0, tmp_preparation, qubit_names_));
+                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
 
                 /**
                  * check time step
@@ -299,7 +299,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  * create gate list
                  */
                 tmp_gate_list.splice(tmp_gate_list.end(),
-                                     (*decomposer_)(qubit_num_, 0, tmp_preparation, qubit_names_));
+                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
 
                 /**
                  * check time step

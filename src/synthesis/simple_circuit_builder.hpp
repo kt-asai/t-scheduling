@@ -8,6 +8,8 @@
 
 #include "../util/option.hpp"
 
+#include "../layout/layout.hpp"
+
 #include "../circuit/gate.hpp"
 #include "../circuit/circuit.hpp"
 
@@ -28,6 +30,8 @@ class SimpleCircuitBuilder
 {
 private:
     util::Option option_;
+
+    Layout layout_;
 
     std::shared_ptr<MatrixDecomposer> decomposer_;
 
@@ -66,11 +70,13 @@ public:
     SimpleCircuitBuilder() = default;
 
     SimpleCircuitBuilder(const util::Option& option,
+                         const Layout& layout,
                          int qubit_num,
                          int dimension,
                          const std::vector<std::string>& qubit_names,
                          const std::vector<util::phase_exponent>& phase_exponent)
         : option_(option),
+          layout_(layout),
           qubit_num_(qubit_num),
           dimension_(dimension),
           qubit_names_(qubit_names),
