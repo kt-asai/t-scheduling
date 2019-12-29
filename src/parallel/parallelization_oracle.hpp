@@ -11,22 +11,22 @@ class ParallelizationOracle
 {
 private:
     int num_qubit_;
+    int num_distillation_;
 
-    std::list<Gate> gate_list_;
+    void init();
 
 public:
     ParallelizationOracle() = default;
 
     ParallelizationOracle(const int num_qubit,
-                          const std::list<Gate>& mapped_gate_list,
-                          const Gate& new_gate)
+                          const int num_distillation)
         : num_qubit_(num_qubit),
-          gate_list_(mapped_gate_list)
-    {
-        gate_list_.push_back(new_gate);
-    }
+          num_distillation_(num_distillation)
+      {
+        init();
+      }
 
-    bool check();
+    bool check(const std::vector<Gate>& gate_list);
 };
 
 }
