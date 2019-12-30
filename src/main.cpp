@@ -11,43 +11,6 @@
 #include "parallel/parallelization_oracle.hpp"
 #include "layout/layout.hpp"
 
-//#include "z3++.h"
-//
-//using namespace z3;
-//
-//int main()
-//{
-//    std::cout << "unsat core example1\n";
-//    context c;
-//    // We use answer literals to track assertions.
-//    // An answer literal is essentially a fresh Boolean marker
-//    // that is used to track an assertion.
-//    // For example, if we want to track assertion F, we
-//    // create a fresh Boolean variable p and assert (p => F)
-//    // Then we provide p as an argument for the check method.
-//    expr p1 = c.bool_const("p1");
-//    expr p2 = c.bool_const("p2");
-//    expr p3 = c.bool_const("p3");
-//    expr x  = c.int_const("x");
-//    expr y  = c.int_const("y");
-//    solver s(c);
-//    s.add(implies(p1, x > 10));
-//    s.add(implies(p1, y > x));
-//    s.add(implies(p2, y < 5));
-//    s.add(implies(p3, y > 0));
-//    expr assumptions[3] = { p1, p2, p3 };
-//    std::cout << s.check(3, assumptions) << "\n";
-//    expr_vector core = s.unsat_core();
-//    std::cout << core << "\n";
-//    std::cout << "size: " << core.size() << "\n";
-//    for (unsigned i = 0; i < core.size(); i++) {
-//        std::cout << core[i] << "\n";
-//    }
-//    // Trying again without p2
-//    expr assumptions2[2] = { p1, p3 };
-//    std::cout << s.check(2, assumptions2) << "\n";
-//}
-
 int main(int argc, char** argv)
 {
     std::cout << "T-scheduling" << std::endl;
@@ -97,27 +60,37 @@ int main(int argc, char** argv)
 
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Original circuit" << std::endl;
-    qc.print();
+//    qc.print();
 //    qc.print_gate_list();
     std::cout << "# ----------------" << std::endl;
 
     tskd::Layout layout(option, qc);
-//    layout.print();
+    layout.print();
+//    layout.print_edge();
     std::cout << "-->> construct layout complete" << std::endl;
 
-    tskd::Character chr(qc);
-    chr.parse();
-    std::cout << "-->> construct character complete" << std::endl;
+    // test z3
+    tskd::ParallelizationOracle oracle(layout);
+    std::vector<std::string> targets = {"3", "4"};
+    tskd::Gate gate1("cnot", "1", targets);
+    tskd::Gate gate2("cnot", "2", "17");
+    std::vector<tskd::Gate> gate_list = {gate1, gate2};
+    bool result = oracle.check(gate_list);
+    std::cout << "result:" << result << std::endl;
 
-    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
-    tskd::Circuit result = synthesis->execute();
-    std::cout << "-->> synthsis complete" << std::endl;
-
-    std::cout << "# ----------------" << std::endl;
-    std::cout << "# Optimized circuit" << std::endl;
-    result.print();
-//    result.print_gate_list();
-    std::cout << "# ----------------" << std::endl;
+//    tskd::Character chr(qc);
+//    chr.parse();
+//    std::cout << "-->> construct character complete" << std::endl;
+//
+//    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
+//    tskd::Circuit result = synthesis->execute();
+//    std::cout << "-->> synthsis complete" << std::endl;
+//
+//    std::cout << "# ----------------" << std::endl;
+//    std::cout << "# Optimized circuit" << std::endl;
+//    result.print();
+////    result.print_gate_list();
+//    std::cout << "# ----------------" << std::endl;
 
     return 0;
 }
