@@ -193,7 +193,6 @@ private:
                          const NodeType& type)
     {
         const int id = static_cast<int>(node_list_.size());
-//        Node node = Node(id, name, x, y, type);
         auto node = std::make_shared<Node>(id, name, x, y, type);
         node_list_.push_back(node);
         grid_[y][x] = node;

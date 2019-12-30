@@ -71,9 +71,9 @@ int main(int argc, char** argv)
 
     // test z3
     tskd::ParallelizationOracle oracle(layout);
-    std::vector<std::string> targets = {"3", "4"};
-    tskd::Gate gate1("cnot", "1", targets);
-    tskd::Gate gate2("cnot", "2", "17");
+//    std::vector<std::string> targets = {"8", "9"};
+    tskd::Gate gate1("cnot", "1", "3");
+    tskd::Gate gate2("cnot", "2", "4");
     std::vector<tskd::Gate> gate_list = {gate1, gate2};
     bool result = oracle.check(gate_list);
     std::cout << "result:" << result << std::endl;

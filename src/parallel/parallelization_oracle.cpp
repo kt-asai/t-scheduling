@@ -93,31 +93,61 @@ void ParallelizationOracle::make_edge_constraints(z3::solver& solver,
     for (auto&& node : layout_.node_list())
     {
         const int num_connected_edge = static_cast<int>(node->edge_list().size());
-        if (related_qubit_id_map_.count(node->name()))
+        if (node->name() != "A")
         {
-            if (num_connected_edge == 4)
+            if (related_qubit_id_map_.count(node->name()))
             {
-                z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
-                z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
-                z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
-                z3::expr e4 =  edge_expr_array[node->edge_list()[3]->id()];
+                if (num_connected_edge == 4)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+                    z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
+                    z3::expr e4 =  edge_expr_array[node->edge_list()[3]->id()];
 
-                solver.add((e1 + e2 + e3 + e4) == 1);
+                    solver.add((e1 + e2 + e3 + e4) == 1);
+                }
+                if (num_connected_edge == 3)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+                    z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
+
+                    solver.add((e1 + e2 + e3) == 1);
+                }
+                if (num_connected_edge == 2)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+
+                    solver.add((e1 + e2) == 1);
+                }
             }
-            if (num_connected_edge == 3)
+            else
             {
-                z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
-                z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
-                z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
+                if (num_connected_edge == 4)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+                    z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
+                    z3::expr e4 =  edge_expr_array[node->edge_list()[3]->id()];
 
-                solver.add((e1 + e2 + e3) == 1);
-            }
-            if (num_connected_edge == 2)
-            {
-                z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
-                z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+                    solver.add((e1 + e2 + e3 + e4) == 0);
+                }
+                if (num_connected_edge == 3)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+                    z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
 
-                solver.add((e1 + e2) == 1);
+                    solver.add((e1 + e2 + e3) == 0);
+                }
+                if (num_connected_edge == 2)
+                {
+                    z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
+                    z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
+
+                    solver.add((e1 + e2) == 0);
+                }
             }
         }
         else
@@ -129,7 +159,10 @@ void ParallelizationOracle::make_edge_constraints(z3::solver& solver,
                 z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
                 z3::expr e4 =  edge_expr_array[node->edge_list()[3]->id()];
 
-                solver.add((e1 + e2 + e3 + e4) != 1);
+                solver.add((e1 + e2 + e3 + e4) == 0
+                ||  (e1 + e2 + e3 + e4) == 2
+                || (e1 + e2 + e3 + e4) == 3
+                || (e1 + e2 + e3 + e4) == 4);
             }
             if (num_connected_edge == 3)
             {
@@ -137,14 +170,14 @@ void ParallelizationOracle::make_edge_constraints(z3::solver& solver,
                 z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
                 z3::expr e3 =  edge_expr_array[node->edge_list()[2]->id()];
 
-                solver.add((e1 + e2 + e3) != 1);
+                solver.add((e1 + e2 + e3) == 0 ||  (e1 + e2 + e3) == 2 || (e1 + e2 + e3) == 3);
             }
             if (num_connected_edge == 2)
             {
                 z3::expr e1 =  edge_expr_array[node->edge_list()[0]->id()];
                 z3::expr e2 =  edge_expr_array[node->edge_list()[1]->id()];
 
-                solver.add((e1 + e2) != 1);
+                solver.add((e1 + e2) == 0 ||  (e1 + e2) == 2);
             }
         }
     }
@@ -237,14 +270,7 @@ bool ParallelizationOracle::check(const std::vector<Gate>& gate_list)
 
     make_base_constraint(s, edge_expr_array, node_expr_array);
 
-    bool result = s.check() == z3::sat;
-
-    if (result)
-    {
-        verification(s);
-    }
-
-    return result;
+    return s.check() == z3::sat;
 }
 
 }
