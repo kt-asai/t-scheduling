@@ -27,6 +27,8 @@ private:
     int num_distillation_;
     int distillation_step_;
 
+    int num_buffer_;
+
     bool change_row_order_;
 
     SynthesisMethod syn_method_;
@@ -38,12 +40,14 @@ public:
     Option(std::string  input_path_,
            int num_distillation,
            int distillation_step,
+           int num_buffer,
            bool change_row_order,
            SynthesisMethod syn_method,
            DecompositionType dec_type)
             : input_path_(std::move(input_path_)),
               num_distillation_(num_distillation),
               distillation_step_(distillation_step),
+              num_buffer_(num_buffer),
               change_row_order_(change_row_order),
               syn_method_(syn_method),
               dec_type_(dec_type)
@@ -69,6 +73,11 @@ public:
     int distillation_step() const
     {
         return distillation_step_;
+    }
+
+    int num_buffer() const
+    {
+        return num_buffer_;
     }
 
     bool change_row_order() const
@@ -102,6 +111,11 @@ public:
         distillation_step_ = distillation_step;
     }
 
+    void set_num_buffer(int num_buffer)
+    {
+        num_buffer_ = num_buffer;
+    }
+
     void set_change_row_order(bool change_row_order)
     {
         change_row_order_ = change_row_order;
@@ -120,11 +134,12 @@ public:
     void show()
     {
         std::cout << "# Option list" << std::endl;
-        std::cout << "## input file: " << input_path_ << std::endl;
-        std::cout << "## output file: " << output_path_ << std::endl;
-        std::cout << "## number of distillatoion: " << num_distillation_ << std::endl;
-        std::cout << "## required distillation step: " << distillation_step_ << std::endl;
-        std::cout << "## synthesis method: ";
+        std::cout << "# input file: " << input_path_ << std::endl;
+        std::cout << "# output file: " << output_path_ << std::endl;
+        std::cout << "# number of distillatoion: " << num_distillation_ << std::endl;
+        std::cout << "# required distillation step: " << distillation_step_ << std::endl;
+        std::cout << "# number of buffer: " << num_buffer_ << std::endl;
+        std::cout << "# synthesis method: ";
         switch (syn_method_)
         {
             case SynthesisMethod::ktpar:
@@ -134,8 +149,8 @@ public:
                 std::cout << "t-scheduling" << std::endl;
                 break;
         }
-        std::cout << "## change row order: " << std::boolalpha << change_row_order_ << std::endl;
-        std::cout << "## decomposition type: ";
+        std::cout << "# change row order: " << std::boolalpha << change_row_order_ << std::endl;
+        std::cout << "# decomposition type: ";
         switch (dec_type_)
         {
             case DecompositionType::kgauss:
