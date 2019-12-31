@@ -167,15 +167,11 @@ static std::list<Gate> generate_gate_list(const std::vector<std::list<Gate>>& ga
 
         if (gate_group.size() >= 2)
         {
-            ret.emplace_front("block");
+            ret.emplace_front("par");
         }
-        for (auto&& gate : gate_group)
+        else
         {
-            ret.push_front(gate);
-        }
-        if (gate_group.size() >= 2)
-        {
-            ret.emplace_front("block");
+            ret.emplace_front(gate_group.front());
         }
     }
 
