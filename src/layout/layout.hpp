@@ -300,14 +300,14 @@ public:
         }
         std::cout << "# width: " << width_ << std::endl;
         std::cout << "# height:" << height_ << std::endl;
-        for (int y = 0; y < height_; y++)
-        {
-            for (int x = 0; x < width_; x++)
-            {
-                std::cout << grid_[y][x]->name();
-            }
-            std::cout << std::endl;
-        }
+//        for (int y = 0; y < height_; y++)
+//        {
+//            for (int x = 0; x < width_; x++)
+//            {
+//                std::cout << grid_[y][x]->name();
+//            }
+//            std::cout << std::endl;
+//        }
     }
 
     void print_edge() const
