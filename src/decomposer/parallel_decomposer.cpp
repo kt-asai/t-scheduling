@@ -167,7 +167,7 @@ static std::list<Gate> generate_gate_list(const std::vector<std::list<Gate>>& ga
 
         if (gate_group.size() >= 2)
         {
-            ret.emplace_front("par");
+            ret.emplace_front("cnot");
         }
         else
         {

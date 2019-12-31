@@ -36,7 +36,7 @@ bool GreedyCircuitBuilder::init(const std::vector<util::xor_func>& in,
 
 int GreedyCircuitBuilder::compute_time_step(const std::list<Gate>& gate_list)
 {
-    return static_cast<int>(gate_list.size());
+    return static_cast<int>(gate_list.size()) * 2;
 }
 
 void GreedyCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
@@ -223,7 +223,10 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-                if (compute_time_step(tmp_gate_list) < option_.distillation_step())
+                int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
+                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
+                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) < upper_bound_time)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
@@ -304,7 +307,10 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-                if (compute_time_step(tmp_gate_list) < option_.distillation_step())
+                int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
+                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
+                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) < upper_bound_time)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
