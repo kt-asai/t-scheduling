@@ -10,6 +10,8 @@
 
 #include "parallel/parallelization_oracle.hpp"
 #include "layout/layout.hpp"
+#include "simulator/simulator.hpp"
+
 
 int main(int argc, char** argv)
 {
@@ -23,7 +25,21 @@ int main(int argc, char** argv)
     const std::string input = argv[1];
     const std::string path = "../benchmarks/" + input;
 
-    const std::string dec_type = argv[2];
+    const std::string syn_type = argv[2];
+    if (syn_type == "tpar")
+    {
+        option.set_syn_method((SynthesisMethod::ktpar));
+    }
+    else if (syn_type == "tskd")
+    {
+        option.set_syn_method((SynthesisMethod::ktskd));
+    }
+    else
+    {
+        option.set_syn_method((SynthesisMethod::ktpar));
+    }
+
+    const std::string dec_type = argv[3];
     if (dec_type == "gauss")
     {
         option.set_dec_type(DecompositionType::kgauss);
@@ -37,20 +53,22 @@ int main(int argc, char** argv)
         option.set_dec_type(DecompositionType::kgauss);
     }
 
-    const std::string change = argv[3];
-    if (change == "true")
-    {
-        option.set_change_row_order(true);
-    }
-    else
-    {
-        option.set_change_row_order(false);
-    }
+    // TODO: fix bug
+//    const std::string change = argv[4];
+//    if (change == "true")
+//    {
+//        option.set_change_row_order(true);
+//    }
+//    else
+//    {
+//        option.set_change_row_order(false);
+//    }
 
+    option.set_change_row_order(true);
     option.set_input_path(path);
     option.set_num_distillation(2);
-    option.set_distillation_step(1000);
-    option.set_syn_method((SynthesisMethod::ktskd));
+    option.set_distillation_step(10);
+    option.set_num_buffer(0);
     option.show();
 
 
@@ -58,10 +76,11 @@ int main(int argc, char** argv)
     tskd::Circuit qc = reader.read();
     std::cout << "-->> read file complete" << std::endl;
 
+//    qc.print_gate_list();
     std::cout << "# ----------------" << std::endl;
     std::cout << "# Original circuit" << std::endl;
-//    qc.print();
-//    qc.print_gate_list();
+    tskd::Simulator sim_init(option, qc);
+    sim_init.print();
     std::cout << "# ----------------" << std::endl;
 
     tskd::Layout layout(option, qc);
@@ -70,27 +89,28 @@ int main(int argc, char** argv)
     std::cout << "-->> construct layout complete" << std::endl;
 
     // test z3
-    tskd::ParallelizationOracle oracle(layout);
+//    tskd::ParallelizationOracle oracle(layout);
 //    std::vector<std::string> targets = {"8", "9"};
-    tskd::Gate gate1("cnot", "1", "3");
-    tskd::Gate gate2("cnot", "2", "4");
-    std::vector<tskd::Gate> gate_list = {gate1, gate2};
-    bool result = oracle.check(gate_list);
-    std::cout << "result:" << result << std::endl;
+//    tskd::Gate gate1("cnot", "1", "3");
+//    tskd::Gate gate2("cnot", "2", "4");
+//    std::list<tskd::Gate> gate_list = {gate1, gate2};
+//    bool result = oracle.check(gate_list);
+//    std::cout << "result:" << result << std::endl;
 
-//    tskd::Character chr(qc);
-//    chr.parse();
-//    std::cout << "-->> construct character complete" << std::endl;
-//
-//    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
-//    tskd::Circuit result = synthesis->execute();
-//    std::cout << "-->> synthsis complete" << std::endl;
-//
-//    std::cout << "# ----------------" << std::endl;
-//    std::cout << "# Optimized circuit" << std::endl;
-//    result.print();
-////    result.print_gate_list();
-//    std::cout << "# ----------------" << std::endl;
+    tskd::Character chr(qc);
+    chr.parse();
+    std::cout << "-->> construct character complete" << std::endl;
+
+    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
+    tskd::Circuit result = synthesis->execute();
+    std::cout << "-->> synthsis complete" << std::endl;
+
+//    result.print_gate_list();
+    std::cout << "# ----------------" << std::endl;
+    std::cout << "# Optimized circuit" << std::endl;
+    tskd::Simulator sim_result(option, result);
+    sim_result.print();
+    std::cout << "# ----------------" << std::endl;
 
     return 0;
 }

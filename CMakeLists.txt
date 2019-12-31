@@ -35,7 +35,8 @@ add_executable(${TARGETS} src/main.cpp
         src/synthesis/greedy_circuit_builder.cpp
         src/matrix/matrix_reconstructor.cpp
         src/parallel/parallelization_oracle.cpp
-        src/layout/layout.cpp)
+        src/layout/layout.cpp
+        src/simulator/simulator.cpp)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
