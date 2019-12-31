@@ -24,7 +24,7 @@ private:
 
     int var_count_;
 
-    void init(const std::vector<Gate>& gate_list);
+    void init(const std::list<Gate>& gate_list);
 
     void make_vars(z3::context& context,
                    z3::expr_vector& edge_expr_array,
@@ -64,7 +64,10 @@ public:
         : layout_(layout),
           var_count_(0) { }
 
-    bool check(const std::vector<Gate>& gate_list);
+    bool check(std::list<Gate>& gate_list,
+               const Gate& new_gate);
+
+    bool check(const std::list<Gate>& gate_list);
 };
 
 }

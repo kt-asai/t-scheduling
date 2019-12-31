@@ -3,21 +3,9 @@
 
 #include "parallel_decomposer.hpp"
 
-#include "../circuit/gate.hpp"
+#include "../parallel/parallelization_oracle.hpp"
 
 namespace tskd {
-
-static
-bool can_parallelization(const std::list<Gate>& mappled_gate_list,
-                        const Gate& new_gate)
-{
-    if (mappled_gate_list.empty())
-    {
-        return true;
-    }
-
-    return false;
-}
 
 static void update_gate_set_list(const int sign,
                                  const int pivot,
@@ -25,7 +13,8 @@ static void update_gate_set_list(const int sign,
                                  const std::pair<int, int>& swap_pair,
                                  std::unordered_map<std::string, int>& depth,
                                  std::vector<std::list<Gate>>& gate_set_list,
-                                 const std::vector<std::string>& qubit_names)
+                                 const std::vector<std::string>& qubit_names,
+                                 ParallelizationOracle& oracle)
 {
     /*
      * Generate swap
@@ -41,11 +30,11 @@ static void update_gate_set_list(const int sign,
         while (counter > 0)
         {
             Gate gate("tof", swap_a, swap_b);
-            if (can_parallelization(gate_set_list[swap_depth], gate))
+            if (oracle.check(gate_set_list[swap_depth], gate))
             {
                 counter--;
-                gate_set_list[swap_depth].push_back(gate);
                 std::swap(swap_a, swap_b);
+                gate_set_list[swap_depth].push_back(gate);
             }
             depth[swap_a]++;
             depth[swap_b]++;
@@ -127,7 +116,7 @@ static void update_gate_set_list(const int sign,
                 target_list.push_back(candidate_target);
                 const Gate new_gate("tof", control, target_list);
 
-                if (can_parallelization(gate_set_list[bit_depth], new_gate))
+                if (oracle.check(gate_set_list[bit_depth], new_gate))
                 {
                     bit_set[j] = -1;
                     depth[candidate_target]++;
@@ -206,6 +195,8 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
     std::unordered_map<std::string, int> depth;
     std::vector<std::list<Gate>> gate_set_list(max_num_gate);
 
+    ParallelizationOracle oracle(layout);
+
     // init
     for (auto&& name : qubit_names)
     {
@@ -259,7 +250,7 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
         }
 
         // generate candidate cnot list
-        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
+        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
     }
 
     //Finish the job
@@ -278,7 +269,7 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
         }
 
         // generate candidate cnot list
-        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names);
+        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
     }
 
     // add gate

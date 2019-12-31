@@ -2,7 +2,7 @@
 
 namespace tskd {
 
-void ParallelizationOracle::init(const std::vector<Gate>& gate_list)
+void ParallelizationOracle::init(const std::list<Gate>& gate_list)
 {
     int id = 1;
     for (auto&& gate : gate_list)
@@ -249,7 +249,19 @@ void ParallelizationOracle::verification(z3::solver& s)
     }
 }
 
-bool ParallelizationOracle::check(const std::vector<Gate>& gate_list)
+bool ParallelizationOracle::check(std::list<Gate>& gate_list,
+                                  const Gate& new_gate)
+{
+    gate_list.push_back(new_gate);
+
+    const bool result = check(gate_list);
+
+    gate_list.pop_back();
+
+    return result;
+}
+
+bool ParallelizationOracle::check(const std::list<Gate>& gate_list)
 {
     num_gate_ = static_cast<int>(gate_list.size());
 
