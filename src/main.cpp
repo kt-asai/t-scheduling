@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
     option.set_change_row_order(true);
     option.set_input_path(path);
-    option.set_num_distillation(10);
+    option.set_num_distillation(2);
     option.set_distillation_step(10);
     option.set_num_buffer(0);
     option.show();
@@ -101,8 +101,10 @@ int main(int argc, char** argv)
     chr.parse();
     std::cout << "-->> construct character complete" << std::endl;
 
+    const auto start = std::chrono::system_clock::now();
     tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
     tskd::Circuit result = synthesis->execute();
+    const auto end = std::chrono::system_clock::now();
     std::cout << "-->> synthsis complete" << std::endl;
 
 //    result.print_gate_list();
@@ -110,6 +112,8 @@ int main(int argc, char** argv)
     std::cout << "# Optimized circuit" << std::endl;
     tskd::Simulator sim_result(option, result);
     sim_result.print();
+    const auto elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::cout << "# " << elapsed_time.count() << " sec" << std::endl;
     std::cout << "# ----------------" << std::endl;
 
     return 0;
