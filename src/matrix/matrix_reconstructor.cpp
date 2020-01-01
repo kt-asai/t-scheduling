@@ -170,8 +170,8 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
         const int next_eval = evaluate_matrix(num_qubit_, tmp_prep);
 
         // sa update param
-        const auto time = current_time - start;
-        const bool force_next = (rate_ * (req_time_ - time)) > (req_time_ * dist(seed_generator_));
+        const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start);
+        const bool force_next = (rate_ * (req_time_.count() - time.count())) > (req_time_.count() * dist(seed_generator_));
 
         // update
         if (current_eval > next_eval || force_next)
@@ -187,7 +187,6 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
             best_rest = current_rest;
             target_phase_map = current_target_phase_map;
         }
-
     }
 
     return best_rest;

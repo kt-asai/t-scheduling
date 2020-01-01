@@ -34,7 +34,7 @@ public:
     {
         engine_ = std::mt19937(seed_generator_());
         rate_ = 10000;
-        req_time_ = std::chrono::milliseconds(500);
+        req_time_ = std::chrono::milliseconds(1000);
     }
 
     std::vector<util::xor_func> execute(const std::vector<util::xor_func>& identity,
