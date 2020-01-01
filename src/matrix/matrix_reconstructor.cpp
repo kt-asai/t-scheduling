@@ -88,6 +88,111 @@ static int evaluate_matrix(const int n,
     return result;
 }
 
+std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util::xor_func>& identity,
+                                                         const std::vector<util::xor_func>& preparation,
+                                                         const std::vector<util::xor_func>& restoration,
+                                                         std::unordered_map<int, int>& target_phase_map)
+{
+    // random generator
+    const int matrix_size = static_cast<int>(preparation.size());
+    std::uniform_int_distribution<> dist_index(0, matrix_size - 1);
+
+    // SA parameters
+    const auto start = std::chrono::system_clock::now();
+    const auto end = std::chrono::system_clock::now() + req_time_;
+    auto current_time = start;
+    std::uniform_int_distribution<> dist(1, rate_);
+
+    // current (temporary) parameters
+    std::vector<util::xor_func> tmp_prep(preparation);
+    std::vector<util::xor_func> current_rest(restoration);
+    util::compose(num_qubit_, tmp_prep, current_rest);
+    int current_eval = evaluate_matrix(num_qubit_, tmp_prep);
+    std::unordered_map<int, int> current_target_phase_map = target_phase_map;
+
+    // best parameters
+    int best_eval = current_eval;
+    std::vector<util::xor_func> best_rest = current_rest;
+
+    /*
+     * implement SA
+     */
+    while (true)
+    {
+        current_time = std::chrono::system_clock::now();
+        if (current_time > end)
+        {
+            break;
+        }
+
+        // choice index randomly
+        const int target_a = dist_index(engine_);
+        const int target_b = dist_index(engine_);
+
+        if (target_a == target_b)
+        {
+            continue;
+        }
+
+        // swap process
+        std::vector<util::xor_func> next_prep(identity);
+        util::compose(num_qubit_, next_prep, current_rest);
+        std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
+
+        std::swap(next_prep[target_a], next_prep[target_b]);
+        int phase_index_a = -1;
+        int phase_index_b = -1;
+        if (next_target_phase_map.count(target_a))
+        {
+            phase_index_a = next_target_phase_map[target_a];
+            next_target_phase_map.erase(target_a);
+        }
+        if (next_target_phase_map.count(target_b))
+        {
+            phase_index_b = next_target_phase_map[target_b];
+            next_target_phase_map.erase(target_b);
+        }
+
+        if (phase_index_a != -1)
+        {
+            next_target_phase_map.emplace(target_b, phase_index_a);
+        }
+        if (phase_index_b != -1)
+        {
+            next_target_phase_map.emplace(target_a, phase_index_b);
+        }
+
+        // evaluate matrix
+        std::vector<util::xor_func> next_rest(identity);
+        util::compose(num_qubit_, next_rest, next_prep);
+        tmp_prep = preparation;
+        util::compose(num_qubit_, tmp_prep, next_rest);
+        const int next_eval = evaluate_matrix(num_qubit_, tmp_prep);
+
+        // sa update param
+        const auto time = current_time - start;
+        const bool force_next = (rate_ * (req_time_ - time)) > (req_time_ * dist(seed_generator_));
+
+        // update
+        if (current_eval > next_eval || force_next)
+        {
+            current_eval = next_eval;
+            current_rest = next_rest;
+            current_target_phase_map = next_target_phase_map;
+        }
+
+        if (best_eval > current_eval)
+        {
+            best_eval = current_eval;
+            best_rest = current_rest;
+            target_phase_map = current_target_phase_map;
+        }
+
+    }
+
+    return best_rest;
+}
+
 std::vector<util::xor_func> MatrixReconstructor::execute(const int num_partition,
                                                          const std::vector<util::xor_func>& bits,
                                                          std::unordered_map<int, int>& target_phase_map)
@@ -139,65 +244,6 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const int num_partition
         {
             continue;
         }
-
-        /*
-        // swap prcess
-//        std::swap(current_matrix[target_a], current_matrix[target_b]);
-//        int phase_index_a = -1;
-//        int phase_index_b = -1;
-//        if (current_target_phase_map.count(target_a))
-//        {
-//            phase_index_a = current_target_phase_map[target_a];
-//            current_target_phase_map.erase(target_a);
-//        }
-//        if (current_target_phase_map.count(target_b))
-//        {
-//            phase_index_b = current_target_phase_map[target_b];
-//            current_target_phase_map.erase(target_b);
-//        }
-//
-//        if (phase_index_a != -1)
-//        {
-//            current_target_phase_map.emplace(target_b, phase_index_a);
-//        }
-//        if (phase_index_b != -1)
-//        {
-//            current_target_phase_map.emplace(target_a, phase_index_b);
-//        }
-//
-//        // evaluate matrix
-//        const int next_eval = EvaluateMatrix(qubit_num_, current_matrix);
-//        const auto time = current_time - start;
-//        const bool force_current = false; //(rate * (req_time - time)) > (req_time * dist(seed_gen));
-//
-//        // update
-//        if (current_eval > next_eval || force_current)
-//        {
-//            current_eval = next_eval;
-//        }
-//        else
-//        {
-//            // recover
-//            std::swap(current_matrix[target_a], current_matrix[target_b]);
-//            if (phase_index_a != -1)
-//            {
-//                current_target_phase_map.erase(target_b);
-//                current_target_phase_map.emplace(target_a, phase_index_a);
-//            }
-//            if (phase_index_b != -1)
-//            {
-//                current_target_phase_map.erase(target_a);
-//                current_target_phase_map.emplace(target_b, phase_index_b);
-//            }
-//        }
-//
-//        if (best_eval > current_eval)
-//        {
-//            best_eval = current_eval;
-//            matrix = current_matrix;
-//            target_phase_map = current_target_phase_map;
-//        }
-        */
 
         // swap process
         std::vector<util::xor_func> next_bits(current_bits);

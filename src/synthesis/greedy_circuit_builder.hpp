@@ -48,6 +48,7 @@ private:
     std::vector<util::phase_exponent> phase_exponent_;
 
     std::vector<util::xor_func> bits_;
+    std::vector<util::xor_func> init_prep_;
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 

@@ -31,7 +31,8 @@ bool SimpleCircuitBuilder::init(const std::vector<util::xor_func>& in,
 }
 
 void SimpleCircuitBuilder::init_bits(const std::set<int>& phase_exponent_index_set,
-                                     std::unordered_map<int, int>& target_phase_map)
+                                     std::unordered_map<int, int>& target_phase_map,
+                                     std::vector<util::xor_func>& in)
 {
     std::set<int>::iterator ti;
     int counter = 0;
@@ -54,11 +55,26 @@ void SimpleCircuitBuilder::init_bits(const std::set<int>& phase_exponent_index_s
 void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
                                    const std::vector<util::xor_func>& in,
                                    const int num_partition,
-                                   std::unordered_map<int, int>& target_phase_map)
+                                   std::unordered_map<int, int>& target_phase_map,
+                                   MatrixReconstructor& sa)
 {
     util::to_upper_echelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::fix_basis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
+
+    /*
+     * Re-construct binary matrix
+     */
+    if (option_.change_row_order())
+    {
+        restoration_ = sa.execute(init_prep_, preparation_, restoration_, target_phase_map);
+    }
+
     util::compose(qubit_num_, preparation_, restoration_);
+//    std::cout << "-- preparation" << std::endl;
+//    for (auto&& e : preparation_)
+//    {
+//        std::cout << e << std::endl;
+//    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -121,14 +137,15 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     {
         bits_[i] = out[i];
     }
-    std::unordered_map<int, int> none;
-    if (option_.change_row_order())
-    {
-        bits_ = sa.execute(static_cast<int>(bits_.size()), bits_, none);
-    }
+
     util::to_upper_echelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
     util::compose(qubit_num_, preparation_, restoration_);
+//    std::cout << "-- preparation" << std::endl;
+//    for (auto&& e : preparation_)
+//    {
+//        std::cout << e << std::endl;
+//    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -150,6 +167,14 @@ std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
      * Reduce in to echelon form to decide on a basis
      */
     util::to_upper_echelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
+    init_prep_ = preparation_;
+
+//    std::cout << "init prepartion" << std::endl;
+//    for (auto&& e : preparation_)
+//    {
+//        std::cout << e << std::endl;
+//    }
+
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 
@@ -161,20 +186,12 @@ std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
         /*
          * Initialize binary matrix
          */
-        init_bits(it, target_phase_map);
-
-        /*
-         * Re-construct binary matrix
-         */
-        if (option_.change_row_order())
-        {
-            bits_ = sa.execute(static_cast<int>(it.size()), bits_, target_phase_map);
-        }
+        init_bits(it, target_phase_map, in);
 
         /*
          * Prepare the bits
          */
-        prepare(ret, in, static_cast<int>(it.size()), target_phase_map);
+        prepare(ret, in, static_cast<int>(it.size()), target_phase_map, sa);
 
         /*
          * Apply the phase gates

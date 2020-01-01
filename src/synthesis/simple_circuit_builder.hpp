@@ -42,6 +42,7 @@ private:
     std::vector<util::phase_exponent> phase_exponent_;
 
     std::vector<util::xor_func> bits_;
+    std::vector<util::xor_func> init_prep_;
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 
@@ -49,12 +50,14 @@ private:
               const std::vector<util::xor_func>& out);
 
     void init_bits(const std::set<int>& phase_exponent_index_set,
-                   std::unordered_map<int, int>& target_phase_map);
+                   std::unordered_map<int, int>& target_phase_map,
+                   std::vector<util::xor_func>& in);
 
     void prepare(std::list<Gate>& gate_list,
                  const std::vector<util::xor_func>& in,
                  const int num_partition,
-                 std::unordered_map<int, int>& target_phase_map);
+                 std::unordered_map<int, int>& target_phase_map,
+                 MatrixReconstructor& sa);
 
     void apply_phase_gates(std::list<Gate>& gate_list,
                            const std::unordered_map<int, int>& target_phase_map);

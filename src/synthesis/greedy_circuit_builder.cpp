@@ -97,17 +97,14 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     {
         bits_[i] = out[i];
     }
-
-    std::unordered_map<int, int> none;
-    if (option_.change_row_order())
-    {
-        bits_ = sa.execute(static_cast<int>(bits_.size()), bits_, none);
-    }
-
     util::to_upper_echelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
-
     util::compose(qubit_num_, preparation_, restoration_);
+//    std::cout << "-- preparation" << std::endl;
+//    for (auto&& e : preparation_)
+//    {
+//        std::cout << e << std::endl;
+//    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -145,6 +142,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
      * Reduce in to echelon form to decide on a basis
      */
     util::to_upper_echelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
+    init_prep_ = preparation_;
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 
@@ -197,13 +195,6 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                     }
                 }
 
-                /**
-                 * change row order in the matrix
-                 */
-                if (option_.change_row_order())
-                {
-                    tmp_bits = sa.execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
-                }
 
                 /**
                  * prepare preparation matrix
@@ -212,7 +203,20 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 util::to_upper_echelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
                 util::fix_basis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
+                /**
+                 * change row order in the matrix
+                 */
+                if (option_.change_row_order())
+                {
+                    tmp_restoration = sa.execute(init_prep_, tmp_preparation, tmp_restoration, tmp_target_phase_map);
+                }
+
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
+//                std::cout << "-- preparation" << std::endl;
+//                for (auto&& e : tmp_preparation)
+//                {
+//                    std::cout << e << std::endl;
+//                }
 
                 /**
                  * create gate list
@@ -226,7 +230,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
                 const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
                 upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
-                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) < upper_bound_time)
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= upper_bound_time)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
@@ -282,20 +286,21 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 }
 
                 /**
-                 * change row order in the matrix
-                 */
-                if (option_.change_row_order())
-                {
-                    tmp_bits = sa.execute(static_cast<int>(tmp_sub_part.size()), tmp_bits, tmp_target_phase_map);
-                }
-
-                /**
                  * prepare preparation matrix
                  */
                 const int num_partition = static_cast<int>(tmp_sub_part.size());
                 util::to_upper_echelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
                 util::fix_basis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
+
+                /**
+                 * change row order in the matrix
+                 */
+                if (option_.change_row_order())
+                {
+                    tmp_restoration = sa.execute(init_prep_, tmp_preparation, tmp_restoration, tmp_target_phase_map);
+                }
+
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
@@ -310,7 +315,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
                 const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
                 upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
-                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) < upper_bound_time)
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= upper_bound_time)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
