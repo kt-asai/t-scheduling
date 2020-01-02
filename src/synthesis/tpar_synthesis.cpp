@@ -17,10 +17,12 @@ void TparSynthesis::init(const Character& chr)
     /*
      * initialize some stuff
      */
+    bit_map_.resize(chr.num_qubit());
     mask_ = util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
     mask_.set(chr.num_data_qubit() + chr.num_hadamard());
     for (int i = 0, j = 0; i < chr.num_qubit(); i++)
     {
+        bit_map_[i] = i;
         circuit_.add_qubit(chr.qubit_names()[i]);
         circuit_.set_ancilla(chr.qubit_names()[i], chr.ancilla_list()[i]);
         wires_.emplace_back(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
@@ -83,10 +85,15 @@ void TparSynthesis::determine_apply_partition(Character::Hadamard& hadamard)
     }
 }
 
-void TparSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
+void TparSynthesis::construct_subcircuit(Character::Hadamard& hadamard)
 {
+
     circuit_.add_gate_list(builder_.build(frozen_[0], wires_, wires_));
+
+    std::vector<util::xor_func> original_hadamard_outputs = hadamard.input_wires_parity_;
     circuit_.add_gate_list(builder_.build(frozen_[1], wires_, hadamard.input_wires_parity_));
+    update_bit_map(original_hadamard_outputs, hadamard.input_wires_parity_);
+
     for (int i = 0; i < chr_.num_qubit(); i++)
     {
         wires_[i] = hadamard.input_wires_parity_[i];
@@ -95,9 +102,10 @@ void TparSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
 
 void TparSynthesis::apply_hadamard(const Character::Hadamard& hadamard)
 {
-    circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
-    wires_[hadamard.target_].reset();
-    wires_[hadamard.target_].set(hadamard.previous_qubit_index_);
+    const int hadamard_target = bit_map_[hadamard.target_];
+    circuit_.add_gate("H", chr_.qubit_names()[hadamard_target]);
+    wires_[hadamard_target].reset();
+    wires_[hadamard_target].set(hadamard.previous_qubit_index_);
     mask_.set(hadamard.previous_qubit_index_);
 }
 
@@ -119,7 +127,9 @@ int TparSynthesis::check_dimension(int current_dimension)
 void TparSynthesis::construct_final_subcircuit()
 {
     circuit_.add_gate_list(builder_.build(floats_[0], wires_, wires_));
-    circuit_.add_gate_list(builder_.build(floats_[1], wires_, chr_.outputs()));
+
+    std::vector<util::xor_func> outputs = chr_.outputs();
+    circuit_.add_gate_list(builder_.build(floats_[1], wires_, outputs));
 
     /*
      * Add the global phase

@@ -66,15 +66,10 @@ void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
      */
     if (option_.change_row_order())
     {
-        restoration_ = sa.execute(init_prep_, preparation_, restoration_, target_phase_map);
+        restoration_ = sa.execute(preparation_, restoration_, target_phase_map);
     }
 
     util::compose(qubit_num_, preparation_, restoration_);
-//    std::cout << "-- preparation" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
 
     gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
@@ -130,7 +125,7 @@ void SimpleCircuitBuilder::unprepare()
 
 void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
                                              const std::vector<util::xor_func>& in,
-                                             const std::vector<util::xor_func>& out,
+                                             std::vector<util::xor_func>& out,
                                              MatrixReconstructor& sa)
 {
     for (int i = 0; i < qubit_num_; i++)
@@ -138,21 +133,40 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
         bits_[i] = out[i];
     }
 
+    std::unordered_map<int, int> bit_correspond_map;
+    for (auto i = 0; i < out.size(); i++)
+    {
+        bit_correspond_map.emplace(i, i);
+    }
+
     util::to_upper_echelon(qubit_num_, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::fix_basis(qubit_num_, dimension_, qubit_num_, in, bits_, &restoration_, std::vector<std::string>());
+
+    /*
+     * Re-construct binary matrix
+     */
+    if (option_.change_row_order())
+    {
+        restoration_ = sa.execute(preparation_, restoration_, bit_correspond_map);
+    }
+
     util::compose(qubit_num_, preparation_, restoration_);
-//    std::cout << "-- preparation" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
+
+
+    // move bit place of out
+    std::vector<util::xor_func> tmp_out(out.size());
+    for (auto i = 0; i < out.size(); i++)
+    {
+        tmp_out[i] = out[bit_correspond_map[i]];
+    }
+    out = tmp_out;
 
     gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
                                             std::vector<util::xor_func>& in,
-                                            const std::vector<util::xor_func>& out)
+                                            std::vector<util::xor_func>& out)
 {
     std::list<Gate> ret;
 
@@ -167,14 +181,6 @@ std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
      * Reduce in to echelon form to decide on a basis
      */
     util::to_upper_echelon(qubit_num_, dimension_, in, &preparation_, std::vector<std::string>());
-    init_prep_ = preparation_;
-
-//    std::cout << "init prepartion" << std::endl;
-//    for (auto&& e : preparation_)
-//    {
-//        std::cout << e << std::endl;
-//    }
-
 
     MatrixReconstructor sa(in, dimension_, qubit_num_);
 

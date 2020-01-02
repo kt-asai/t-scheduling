@@ -42,7 +42,6 @@ private:
     std::vector<util::phase_exponent> phase_exponent_;
 
     std::vector<util::xor_func> bits_;
-    std::vector<util::xor_func> init_prep_;
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 
@@ -66,7 +65,7 @@ private:
 
     void prepare_last_part(std::list<Gate>& gate_list,
                            const std::vector<util::xor_func>& in,
-                           const std::vector<util::xor_func>& out,
+                           std::vector<util::xor_func>& out,
                            MatrixReconstructor& sa);
 
 public:
@@ -103,7 +102,7 @@ public:
 
     std::list<Gate> build(const tpar::partitioning& partition,
                           std::vector<util::xor_func>& in,
-                          const std::vector<util::xor_func>& out);
+                          std::vector<util::xor_func>& out);
 
     static std::list<Gate> build_global_phase(int qubit_num,
                                               int phase,

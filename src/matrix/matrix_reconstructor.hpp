@@ -24,6 +24,10 @@ private:
     int rate_;
     std::chrono::milliseconds req_time_;
 
+    std::vector<util::xor_func> identity_;
+
+    void init();
+
 public:
     MatrixReconstructor(std::vector<util::xor_func>& input,
                        const int dimension,
@@ -32,13 +36,10 @@ public:
           dimension_(dimension),
           num_qubit_(num_qubit)
     {
-        engine_ = std::mt19937(seed_generator_());
-        rate_ = 10000;
-        req_time_ = std::chrono::milliseconds(1000);
+        init();
     }
 
-    std::vector<util::xor_func> execute(const std::vector<util::xor_func>& identity,
-                                        const std::vector<util::xor_func>& preparation,
+    std::vector<util::xor_func> execute(const std::vector<util::xor_func>& preparation,
                                         const std::vector<util::xor_func>& restoration,
                                         std::unordered_map<int, int>& target_phase_map);
 };

@@ -208,7 +208,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  */
                 if (option_.change_row_order())
                 {
-                    tmp_restoration = sa.execute(init_prep_, tmp_preparation, tmp_restoration, tmp_target_phase_map);
+                    tmp_restoration = sa.execute(tmp_preparation, tmp_restoration, tmp_target_phase_map);
                 }
 
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
@@ -298,7 +298,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  */
                 if (option_.change_row_order())
                 {
-                    tmp_restoration = sa.execute(init_prep_, tmp_preparation, tmp_restoration, tmp_target_phase_map);
+                    tmp_restoration = sa.execute(tmp_preparation, tmp_restoration, tmp_target_phase_map);
                 }
 
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);

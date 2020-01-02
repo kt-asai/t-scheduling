@@ -88,8 +88,26 @@ static int evaluate_matrix(const int n,
     return result;
 }
 
-std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util::xor_func>& identity,
-                                                         const std::vector<util::xor_func>& preparation,
+void MatrixReconstructor::init()
+{
+    // initialize some variables
+    engine_ = std::mt19937(seed_generator_());
+    rate_ = 10000;
+    req_time_ = std::chrono::milliseconds(1000);
+
+    /*
+     * construct identity matrix
+     */
+    identity_.resize(num_qubit_);
+    for (int i = 0; i < num_qubit_; i++)
+    {
+        identity_[i] = util::xor_func(num_qubit_ + 1, 0);
+        identity_[i].set(i);
+    }
+
+}
+
+std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util::xor_func>& preparation,
                                                          const std::vector<util::xor_func>& restoration,
                                                          std::unordered_map<int, int>& target_phase_map)
 {
@@ -103,16 +121,19 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
     auto current_time = start;
     std::uniform_int_distribution<> dist(1, rate_);
 
+    // initial parameters
+    std::vector<util::xor_func> init_prep(identity_);
+    util::compose(num_qubit_, init_prep, restoration);
+
     // current (temporary) parameters
+    std::vector<util::xor_func> current_prep(init_prep);
     std::vector<util::xor_func> tmp_prep(preparation);
-    std::vector<util::xor_func> current_rest(restoration);
-    util::compose(num_qubit_, tmp_prep, current_rest);
+    util::compose(num_qubit_, tmp_prep, restoration);
     int current_eval = evaluate_matrix(num_qubit_, tmp_prep);
-    std::unordered_map<int, int> current_target_phase_map = target_phase_map;
 
     // best parameters
     int best_eval = current_eval;
-    std::vector<util::xor_func> best_rest = current_rest;
+    std::vector<util::xor_func> best_prep = current_prep;
 
     /*
      * implement SA
@@ -135,38 +156,14 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
         }
 
         // swap process
-        std::vector<util::xor_func> next_prep(identity);
-        util::compose(num_qubit_, next_prep, current_rest);
-        std::unordered_map<int, int> next_target_phase_map(current_target_phase_map);
-
+        std::vector<util::xor_func> next_prep(current_prep);
         std::swap(next_prep[target_a], next_prep[target_b]);
-        int phase_index_a = -1;
-        int phase_index_b = -1;
-        if (next_target_phase_map.count(target_a))
-        {
-            phase_index_a = next_target_phase_map[target_a];
-            next_target_phase_map.erase(target_a);
-        }
-        if (next_target_phase_map.count(target_b))
-        {
-            phase_index_b = next_target_phase_map[target_b];
-            next_target_phase_map.erase(target_b);
-        }
-
-        if (phase_index_a != -1)
-        {
-            next_target_phase_map.emplace(target_b, phase_index_a);
-        }
-        if (phase_index_b != -1)
-        {
-            next_target_phase_map.emplace(target_a, phase_index_b);
-        }
 
         // evaluate matrix
-        std::vector<util::xor_func> next_rest(identity);
-        util::compose(num_qubit_, next_rest, next_prep);
+        std::vector<util::xor_func> tmp_rest(identity_);
         tmp_prep = preparation;
-        util::compose(num_qubit_, tmp_prep, next_rest);
+        util::compose(num_qubit_, tmp_rest, next_prep);
+        util::compose(num_qubit_, tmp_prep, tmp_rest);
         const int next_eval = evaluate_matrix(num_qubit_, tmp_prep);
 
         // sa update param
@@ -177,19 +174,38 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
         if (current_eval > next_eval || force_next)
         {
             current_eval = next_eval;
-            current_rest = next_rest;
-            current_target_phase_map = next_target_phase_map;
+            current_prep = next_prep;
         }
 
         if (best_eval > current_eval)
         {
             best_eval = current_eval;
-            best_rest = current_rest;
-            target_phase_map = current_target_phase_map;
+            best_prep = current_prep;
         }
     }
 
-    return best_rest;
+    // set result restoration
+    std::vector<util::xor_func> result_rest(identity_);
+    util::compose(num_qubit_, result_rest, best_prep);
+
+    // update target phase
+    std::unordered_map<int, int> result_target_phase_map;
+    for (auto&& map : target_phase_map)
+    {
+        const int bit = map.first;
+        const int phase_index = map.second;
+        const util::xor_func func = init_prep[bit];
+        for (size_t i = 0; i < best_prep.size(); i++)
+        {
+            if (func == best_prep[i])
+            {
+                result_target_phase_map.emplace(i, phase_index);
+            }
+        }
+    }
+    target_phase_map = result_target_phase_map;
+
+    return result_rest;
 }
 
 }
