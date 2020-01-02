@@ -71,38 +71,6 @@ private:
         }
     }
 
-//    inline void update_bit_map(const std::vector<util::xor_func>& original,
-//                               const std::vector<util::xor_func>& result)
-//    {
-////        std::cout << "before bit_map" << std::endl;
-////        for (size_t i = 0; i < chr_.num_qubit(); i++)
-////        {
-////            std::cout << i << ":" << bit_map_[i] << std::endl;
-////        }
-//
-//        std::vector<int> tmp_bit_map(chr_.num_qubit());
-//        std::set<int> used_bit_index_set;
-//        for (size_t i = 0; i < original.size(); i++)
-//        {
-//            for (size_t j = 0; j < result.size(); j++)
-//            {
-//                if (!used_bit_index_set.count(j) && original[i] == result[j])
-//                {
-//                    tmp_bit_map[i] = bit_map_[j];
-//                    used_bit_index_set.insert(j);
-//                    break;
-//                }
-//            }
-//        }
-//        bit_map_ = tmp_bit_map;
-//
-////        std::cout << "after bit_map" << std::endl;
-////        for (size_t i = 0; i < chr_.num_qubit(); i++)
-////        {
-////            std::cout << i << ":" << bit_map_[i] << std::endl;
-////        }
-//    }
-
 public:
     TparSynthesis(const util::Option& option,
                   const Layout& layout,
