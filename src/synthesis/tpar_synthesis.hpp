@@ -31,13 +31,14 @@ private:
 
     int global_phase_;
 
-    std::vector<tpar::partitioning> floats_;
-    std::vector<tpar::partitioning> frozen_;
+    tpar::partitioning floats_;
+    tpar::partitioning frozen_;
+
 
     util::xor_func mask_;
 
     std::vector<util::xor_func> wires_;
-    std::vector<std::list<int>> remaining_;
+    std::list<int> remaining_;
 
     std::vector<int> bit_map_; // [from] = to
 

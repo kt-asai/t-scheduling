@@ -44,13 +44,9 @@ void TparSynthesis::init(const Character& chr)
         {
             global_phase_ = phase_exponent.first;
         }
-        else if (phase_exponent.first % 2 == 1)
+        else
         {
-            remaining_[0].push_back(index);
-        }
-        else if (phase_exponent.first != 0)
-        {
-            remaining_[1].push_back(index);
+            remaining_.push_back(index);
         }
         index++;
     }
@@ -58,40 +54,31 @@ void TparSynthesis::init(const Character& chr)
 
 void TparSynthesis::create_partition()
 {
-    for (int j = 0; j < 2; j++)
+    for (auto it = remaining_.begin(); it != remaining_.end();)
     {
-        for (auto it = remaining_[j].begin(); it != remaining_[j].end();)
+        util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
+        if (tmp.none())
         {
-            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
-            if (tmp.none())
-            {
-                tpar::add_to_partition(floats_[j], *it, chr_.phase_exponents(), oracle_);
-                it = remaining_[j].erase(it);
-            }
-            else
-            {
-                it++;
-            }
+            tpar::add_to_partition(floats_, *it, chr_.phase_exponents(), oracle_);
+            it = remaining_.erase(it);
+        }
+        else
+        {
+            it++;
         }
     }
 }
 
 void TparSynthesis::determine_apply_partition(Character::Hadamard& hadamard)
 {
-    for (int i = 0; i < 2; i++)
-    {
-        // TODO: freeze_partisionsの第二引数のconst化
-        frozen_[i] = tpar::freeze_partitions(floats_[i], hadamard.in_);
-    }
+    // TODO: freeze_partisionsの第二引数のconst化
+    frozen_ = tpar::freeze_partitions(floats_, hadamard.in_);
 }
 
 void TparSynthesis::construct_subcircuit(Character::Hadamard& hadamard)
 {
-
-    circuit_.add_gate_list(builder_.build(frozen_[0], wires_, wires_));
-
     std::vector<util::xor_func> original_hadamard_outputs = hadamard.input_wires_parity_;
-    circuit_.add_gate_list(builder_.build(frozen_[1], wires_, hadamard.input_wires_parity_));
+    circuit_.add_gate_list(builder_.build(frozen_, wires_, hadamard.input_wires_parity_));
     update_bit_map(original_hadamard_outputs, hadamard.input_wires_parity_);
 
     for (int i = 0; i < chr_.num_qubit(); i++)
@@ -117,8 +104,7 @@ int TparSynthesis::check_dimension(int current_dimension)
     {
         new_dimension = updated_dimension;
         oracle_.set_dim(new_dimension);
-        tpar::repartition(floats_[0], chr_.phase_exponents(), oracle_);
-        tpar::repartition(floats_[1], chr_.phase_exponents(), oracle_);
+        tpar::repartition(floats_, chr_.phase_exponents(), oracle_);
     }
 
     return new_dimension;
@@ -126,10 +112,8 @@ int TparSynthesis::check_dimension(int current_dimension)
 
 void TparSynthesis::construct_final_subcircuit()
 {
-    circuit_.add_gate_list(builder_.build(floats_[0], wires_, wires_));
-
     std::vector<util::xor_func> outputs = chr_.outputs();
-    circuit_.add_gate_list(builder_.build(floats_[1], wires_, outputs));
+    circuit_.add_gate_list(builder_.build(floats_, wires_, outputs));
 
     /*
      * Add the global phase

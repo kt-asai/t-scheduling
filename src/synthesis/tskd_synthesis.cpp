@@ -41,13 +41,9 @@ void TskdSynthesis::init(const Character& chr)
         {
             global_phase_ = phase_exponent.first;
         }
-        else if (phase_exponent.first % 2 == 1)
+        else
         {
-            remaining_[0].push_back(index);
-        }
-        else if (phase_exponent.first != 0)
-        {
-            remaining_[1].push_back(index);
+            remaining_.push_back(index);
         }
         index++;
     }
@@ -55,67 +51,56 @@ void TskdSynthesis::init(const Character& chr)
     /**
      * sort index of phase exponents
      */
-    for (int i = 0; i < 2; ++i)
-    {
-        remaining_[i].sort([&chr](int lhs, int rhs) -> bool
-                           {
-                               if (chr.phase_exponents()[lhs].second.count() == chr.phase_exponents()[rhs].second.count())
-                               {
-                                   return chr.phase_exponents()[lhs].second < chr.phase_exponents()[rhs].second;
-                               }
-                               else
-                               {
-                                   return chr.phase_exponents()[lhs].second.count() < chr.phase_exponents()[rhs].second.count();
-                               }
-                           });
-    }
+    remaining_.sort([&chr](int lhs, int rhs) -> bool
+                   {
+                       if (chr.phase_exponents()[lhs].second.count() == chr.phase_exponents()[rhs].second.count())
+                       {
+                           return chr.phase_exponents()[lhs].second < chr.phase_exponents()[rhs].second;
+                       }
+                       else
+                       {
+                           return chr.phase_exponents()[lhs].second.count() < chr.phase_exponents()[rhs].second.count();
+                       }
+                   });
 }
 
 void TskdSynthesis::determine_apply_phase_set(Character::Hadamard& hadamard)
 {
-    std::vector<std::list<int>> tmp_index_list(2);
-    std::vector<std::list<int>> tmp_carry_index_list(2);
-    for (int i = 0; i < 2; ++i)
+    std::list<int> tmp_index_list;
+    std::list<int> tmp_carry_index_list;
+    for (auto it = remaining_.begin(); it != remaining_.end();)
     {
-        for (auto it = remaining_[i].begin(); it != remaining_[i].end();)
+        util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
+        if (tmp.none())
         {
-            util::xor_func tmp = (~mask_) & (chr_.phase_exponents()[*it].second);
-            if (tmp.none())
+            auto ti = hadamard.in_.find(*it);
+            if (ti != hadamard.in_.end())
             {
-                auto ti = hadamard.in_.find(*it);
-                if (ti != hadamard.in_.end())
-                {
-                    tmp_index_list[i].push_back(*it);
-                }
-                else
-                {
-                    tmp_carry_index_list[i].push_back(*it);
-                }
-                it = remaining_[i].erase(it);
+                tmp_index_list.push_back(*it);
             }
             else
             {
-                it++;
+                tmp_carry_index_list.push_back(*it);
             }
+            it = remaining_.erase(it);
+        }
+        else
+        {
+            it++;
         }
     }
 
-    index_list_[0] = tmp_index_list[0];
-    index_list_[1] = tmp_index_list[1];
-    carry_index_list_[0] = tmp_carry_index_list[0];
-    carry_index_list_[1] = tmp_carry_index_list[1];
+    index_list_ = tmp_index_list;
+    carry_index_list_ = tmp_carry_index_list;
 }
 
 void TskdSynthesis::construct_subcircuit(Character::Hadamard& hadamard)
 {
-    circuit_.add_gate_list(builder_.build(index_list_[0], carry_index_list_[0], wires_, wires_));
-
     std::vector<util::xor_func> original_hadamard_outputs = hadamard.input_wires_parity_;
-    circuit_.add_gate_list(builder_.build(index_list_[1], carry_index_list_[1], wires_, hadamard.input_wires_parity_));
+    circuit_.add_gate_list(builder_.build(index_list_, carry_index_list_, wires_, hadamard.input_wires_parity_));
     update_bit_map(original_hadamard_outputs, hadamard.input_wires_parity_);
 
-    remaining_[0].splice(remaining_[0].begin(), carry_index_list_[0]);
-    remaining_[1].splice(remaining_[1].begin(), carry_index_list_[1]);
+    remaining_.splice(remaining_.begin(), carry_index_list_);
     for (int i = 0; i < chr_.num_qubit(); i++)
     {
         wires_[i] = hadamard.input_wires_parity_[i];
@@ -134,19 +119,14 @@ void TskdSynthesis::apply_hadamard(const Character::Hadamard& hadamard)
 void TskdSynthesis::construct_final_subcircuit()
 {
     std::list<int> none_list;
-    std::vector<std::list<int>> final_index_list(2);
-    for (int i = 0; i < 2; ++i)
+    std::list<int> final_index_list;
+    for (auto it = remaining_.begin(); it != remaining_.end(); it++)
     {
-        for (auto it = remaining_[i].begin(); it != remaining_[i].end(); it++)
-        {
-            final_index_list[i].push_back(*it);
-        }
+        final_index_list.push_back(*it);
     }
 
-    circuit_.add_gate_list(builder_.build(final_index_list[0], none_list, wires_, wires_));
-
     std::vector<util::xor_func> outputs = chr_.outputs();
-    circuit_.add_gate_list(builder_.build(final_index_list[1], none_list, wires_, outputs));
+    circuit_.add_gate_list(builder_.build(final_index_list, none_list, wires_, outputs));
 
     /*
      * Add the global phase
