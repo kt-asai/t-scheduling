@@ -14,10 +14,12 @@ void TskdSynthesis::init(const Character& chr)
     /*
      * initialize some stuff
      */
+    bit_map_.resize(chr.num_qubit());
     mask_ = util::xor_func(chr.num_data_qubit() + chr.num_hadamard() + 1, 0);
     mask_.set(chr.num_data_qubit() + chr.num_hadamard());
     for (int i = 0, j = 0; i < chr.num_qubit(); i++)
     {
+        bit_map_[i] = i;
         circuit_.add_qubit(chr.qubit_names()[i]);
         circuit_.set_ancilla(chr.qubit_names()[i], chr.ancilla_list()[i]);
         wires_.emplace_back(chr.num_data_qubit() + chr.num_hadamard()+ 1, 0);
@@ -104,10 +106,14 @@ void TskdSynthesis::determine_apply_phase_set(Character::Hadamard& hadamard)
     carry_index_list_[1] = tmp_carry_index_list[1];
 }
 
-void TskdSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
+void TskdSynthesis::construct_subcircuit(Character::Hadamard& hadamard)
 {
     circuit_.add_gate_list(builder_.build(index_list_[0], carry_index_list_[0], wires_, wires_));
+
+    std::vector<util::xor_func> original_hadamard_outputs = hadamard.input_wires_parity_;
     circuit_.add_gate_list(builder_.build(index_list_[1], carry_index_list_[1], wires_, hadamard.input_wires_parity_));
+    update_bit_map(original_hadamard_outputs, hadamard.input_wires_parity_);
+
     remaining_[0].splice(remaining_[0].begin(), carry_index_list_[0]);
     remaining_[1].splice(remaining_[1].begin(), carry_index_list_[1]);
     for (int i = 0; i < chr_.num_qubit(); i++)
@@ -118,9 +124,10 @@ void TskdSynthesis::construct_subcircuit(const Character::Hadamard& hadamard)
 
 void TskdSynthesis::apply_hadamard(const Character::Hadamard& hadamard)
 {
-    circuit_.add_gate("H", chr_.qubit_names()[hadamard.target_]);
-    wires_[hadamard.target_].reset();
-    wires_[hadamard.target_].set(hadamard.previous_qubit_index_);
+    const int hadamard_target = bit_map_[hadamard.target_];
+    circuit_.add_gate("H", chr_.qubit_names()[hadamard_target]);
+    wires_[hadamard_target].reset();
+    wires_[hadamard_target].set(hadamard.previous_qubit_index_);
     mask_.set(hadamard.previous_qubit_index_);
 }
 
@@ -137,7 +144,9 @@ void TskdSynthesis::construct_final_subcircuit()
     }
 
     circuit_.add_gate_list(builder_.build(final_index_list[0], none_list, wires_, wires_));
-    circuit_.add_gate_list(builder_.build(final_index_list[1], none_list, wires_, chr_.outputs()));
+
+    std::vector<util::xor_func> outputs = chr_.outputs();
+    circuit_.add_gate_list(builder_.build(final_index_list[1], none_list, wires_, outputs));
 
     /*
      * Add the global phase
