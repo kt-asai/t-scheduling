@@ -5,34 +5,15 @@ namespace tskd {
 static int evaluate_matrix(const int n,
                            std::vector<util::xor_func> matrix)
 {
-    constexpr int not_cost = 1;
     constexpr int cnot_cost = 1;
-    constexpr int swap_cost = cnot_cost * 3;
 
     int result = 0;
 
     bool flg = false;
-    bool is_create = false;
-
-    for (int j = 0; j < n; j++)
-    {
-        if (matrix[j].test(n))
-        {
-            matrix[j].reset(n);
-
-            if (!is_create)
-            {
-                result += not_cost;
-                is_create = true;
-            }
-        }
-    }
-
     // Make triangular
     for (int i = 0; i < n; i++)
     {
         flg = false;
-        is_create = false;
         for (int j = i; j < n; j++)
         {
             if (matrix[j].test(i))
@@ -42,19 +23,13 @@ static int evaluate_matrix(const int n,
                     if (j != i)
                     {
                         swap(matrix[i], matrix[j]);
-                        result += swap_cost;
                     }
                     flg = true;
                 }
                 else
                 {
                     matrix[j] ^= matrix[i];
-
-                    if (!is_create)
-                    {
-                        result += cnot_cost;
-                        is_create = true;
-                    }
+                    result += cnot_cost;
                 }
             }
         }
@@ -69,18 +44,12 @@ static int evaluate_matrix(const int n,
     // Finish the job
     for (int i = n - 1; i > 0; i--)
     {
-        is_create = false;
         for (int j = i - 1; j >= 0; j--)
         {
             if (matrix[j].test(i))
             {
                 matrix[j] ^= matrix[i];
-
-                if (!is_create)
-                {
-                    result += cnot_cost;
-                    is_create = true;
-                }
+                result += cnot_cost;
             }
         }
     }
@@ -93,7 +62,7 @@ void MatrixReconstructor::init()
     // initialize some variables
     engine_ = std::mt19937(seed_generator_());
     rate_ = 10000;
-    req_time_ = std::chrono::milliseconds(100);
+    req_time_ = std::chrono::milliseconds(1000);
 
     /*
      * construct identity matrix
@@ -128,7 +97,9 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
     std::vector<util::xor_func> current_prep(init_prep);
     std::vector<util::xor_func> tmp_prep(preparation);
     util::compose(num_qubit_, tmp_prep, restoration);
-    int current_eval = evaluate_matrix(num_qubit_, tmp_prep);
+    std::vector<util::xor_func> rev_prep(identity_);
+    util::compose(num_qubit_, rev_prep, tmp_prep);
+    int current_eval = evaluate_matrix(num_qubit_, rev_prep);
 
     // best parameters
     int best_eval = current_eval;
@@ -160,10 +131,12 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
 
         // evaluate matrix
         std::vector<util::xor_func> tmp_rest(identity_);
+        std::vector<util::xor_func> tmp_rev_prep(identity_);
         tmp_prep = preparation;
         util::compose(num_qubit_, tmp_rest, next_prep);
         util::compose(num_qubit_, tmp_prep, tmp_rest);
-        const int next_eval = evaluate_matrix(num_qubit_, tmp_prep);
+        util::compose(num_qubit_, tmp_rev_prep, tmp_prep);
+        const int next_eval = evaluate_matrix(num_qubit_, tmp_rev_prep);
 
         // sa update param
         const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start);
