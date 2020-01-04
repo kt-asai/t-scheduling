@@ -22,16 +22,12 @@ bool GreedyCircuitBuilder::init(const std::vector<util::xor_func>& in,
     for (int i = 0; i < qubit_num_; i++)
     {
         is_io_different &= (in[i] == out[i]);
-        for (int i = 0; i < qubit_num_; i++)
-        {
-            is_io_different &= (in[i] == out[i]);
-            preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
-            restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
-            identity_[i] = util::xor_func(qubit_num_ + 1, 0);
-            preparation_[i].set(i);
-            restoration_[i].set(i);
-            identity_[i].set(i);
-        }
+        preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
+        restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+        identity_[i] = util::xor_func(qubit_num_ + 1, 0);
+        preparation_[i].set(i);
+        restoration_[i].set(i);
+        identity_[i].set(i);
     }
 
     return is_io_different;
@@ -118,17 +114,6 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
         restoration_ = sa.execute(preparation_, restoration_, bit_correspond_map);
     }
 
-    util::compose(qubit_num_, preparation_, restoration_);
-
-    /*
-     * set preparation before decompose matrix
-     */
-    std::vector<int> func_map;
-    std::vector<util::xor_func> before_prep(identity_);
-    util::compose(qubit_num_, before_prep, restoration_);
-
-    util::compose(qubit_num_, preparation_, restoration_);
-
     // move bit place of out
     std::vector<util::xor_func> tmp_out(out.size());
     for (auto i = 0; i < out.size(); i++)
@@ -137,8 +122,38 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     }
     out = tmp_out;
 
-    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
-//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    /*
+     * set preparation before decompose matrix
+     */
+    std::vector<int> func_map(qubit_num_);
+    for (size_t i = 0; i < qubit_num_; i++)
+    {
+        func_map[i] = i;
+    }
+    std::vector<util::xor_func> before_prep(identity_);
+    util::compose(qubit_num_, before_prep, restoration_);
+
+    util::compose(qubit_num_, preparation_, restoration_);
+
+    /*
+     * generate circuit from inverse matrix
+     */
+    std::vector<util::xor_func> rev_prep(identity_);
+    util::compose(qubit_num_, rev_prep, preparation_);
+    std::list<Gate> ret = (*decomposer_).execute(rev_prep, func_map);
+    ret.reverse();
+    gate_list.splice(gate_list.end(), std::move(ret));
+
+    /*
+     * procedure after remove swap gate
+     * change where the function is applied
+     */
+    std::vector<util::xor_func> tmp(out.size());
+    for (auto i = 0; i < out.size(); i++)
+    {
+        tmp[i] = out[func_map[i]];
+    }
+    out = tmp;
 }
 
 int GreedyCircuitBuilder::check_dimension(const Character& chr,
@@ -245,19 +260,46 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /*
                  * set preparation before decompose matrix
                  */
-                std::vector<int> func_map;
+                std::vector<int> func_map(qubit_num_);
+                for (size_t i = 0; i < qubit_num_; i++)
+                {
+                    func_map[i] = i;
+                }
                 std::vector<util::xor_func> before_prep(identity_);
-                util::compose(qubit_num_, before_prep, restoration_);
-
+                util::compose(qubit_num_, before_prep, tmp_restoration);
 
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
-                /**
-                 * create gate list
+                /*
+                 * generate circuit from inverse matrix
                  */
-                tmp_gate_list.splice(tmp_gate_list.end(),(*decomposer_).execute(tmp_preparation, func_map));
-//                tmp_gate_list.splice(tmp_gate_list.end(),
-//                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
+                std::vector<util::xor_func> tmp_rev_prep(identity_);
+                util::compose(qubit_num_, tmp_rev_prep, tmp_preparation);
+                std::list<Gate> tmp_ret = (*decomposer_).execute(tmp_rev_prep, func_map);
+                tmp_ret.reverse();
+                tmp_gate_list.splice(tmp_gate_list.end(), std::move(tmp_ret));
+
+                /*
+                 * procedure after remove swap gate
+                 * change where the function is applied
+                 */
+                std::vector<util::xor_func> after_prep(qubit_num_);
+                for (size_t i = 0; i < qubit_num_; i++)
+                {
+                    after_prep[func_map[i]] = before_prep[i];
+                }
+                std::vector<util::xor_func> after_rest(identity_);
+                util::compose(qubit_num_, after_rest, after_prep);
+                tmp_restoration = after_rest;
+
+                std::unordered_map<int, int> tmp;
+                for (auto&& map : tmp_target_phase_map)
+                {
+                    const int target = map.first;
+                    const int phase_index = map.second;
+                    tmp.emplace(func_map[target], phase_index);
+                }
+                tmp_target_phase_map = tmp;
 
                 /**
                  * check time step
@@ -339,18 +381,46 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /*
                  * set preparation before decompose matrix
                  */
-                std::vector<int> func_map;
+                std::vector<int> func_map(qubit_num_);
+                for (size_t i = 0; i < qubit_num_; i++)
+                {
+                    func_map[i] = i;
+                }
                 std::vector<util::xor_func> before_prep(identity_);
-                util::compose(qubit_num_, before_prep, restoration_);
+                util::compose(qubit_num_, before_prep, tmp_restoration);
 
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
-                /**
-                 * create gate list
+                /*
+                 * generate circuit from inverse matrix
                  */
-                tmp_gate_list.splice(tmp_gate_list.end(),(*decomposer_).execute(tmp_preparation, func_map));
-//                tmp_gate_list.splice(tmp_gate_list.end(),
-//                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
+                std::vector<util::xor_func> tmp_rev_prep(identity_);
+                util::compose(qubit_num_, tmp_rev_prep, tmp_preparation);
+                std::list<Gate> tmp_ret = (*decomposer_).execute(tmp_rev_prep, func_map);
+                tmp_ret.reverse();
+                tmp_gate_list.splice(tmp_gate_list.end(), std::move(tmp_ret));
+
+                /*
+                 * procedure after remove swap gate
+                 * change where the function is applied
+                 */
+                std::vector<util::xor_func> after_prep(qubit_num_);
+                for (size_t i = 0; i < qubit_num_; i++)
+                {
+                    after_prep[func_map[i]] = before_prep[i];
+                }
+                std::vector<util::xor_func> after_rest(identity_);
+                util::compose(qubit_num_, after_rest, after_prep);
+                tmp_restoration = after_rest;
+
+                std::unordered_map<int, int> tmp;
+                for (auto&& map : tmp_target_phase_map)
+                {
+                    const int target = map.first;
+                    const int phase_index = map.second;
+                    tmp.emplace(func_map[target], phase_index);
+                }
+                tmp_target_phase_map = tmp;
 
                 /**
                  * check time step

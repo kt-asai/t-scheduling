@@ -195,6 +195,15 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
         restoration_ = sa.execute(preparation_, restoration_, bit_correspond_map);
     }
 
+    // move bit place of out
+    std::vector<util::xor_func> tmp_out(out.size());
+    for (auto i = 0; i < out.size(); i++)
+    {
+        tmp_out[i] = out[bit_correspond_map[i]];
+    }
+    out = tmp_out;
+
+
     /*
      * set preparation before decompose matrix
      */
@@ -208,22 +217,19 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
 
     util::compose(qubit_num_, preparation_, restoration_);
 
-    // move bit place of out
-    std::vector<util::xor_func> tmp_out(out.size());
-    for (auto i = 0; i < out.size(); i++)
-    {
-        tmp_out[i] = out[bit_correspond_map[i]];
-    }
-    out = tmp_out;
-
+    /*
+     * generate circuit from inverse matrix
+     */
     std::vector<util::xor_func> rev_prep(identity_);
     util::compose(qubit_num_, rev_prep, preparation_);
-
     std::list<Gate> ret = (*decomposer_).execute(rev_prep, func_map);
     ret.reverse();
     gate_list.splice(gate_list.end(), std::move(ret));
 
-    // move bit place of out
+    /*
+     * procedure after remove swap gate
+     * change where the function is applied
+     */
     std::vector<util::xor_func> tmp(out.size());
     for (auto i = 0; i < out.size(); i++)
     {
