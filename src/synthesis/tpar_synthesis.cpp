@@ -78,7 +78,7 @@ void TparSynthesis::determine_apply_partition(Character::Hadamard& hadamard)
 void TparSynthesis::construct_subcircuit(Character::Hadamard& hadamard)
 {
     std::vector<util::xor_func> original_hadamard_outputs = hadamard.input_wires_parity_;
-    circuit_.add_gate_list(builder_.build(frozen_, wires_, hadamard.input_wires_parity_));
+    circuit_.add_gate_list(builder_.build(frozen_, wires_, hadamard.input_wires_parity_, bit_map_));
     update_bit_map(original_hadamard_outputs, hadamard.input_wires_parity_);
 
     for (int i = 0; i < chr_.num_qubit(); i++)
@@ -113,7 +113,7 @@ int TparSynthesis::check_dimension(int current_dimension)
 void TparSynthesis::construct_final_subcircuit()
 {
     std::vector<util::xor_func> outputs = chr_.outputs();
-    circuit_.add_gate_list(builder_.build(floats_, wires_, outputs));
+    circuit_.add_gate_list(builder_.build(floats_, wires_, outputs, bit_map_));
 
     /*
      * Add the global phase

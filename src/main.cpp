@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 //        option.set_change_row_order(false);
 //    }
 
-    option.set_change_row_order(true);
+    option.set_change_row_order(false);
     option.set_input_path(path);
     option.set_num_distillation(4);
     option.set_distillation_step(10);
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 //    tskd::Gate gate1("cnot", "1", "3");
 //    tskd::Gate gate2("cnot", "2", "4");
 //    std::list<tskd::Gate> gate_list = {gate1, gate2};
-//    bool result = oracle.check(gate_lisct);m
+//    bool result = oracle.check(gate_lisct);
 //    std::cout << "result:" << result << std::endl;
 
     tskd::Character chr(qc);

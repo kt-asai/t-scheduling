@@ -59,13 +59,14 @@ void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
                                    const std::vector<util::xor_func>& in,
                                    const int num_partition,
                                    std::unordered_map<int, int>& target_phase_map,
-                                   MatrixReconstructor& sa)
+                                   MatrixReconstructor& sa,
+                                   const std::vector<int>& bit_map)
 {
     util::to_upper_echelon(num_partition, dimension_, bits_, &restoration_, std::vector<std::string>());
     util::fix_basis(qubit_num_, dimension_, num_partition, in, bits_, &restoration_, std::vector<std::string>());
 
     /*
-     * Re-construct binary matrix
+     * re-construct binary matrix
      */
     if (option_.change_row_order())
     {
@@ -75,18 +76,46 @@ void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
     /*
      * set preparation before decompose matrix
      */
-    std::vector<int> func_map;
+    std::vector<int> func_map(qubit_num_);
+    for (size_t i = 0; i < qubit_num_; i++)
+    {
+        func_map[i] = i;
+    }
     std::vector<util::xor_func> before_prep(identity_);
     util::compose(qubit_num_, before_prep, restoration_);
 
     util::compose(qubit_num_, preparation_, restoration_);
 
-    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
-//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    /*
+     * generate circuit from inverse matrix
+     */
+    std::vector<util::xor_func> rev_prep(identity_);
+    util::compose(qubit_num_, rev_prep, preparation_);
+    std::list<Gate> ret = (*decomposer_).execute(rev_prep, func_map);
+    ret.reverse();
+    gate_list.splice(gate_list.end(), std::move(ret));
 
     /*
      * procedure after remove swap gate
+     * change where the function is applied
      */
+    std::vector<util::xor_func> after_prep(qubit_num_);
+    for (size_t i = 0; i < qubit_num_; i++)
+    {
+        after_prep[func_map[i]] = before_prep[i];
+    }
+    std::vector<util::xor_func> after_rest(identity_);
+    util::compose(qubit_num_, after_rest, after_prep);
+    restoration_ = after_rest;
+
+    std::unordered_map<int, int> tmp;
+    for (auto&& map : target_phase_map)
+    {
+        const int target = map.first;
+        const int phase_index = map.second;
+        tmp.emplace(func_map[target], phase_index);
+    }
+    target_phase_map = tmp;
 }
 
 void SimpleCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
@@ -141,7 +170,8 @@ void SimpleCircuitBuilder::unprepare()
 void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
                                              const std::vector<util::xor_func>& in,
                                              std::vector<util::xor_func>& out,
-                                             MatrixReconstructor& sa)
+                                             MatrixReconstructor& sa,
+                                             const std::vector<int>& bit_map)
 {
     for (int i = 0; i < qubit_num_; i++)
     {
@@ -168,12 +198,15 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     /*
      * set preparation before decompose matrix
      */
-    std::vector<int> func_map;
+    std::vector<int> func_map(qubit_num_);
+    for (size_t i = 0; i < qubit_num_; i++)
+    {
+        func_map[i] = i;
+    }
     std::vector<util::xor_func> before_prep(identity_);
     util::compose(qubit_num_, before_prep, restoration_);
 
     util::compose(qubit_num_, preparation_, restoration_);
-
 
     // move bit place of out
     std::vector<util::xor_func> tmp_out(out.size());
@@ -183,13 +216,26 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     }
     out = tmp_out;
 
-    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
-//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    std::vector<util::xor_func> rev_prep(identity_);
+    util::compose(qubit_num_, rev_prep, preparation_);
+
+    std::list<Gate> ret = (*decomposer_).execute(rev_prep, func_map);
+    ret.reverse();
+    gate_list.splice(gate_list.end(), std::move(ret));
+
+    // move bit place of out
+    std::vector<util::xor_func> tmp(out.size());
+    for (auto i = 0; i < out.size(); i++)
+    {
+        tmp[i] = out[func_map[i]];
+    }
+    out = tmp;
 }
 
 std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
                                             std::vector<util::xor_func>& in,
-                                            std::vector<util::xor_func>& out)
+                                            std::vector<util::xor_func>& out,
+                                            const std::vector<int>& bit_map)
 {
     std::list<Gate> ret;
 
@@ -220,7 +266,7 @@ std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
         /*
          * Prepare the bits
          */
-        prepare(ret, in, static_cast<int>(it.size()), target_phase_map, sa);
+        prepare(ret, in, static_cast<int>(it.size()), target_phase_map, sa, bit_map);
 
         /*
          * Apply the phase gates
@@ -236,7 +282,7 @@ std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
     /*
      * Reduce out to the basis of in
      */
-    prepare_last_part(ret, in, out, sa);
+    prepare_last_part(ret, in, out, sa, bit_map);
 
     return ret;
 }

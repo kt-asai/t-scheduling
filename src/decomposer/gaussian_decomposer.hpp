@@ -24,13 +24,6 @@ public:
 
     std::list<Gate> execute(std::vector<util::xor_func>& matrix,
                             std::vector<int>& func_map) final;
-
-//    std::list<Gate> operator()(const Layout& layout,
-//                               const int n,
-//                               const int m,
-//                               std::vector<util::xor_func>& matrix,
-//                               std::vector<int>& bit_map,
-//                               const std::vector<std::string>& qubit_names) final;
 };
 
 }

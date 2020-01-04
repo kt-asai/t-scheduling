@@ -58,7 +58,8 @@ private:
                  const std::vector<util::xor_func>& in,
                  const int num_partition,
                  std::unordered_map<int, int>& target_phase_map,
-                 MatrixReconstructor& sa);
+                 MatrixReconstructor& sa,
+                 const std::vector<int>& bit_map);
 
     void apply_phase_gates(std::list<Gate>& gate_list,
                            const std::unordered_map<int, int>& target_phase_map);
@@ -68,7 +69,8 @@ private:
     void prepare_last_part(std::list<Gate>& gate_list,
                            const std::vector<util::xor_func>& in,
                            std::vector<util::xor_func>& out,
-                           MatrixReconstructor& sa);
+                           MatrixReconstructor& sa,
+                           const std::vector<int>& bit_map);
 
 public:
     SimpleCircuitBuilder() = default;
@@ -104,7 +106,8 @@ public:
 
     std::list<Gate> build(const tpar::partitioning& partition,
                           std::vector<util::xor_func>& in,
-                          std::vector<util::xor_func>& out);
+                          std::vector<util::xor_func>& out,
+                          const std::vector<int>& bit_map);
 
     static std::list<Gate> build_global_phase(int qubit_num,
                                               int phase,

@@ -93,7 +93,7 @@ void MatrixReconstructor::init()
     // initialize some variables
     engine_ = std::mt19937(seed_generator_());
     rate_ = 10000;
-    req_time_ = std::chrono::milliseconds(1000);
+    req_time_ = std::chrono::milliseconds(100);
 
     /*
      * construct identity matrix
@@ -104,7 +104,6 @@ void MatrixReconstructor::init()
         identity_[i] = util::xor_func(num_qubit_ + 1, 0);
         identity_[i].set(i);
     }
-
 }
 
 std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util::xor_func>& preparation,
