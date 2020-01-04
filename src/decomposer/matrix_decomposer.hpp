@@ -17,17 +17,56 @@ namespace tskd {
 class MatrixDecomposer
 {
 private:
+    Layout layout_;
+
+    int n_;
+    int m_;
+
+    std::vector<std::string> qubit_names_;
 
 public:
     MatrixDecomposer() = default;
 
+    MatrixDecomposer(const Layout& layout,
+                     const int n,
+                     const int m,
+                     const std::vector<std::string>& qubit_names)
+        : layout_(layout),
+          n_(n),
+          m_(m),
+          qubit_names_(qubit_names) { }
+
     virtual ~MatrixDecomposer() = default;
 
-    virtual std::list<Gate> operator()(const Layout& layout,
-                                       const int n,
-                                       const int m,
-                                       std::vector<util::xor_func>& matrix,
-                                       const std::vector<std::string>& qubit_names) = 0;
+    Layout layout() const
+    {
+        return layout_;
+    }
+
+    int n() const
+    {
+        return n_;
+    }
+
+    int m() const
+    {
+        return m_;
+    }
+
+    std::vector<std::string> qubit_names() const
+    {
+        return qubit_names_;
+    }
+
+    virtual std::list<Gate> execute(std::vector<util::xor_func>& matrix,
+                                    std::vector<int>& func_map) = 0;
+
+//    virtual std::list<Gate> operator()(const Layout& layout,
+//                                       const int n,
+//                                       const int m,
+//                                       std::vector<util::xor_func>& matrix,
+//                                       std::vector<int>& func_map,
+//                                       const std::vector<std::string>& qubit_names) = 0;
 };
 
 }

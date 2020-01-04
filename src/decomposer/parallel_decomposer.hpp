@@ -14,13 +14,22 @@ private:
 public:
     ParallelDecomposer() = default;
 
+    ParallelDecomposer(const Layout& layout,
+                       const int n,
+                       const int m,
+                       const std::vector<std::string>& qubit_names)
+            : MatrixDecomposer(layout, n, m, qubit_names) { }
+
     ~ParallelDecomposer() final = default;
 
-    std::list<Gate> operator()(const Layout& layout,
-                               const int n,
-                               const int m,
-                               std::vector<util::xor_func>& matrix,
-                               const std::vector<std::string>& qubit_names) final;
+    std::list<Gate> execute(std::vector<util::xor_func>& matrix,
+                            std::vector<int>& func_map) final;
+
+//    std::list<Gate> operator()(const Layout& layout,
+//                               const int n,
+//                               const int m,
+//                               std::vector<util::xor_func>& matrix,
+//                               const std::vector<std::string>& qubit_names) final;
 };
 
 }

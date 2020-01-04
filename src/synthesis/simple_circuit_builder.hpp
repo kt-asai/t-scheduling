@@ -45,6 +45,8 @@ private:
     std::vector<util::xor_func> preparation_;
     std::vector<util::xor_func> restoration_;
 
+    std::vector<util::xor_func> identity_;
+
     bool init(const std::vector<util::xor_func>& in,
               const std::vector<util::xor_func>& out);
 
@@ -86,11 +88,11 @@ public:
     {
         if (option.dec_type() == DecompositionType::kgauss)
         {
-            decomposer_ = std::make_shared<GaussianDecomposer>();
+            decomposer_ = std::make_shared<GaussianDecomposer>(layout, qubit_num, 0, qubit_names);
         }
         else if (option.dec_type() == DecompositionType::kparallel)
         {
-            decomposer_ = std::make_shared<ParallelDecomposer>();
+            decomposer_ = std::make_shared<ParallelDecomposer>(layout, qubit_num, 0, qubit_names);
         }
         else
         {

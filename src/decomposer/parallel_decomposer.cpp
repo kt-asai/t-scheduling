@@ -178,11 +178,8 @@ static std::list<Gate> generate_gate_list(const std::vector<std::list<Gate>>& ga
     return ret;
 }
 
-std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
-                                               const int n,
-                                               const int m,
-                                               std::vector<util::xor_func>& matrix,
-                                               const std::vector<std::string>& qubit_names)
+std::list<Gate> ParallelDecomposer::execute(std::vector<util::xor_func>& matrix,
+                                            std::vector<int>& func_map)
 {
     constexpr int swap_step = 3;
     constexpr int cnot_step = 1;
@@ -191,32 +188,32 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
     std::unordered_map<std::string, int> depth;
     std::vector<std::list<Gate>> gate_set_list(max_num_gate);
 
-    ParallelizationOracle oracle(layout);
+    ParallelizationOracle oracle(layout());
 
     // init
-    for (auto&& name : qubit_names)
+    for (auto&& name : qubit_names())
     {
         depth.emplace(name, 0);
     }
 
-    for (int j = 0; j < n; j++)
+    for (int j = 0; j < n(); j++)
     {
-        if (matrix[j].test(n))
+        if (matrix[j].test(n()))
         {
-            matrix[j].reset(n);
-            ret.splice(ret.begin(), util::compose_x(j, qubit_names));
+            matrix[j].reset(n());
+            ret.splice(ret.begin(), util::compose_x(j, qubit_names()));
         }
     }
 
     // Make triangular
     std::vector<int> one_array(static_cast<int>(matrix.size()));
     std::pair<int, int> swap_pair = std::make_pair(-1, -1); // <pivot, target>
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n(); i++)
     {
         bool flg = false;
         swap_pair = std::make_pair(-1, -1); // <pivot, target>
         one_array.clear();
-        for (int j = i; j < n + m; j++)
+        for (int j = i; j < n() + m(); j++)
         {
 
             if (matrix[j].test(i))
@@ -246,13 +243,13 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
         }
 
         // generate candidate cnot list
-        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
+        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names(), oracle);
     }
 
     //Finish the job
     swap_pair = std::make_pair(-1, -1); // <pivot, target>
     one_array.clear();
-    for (int i = n - 1; i > 0; i--)
+    for (int i = n() - 1; i > 0; i--)
     {
         one_array.clear();
         for (int j = i - 1; j >= 0; j--)
@@ -265,7 +262,7 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
         }
 
         // generate candidate cnot list
-        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
+        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names(), oracle);
     }
 
     // add gate
@@ -273,5 +270,101 @@ std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
 
     return ret;
 }
+
+//std::list<Gate> ParallelDecomposer::operator()(const Layout& layout,
+//                                               const int n,
+//                                               const int m,
+//                                               std::vector<util::xor_func>& matrix,
+//                                               const std::vector<std::string>& qubit_names)
+//{
+//    constexpr int swap_step = 3;
+//    constexpr int cnot_step = 1;
+//    const int max_num_gate = (swap_step + cnot_step) * (2 * matrix.size());
+//    std::list<Gate> ret;
+//    std::unordered_map<std::string, int> depth;
+//    std::vector<std::list<Gate>> gate_set_list(max_num_gate);
+//
+//    ParallelizationOracle oracle(layout);
+//
+//    // init
+//    for (auto&& name : qubit_names)
+//    {
+//        depth.emplace(name, 0);
+//    }
+//
+//    for (int j = 0; j < n; j++)
+//    {
+//        if (matrix[j].test(n))
+//        {
+//            matrix[j].reset(n);
+//            ret.splice(ret.begin(), util::compose_x(j, qubit_names));
+//        }
+//    }
+//
+//    // Make triangular
+//    std::vector<int> one_array(static_cast<int>(matrix.size()));
+//    std::pair<int, int> swap_pair = std::make_pair(-1, -1); // <pivot, target>
+//    for (int i = 0; i < n; i++)
+//    {
+//        bool flg = false;
+//        swap_pair = std::make_pair(-1, -1); // <pivot, target>
+//        one_array.clear();
+//        for (int j = i; j < n + m; j++)
+//        {
+//
+//            if (matrix[j].test(i))
+//            {
+//                // If we haven't yet seen a vector with bit i set...
+//                if (!flg) {
+//                    // If it wasn't the first vector we tried, swap to the front
+//                    if (j != i)
+//                    {
+//                        swap(matrix[i], matrix[j]);
+//                        swap_pair = std::make_pair(i, j);
+//                    }
+//                    flg = true;
+//                }
+//                else
+//                {
+//                    matrix[j] ^= matrix[i];
+//                    one_array.push_back(j);
+//                }
+//            }
+//        }
+//        if (!flg)
+//        {
+//            std::cerr << "ERROR: not full rank" << std::endl;
+//
+//            exit(1);
+//        }
+//
+//        // generate candidate cnot list
+//        update_gate_set_list(0, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
+//    }
+//
+//    //Finish the job
+//    swap_pair = std::make_pair(-1, -1); // <pivot, target>
+//    one_array.clear();
+//    for (int i = n - 1; i > 0; i--)
+//    {
+//        one_array.clear();
+//        for (int j = i - 1; j >= 0; j--)
+//        {
+//            if (matrix[j].test(i))
+//            {
+//                matrix[j] ^= matrix[i];
+//                one_array.push_back(j);
+//            }
+//        }
+//
+//        // generate candidate cnot list
+//        update_gate_set_list(1, i, one_array, swap_pair, depth, gate_set_list, qubit_names, oracle);
+//    }
+//
+//    // add gate
+//    ret.splice(ret.end(), generate_gate_list(gate_set_list));
+//
+//    return ret;
+//}
 
 }

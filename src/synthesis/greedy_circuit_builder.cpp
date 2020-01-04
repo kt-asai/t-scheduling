@@ -17,6 +17,7 @@ bool GreedyCircuitBuilder::init(const std::vector<util::xor_func>& in,
     bits_ = std::vector<util::xor_func>(qubit_num_);
     preparation_ = std::vector<util::xor_func>(qubit_num_);
     restoration_ = std::vector<util::xor_func>(qubit_num_);
+    identity_ = std::vector<util::xor_func>(qubit_num_);
 
     for (int i = 0; i < qubit_num_; i++)
     {
@@ -26,8 +27,10 @@ bool GreedyCircuitBuilder::init(const std::vector<util::xor_func>& in,
             is_io_different &= (in[i] == out[i]);
             preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
             restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+            identity_[i] = util::xor_func(qubit_num_ + 1, 0);
             preparation_[i].set(i);
             restoration_[i].set(i);
+            identity_[i].set(i);
         }
     }
 
@@ -117,6 +120,15 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
 
     util::compose(qubit_num_, preparation_, restoration_);
 
+    /*
+     * set preparation before decompose matrix
+     */
+    std::vector<int> func_map;
+    std::vector<util::xor_func> before_prep(identity_);
+    util::compose(qubit_num_, before_prep, restoration_);
+
+    util::compose(qubit_num_, preparation_, restoration_);
+
     // move bit place of out
     std::vector<util::xor_func> tmp_out(out.size());
     for (auto i = 0; i < out.size(); i++)
@@ -125,7 +137,8 @@ void GreedyCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     }
     out = tmp_out;
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
+//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 int GreedyCircuitBuilder::check_dimension(const Character& chr,
@@ -229,13 +242,22 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                     tmp_restoration = sa.execute(tmp_preparation, tmp_restoration, tmp_target_phase_map);
                 }
 
+                /*
+                 * set preparation before decompose matrix
+                 */
+                std::vector<int> func_map;
+                std::vector<util::xor_func> before_prep(identity_);
+                util::compose(qubit_num_, before_prep, restoration_);
+
+
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
                  * create gate list
                  */
-                tmp_gate_list.splice(tmp_gate_list.end(),
-                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
+                tmp_gate_list.splice(tmp_gate_list.end(),(*decomposer_).execute(tmp_preparation, func_map));
+//                tmp_gate_list.splice(tmp_gate_list.end(),
+//                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
 
                 /**
                  * check time step
@@ -314,13 +336,21 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                     tmp_restoration = sa.execute(tmp_preparation, tmp_restoration, tmp_target_phase_map);
                 }
 
+                /*
+                 * set preparation before decompose matrix
+                 */
+                std::vector<int> func_map;
+                std::vector<util::xor_func> before_prep(identity_);
+                util::compose(qubit_num_, before_prep, restoration_);
+
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /**
                  * create gate list
                  */
-                tmp_gate_list.splice(tmp_gate_list.end(),
-                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
+                tmp_gate_list.splice(tmp_gate_list.end(),(*decomposer_).execute(tmp_preparation, func_map));
+//                tmp_gate_list.splice(tmp_gate_list.end(),
+//                                     (*decomposer_)(layout_, qubit_num_, 0, tmp_preparation, qubit_names_));
 
                 /**
                  * check time step

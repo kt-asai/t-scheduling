@@ -17,14 +17,17 @@ bool SimpleCircuitBuilder::init(const std::vector<util::xor_func>& in,
     bits_ = std::vector<util::xor_func>(qubit_num_);
     preparation_ = std::vector<util::xor_func>(qubit_num_);
     restoration_ = std::vector<util::xor_func>(qubit_num_);
+    identity_ = std::vector<util::xor_func>(qubit_num_);
 
     for (int i = 0; i < qubit_num_; i++)
     {
         is_io_different &= (in[i] == out[i]);
         preparation_[i] = util::xor_func(qubit_num_ + 1, 0);
         restoration_[i] = util::xor_func(qubit_num_ + 1, 0);
+        identity_[i] = util::xor_func(qubit_num_ + 1, 0);
         preparation_[i].set(i);
         restoration_[i].set(i);
+        identity_[i].set(i);
     }
 
     return is_io_different;
@@ -69,9 +72,21 @@ void SimpleCircuitBuilder::prepare(std::list<Gate>& gate_list,
         restoration_ = sa.execute(preparation_, restoration_, target_phase_map);
     }
 
+    /*
+     * set preparation before decompose matrix
+     */
+    std::vector<int> func_map;
+    std::vector<util::xor_func> before_prep(identity_);
+    util::compose(qubit_num_, before_prep, restoration_);
+
     util::compose(qubit_num_, preparation_, restoration_);
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
+//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+
+    /*
+     * procedure after remove swap gate
+     */
 }
 
 void SimpleCircuitBuilder::apply_phase_gates(std::list<Gate>& gate_list,
@@ -150,6 +165,13 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
         restoration_ = sa.execute(preparation_, restoration_, bit_correspond_map);
     }
 
+    /*
+     * set preparation before decompose matrix
+     */
+    std::vector<int> func_map;
+    std::vector<util::xor_func> before_prep(identity_);
+    util::compose(qubit_num_, before_prep, restoration_);
+
     util::compose(qubit_num_, preparation_, restoration_);
 
 
@@ -161,7 +183,8 @@ void SimpleCircuitBuilder::prepare_last_part(std::list<Gate>& gate_list,
     }
     out = tmp_out;
 
-    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
+    gate_list.splice(gate_list.end(), (*decomposer_).execute(preparation_, func_map));
+//    gate_list.splice(gate_list.end(), (*decomposer_)(layout_, qubit_num_, 0, preparation_, qubit_names_));
 }
 
 std::list<Gate> SimpleCircuitBuilder::build(const tpar::partitioning& partition,
