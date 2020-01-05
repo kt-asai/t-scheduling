@@ -88,6 +88,7 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
     const auto end = std::chrono::system_clock::now() + req_time_;
     auto current_time = start;
     std::uniform_int_distribution<> dist(1, rate_);
+    constexpr int loop_count = 100;
 
     // initial parameters
     std::vector<util::xor_func> init_prep(identity_);
@@ -116,43 +117,48 @@ std::vector<util::xor_func> MatrixReconstructor::execute(const std::vector<util:
             break;
         }
 
-        // choice index randomly
-        const int target_a = dist_index(engine_);
-        const int target_b = dist_index(engine_);
-
-        if (target_a == target_b)
+        for (int loop = 0; loop < loop_count; ++loop)
         {
-            continue;
-        }
+            // choice index randomly
+            const int target_a = dist_index(engine_);
+            const int target_b = dist_index(engine_);
 
-        // swap process
-        std::vector<util::xor_func> next_prep(current_prep);
-        std::swap(next_prep[target_a], next_prep[target_b]);
+            if (target_a == target_b)
+            {
+                continue;
+            }
 
-        // evaluate matrix
-        std::vector<util::xor_func> tmp_rest(identity_);
-        std::vector<util::xor_func> tmp_rev_prep(identity_);
-        tmp_prep = preparation;
-        util::compose(num_qubit_, tmp_rest, next_prep);
-        util::compose(num_qubit_, tmp_prep, tmp_rest);
-        util::compose(num_qubit_, tmp_rev_prep, tmp_prep);
-        const int next_eval = evaluate_matrix(num_qubit_, tmp_rev_prep);
+            // swap process
+            std::swap(current_prep[target_a], current_prep[target_b]);
 
-        // sa update param
-        const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start);
-        const bool force_next = (rate_ * (req_time_.count() - time.count())) > (req_time_.count() * dist(seed_generator_));
+            // evaluate matrix
+            std::vector<util::xor_func> tmp_rest(identity_);
+            std::vector<util::xor_func> tmp_rev_prep(identity_);
+            tmp_prep = preparation;
+            util::compose(num_qubit_, tmp_rest, current_prep);
+            util::compose(num_qubit_, tmp_prep, tmp_rest);
+            util::compose(num_qubit_, tmp_rev_prep, tmp_prep);
+            const int next_eval = evaluate_matrix(num_qubit_, tmp_rev_prep);
 
-        // update
-        if (current_eval > next_eval || force_next)
-        {
-            current_eval = next_eval;
-            current_prep = next_prep;
-        }
+            // sa update param
+            const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start);
+            const bool force_next = (rate_ * (req_time_.count() - time.count())) > (req_time_.count() * dist(seed_generator_));
 
-        if (best_eval > current_eval)
-        {
-            best_eval = current_eval;
-            best_prep = current_prep;
+            // update
+            if (current_eval > next_eval || force_next)
+            {
+                current_eval = next_eval;
+            }
+            else
+            {
+                std::swap(current_prep[target_a], current_prep[target_b]);
+            }
+
+            if (best_eval > current_eval)
+            {
+                best_eval = current_eval;
+                best_prep = current_prep;
+            }
         }
     }
 
