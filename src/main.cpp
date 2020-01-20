@@ -54,19 +54,23 @@ int main(int argc, char** argv)
     }
 
     // TODO: fix bug
-//    const std::string change = argv[4];
-//    if (change == "true")
-//    {
-//        option.set_change_row_order(true);
-//    }
-//    else
-//    {
-//        option.set_change_row_order(false);
-//    }
+    const std::string change = argv[4];
+    if (change == "true")
+    {
+        option.set_change_row_order(true);
+    }
+    else
+    {
+        option.set_change_row_order(false);
+    }
 
-    option.set_change_row_order(false);
+    const std::string s_nd = argv[5];
+    const int num_distillation = std::stoi(s_nd);
+    option.set_num_distillation(num_distillation);
+
+//    option.set_change_row_order(true);
     option.set_input_path(path);
-    option.set_num_distillation(4);
+//    option.set_num_distillation(4);
     option.set_distillation_step(10);
     option.set_num_buffer(0);
     option.show();
@@ -85,6 +89,7 @@ int main(int argc, char** argv)
 
     tskd::Layout layout(option, qc);
     layout.print();
+    std::cout << "# ----------------" << std::endl;
 //    layout.print_edge();
     std::cout << "-->> construct layout complete" << std::endl;
 

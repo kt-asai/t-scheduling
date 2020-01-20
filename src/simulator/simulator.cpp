@@ -130,9 +130,9 @@ void Simulator::calculate()
                 while (num_t_gate > 0)
                 {
                     num_t_gate -= get_magic_state(num_t_gate, used_index_set);
-                    update_buffer_capacity(1, used_index_set);
+                    update_buffer_capacity(3, used_index_set);
                     used_index_set.clear();
-                    current_time_step += 1;
+                    current_time_step += 3;
                 }
             }
 

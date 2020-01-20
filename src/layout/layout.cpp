@@ -36,7 +36,7 @@ void Layout::calculate_width_and_height()
      * 3.up, down and horizontal
      */
     double ratio = 100000;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 1; i++)
     {
         const int rotation = i % 2;
         const int width = i < 2 ? ds_length[rotation] * option_.num_distillation()
