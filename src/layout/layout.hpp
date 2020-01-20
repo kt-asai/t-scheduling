@@ -2,6 +2,7 @@
 #define T_SCHEDULING_LAYOUT_HPP
 
 #include <vector>
+#include <memory>
 
 #include "../util/option.hpp"
 
