@@ -28,6 +28,7 @@ private:
     int distillation_step_;
 
     int num_buffer_;
+    int num_buffer_row_;
 
     bool change_row_order_;
 
@@ -80,6 +81,11 @@ public:
         return num_buffer_;
     }
 
+    int num_buffer_row() const
+    {
+        return num_buffer_row_;
+    }
+
     bool change_row_order() const
     {
         return change_row_order_;
@@ -114,6 +120,11 @@ public:
     void set_num_buffer(int num_buffer)
     {
         num_buffer_ = num_buffer;
+    }
+
+    void set_num_buffer_row(int num_row)
+    {
+        num_buffer_row_ = num_row;
     }
 
     void set_change_row_order(bool change_row_order)

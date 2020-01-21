@@ -68,17 +68,32 @@ int main(int argc, char** argv)
     const int num_distillation = std::stoi(s_nd);
     option.set_num_distillation(num_distillation);
 
-//    option.set_change_row_order(true);
+    // set number of buffer row
+    option.set_num_buffer_row(0);
+    const std::string nbr = argv[6];
+    const int num_row = std::stoi(nbr);
+    option.set_num_buffer_row(num_row);
+
+
     option.set_input_path(path);
-//    option.set_num_distillation(4);
     option.set_distillation_step(10);
     option.set_num_buffer(0);
-    option.show();
 
 
     tskd::CircuitReader reader(option.input_path());
     tskd::Circuit qc = reader.read();
     std::cout << "-->> read file complete" << std::endl;
+
+    std::cout << "# ----------------" << std::endl;
+    tskd::Layout layout(option, qc);
+    layout.print();
+//    layout.print_edge();
+    std::cout << "-->> construct layout complete" << std::endl;
+
+    // set buffer
+    const int num_buffer = option.num_buffer_row() * layout.width();
+    option.set_num_buffer(num_buffer);
+    option.show();
 
 //    qc.print_gate_list();
     std::cout << "# ----------------" << std::endl;
@@ -86,12 +101,6 @@ int main(int argc, char** argv)
     tskd::Simulator sim_init(option, qc);
     sim_init.print();
     std::cout << "# ----------------" << std::endl;
-
-    tskd::Layout layout(option, qc);
-    layout.print();
-    std::cout << "# ----------------" << std::endl;
-//    layout.print_edge();
-    std::cout << "-->> construct layout complete" << std::endl;
 
     // test z3
 //    tskd::ParallelizationOracle oracle(layout);
