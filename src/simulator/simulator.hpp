@@ -54,7 +54,8 @@ public:
               const Circuit& circuit)
         : option_(option),
           circuit_(circuit),
-          use_buffer_(false)
+          use_buffer_(false),
+          buffer_capacity_(0)
     {
         distillations_ = std::vector<int>(option.num_distillation(), 0);
 
