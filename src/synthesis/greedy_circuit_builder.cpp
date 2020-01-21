@@ -310,10 +310,10 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  * check time step
                  */
                 // int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
-                int upper_bound_time = option_.distillation_step() * t_num_in_par;
-                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
-                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
-                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= upper_bound_time)
+//                int upper_bound_time = option_.distillation_step() * t_num_in_par;
+                const int buffer_upper_bound = std::max(1, (option_.num_buffer() / option_.num_distillation())) * option_.distillation_step();
+//                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= buffer_upper_bound)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
@@ -437,10 +437,11 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                  * check time step
                  */
 //                int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
-                int upper_bound_time = option_.distillation_step() * t_num_in_par;
-                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
-                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
-                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= upper_bound_time)
+//                int upper_bound_time = option_.distillation_step() * t_num_in_par;
+//                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
+                const int buffer_upper_bound = std::max(1, (option_.num_buffer() / option_.num_distillation())) * option_.distillation_step();
+//                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
+                if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= buffer_upper_bound)
                 {
                     result_restoration = tmp_restoration;
                     result_sub_part = tmp_sub_part;
