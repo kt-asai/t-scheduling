@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #include "util/option.hpp"
 #include "io/circuit_reader.hpp"
@@ -22,8 +23,8 @@ int main(int argc, char** argv)
      */
     tskd::util::Option option;
 
-    const std::string input = argv[1];
-    const std::string path = "../benchmarks/" + input;
+    const std::string circuit_file = argv[1];
+    const std::string path = "../benchmarks/" + circuit_file;
 
     const std::string syn_type = argv[2];
     if (syn_type == "tpar")
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
     std::cout << "-->> construct character complete" << std::endl;
 
     const auto start = std::chrono::system_clock::now();
-    tskd::Synthesis* synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
+    std::shared_ptr<tskd::Synthesis> synthesis = tskd::SynthesisMethodFactory().create(option.syn_method(), option, layout, chr);
     tskd::Circuit result = synthesis->execute();
     const auto end = std::chrono::system_clock::now();
     std::cout << "-->> synthsis complete" << std::endl;
