@@ -76,7 +76,7 @@ int Simulator::get_magic_state(int required_magic_states,
     int ret_magic_state = 0;
     if (use_buffer_)
     {
-        ret_magic_state = std::min(buffer_capacity_, required_magic_states);
+        ret_magic_state = std::min(buffer_capacity_, std::min(required_magic_states, option_.num_distillation() * 2));
         buffer_capacity_ -= ret_magic_state;
     }
     else
