@@ -47,25 +47,23 @@ void TskdSynthesis::init(const Character& chr)
         }
         index++;
     }
-
-    /**
-     * sort index of phase exponents
-     */
-    remaining_.sort([&chr](int lhs, int rhs) -> bool
-                   {
-                       if (chr.phase_exponents()[lhs].second.count() == chr.phase_exponents()[rhs].second.count())
-                       {
-                           return chr.phase_exponents()[lhs].second < chr.phase_exponents()[rhs].second;
-                       }
-                       else
-                       {
-                           return chr.phase_exponents()[lhs].second.count() < chr.phase_exponents()[rhs].second.count();
-                       }
-                   });
 }
 
 void TskdSynthesis::determine_apply_phase_set(Character::Hadamard& hadamard)
 {
+    /**
+     * sort index of phase exponents
+     */
+    remaining_.sort([this](int lhs, int rhs) -> bool {
+                        if (chr_.phase_exponents()[lhs].second.count() == chr_.phase_exponents()[rhs].second.count())
+                        {
+                            return chr_.phase_exponents()[lhs].second < chr_.phase_exponents()[rhs].second;
+                        }
+                        else
+                        {
+                            return chr_.phase_exponents()[lhs].second.count() < chr_.phase_exponents()[rhs].second.count();
+                        }});
+
     std::list<int> tmp_index_list;
     std::list<int> tmp_carry_index_list;
     for (auto it = remaining_.begin(); it != remaining_.end();)
