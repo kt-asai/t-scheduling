@@ -62,7 +62,7 @@ void MatrixReconstructor::init()
     // initialize some variables
     engine_ = std::mt19937(seed_generator_());
     rate_ = 10000;
-    req_time_ = std::chrono::milliseconds(1000);
+    req_time_ = std::chrono::milliseconds(200);
 
     /*
      * construct identity matrix
