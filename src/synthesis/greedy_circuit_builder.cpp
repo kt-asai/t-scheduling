@@ -246,7 +246,6 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                     }
                 }
 
-
                 /**
                  * prepare preparation matrix
                  */
@@ -254,6 +253,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 util::to_upper_echelon(num_partition, dimension_, tmp_bits, &tmp_restoration, std::vector<std::string>());
                 util::fix_basis(qubit_num_, dimension_, num_partition, in, tmp_bits, &tmp_restoration,
                                std::vector<std::string>());
+
                 /**
                  * change row order in the matrix
                  */
@@ -309,10 +309,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-                // int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
-//                int upper_bound_time = option_.distillation_step() * t_num_in_par;
                 const int buffer_upper_bound = std::max(1, (option_.num_buffer() / option_.num_distillation())) * option_.distillation_step();
-//                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
                 if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= buffer_upper_bound)
                 {
                     result_restoration = tmp_restoration;
@@ -399,7 +396,6 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 }
                 std::vector<util::xor_func> before_prep(identity_);
                 util::compose(qubit_num_, before_prep, tmp_restoration);
-
                 util::compose(qubit_num_, tmp_preparation, tmp_restoration);
 
                 /*
@@ -436,11 +432,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
                 /**
                  * check time step
                  */
-//                int upper_bound_time = option_.distillation_step() * static_cast<int>(tmp_sub_part.size());
-//                int upper_bound_time = option_.distillation_step() * t_num_in_par;
-//                const int buffer_upper_bound = std::max(1, option_.num_buffer()) * option_.distillation_step();
                 const int buffer_upper_bound = std::max(1, (option_.num_buffer() / option_.num_distillation())) * option_.distillation_step();
-//                upper_bound_time = std::min(upper_bound_time, buffer_upper_bound);
                 if (tmp_sub_part.size() == 1 || compute_time_step(tmp_gate_list) <= buffer_upper_bound)
                 {
                     result_restoration = tmp_restoration;
@@ -480,6 +472,7 @@ std::list<Gate> GreedyCircuitBuilder::build(std::list<int>& index_list,
 
     return ret;
 }
+
 
 std::list<Gate> GreedyCircuitBuilder::build_global_phase(int qubit_num,
                                                        int phase,
